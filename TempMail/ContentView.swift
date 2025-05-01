@@ -9,58 +9,59 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @EnvironmentObject private var accountsController: AccountsController
+    @EnvironmentObject private var addressesViewModel: AddressesViewModel
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
 #if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
+        NavigationView {
+            AddressesView()
+        }
+#elseif os(macOS)
+        NavigationSplitView {
+            NewAddressBtn()
+            AddressesView()
+            Text("Powered by [mail.tm](https://www.mail.tm)")
+                .font(.footnote)
+        } content: {
+            MessagesView(account: accountsController.selectedAccount)
         } detail: {
-            Text("Select an item")
+            MessageDetailView(message: accountsController.selectedMessage, account: accountsController.selectedAccount)
         }
-    }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
+#endif
     }
+}
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+struct NewAddressBtn: View {
+    @EnvironmentObject private var addressesViewModel: AddressesViewModel
+    
+    var body: some View {
+        Button(action: addressesViewModel.openNewAddressSheet, label: {
+            VStack(alignment: .leading) {
+                HStack {
+                    Text("New Address")
+                        .foregroundStyle(.primary)
+                        .padding(.leading, 4)
+                        .lineLimit(1)
+                    Spacer()
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundStyle(.primary)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity)
+                .background(Color.secondary.opacity(0.2))
+                .cornerRadius(6)
             }
-        }
+        })
+        .padding(.horizontal)
+        .padding(.vertical, 5)
+        .buttonStyle(.plain)
+        .keyboardShortcut(.init("a", modifiers: [.command]))
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .environmentObject(AccountsController.shared)
 }

@@ -10,9 +10,12 @@ import SwiftData
 
 @main
 struct TempMailApp: App {
+    @StateObject private var accountsController = AccountsController()
+    @StateObject private var addressViewModel = AddressesViewModel()
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Account.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -26,6 +29,8 @@ struct TempMailApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(accountsController)
+                .environmentObject(addressViewModel)
         }
         .modelContainer(sharedModelContainer)
     }
