@@ -17,6 +17,14 @@ struct Message: Hashable, Identifiable {
         data.id
     }
     
+    var fromAddress: String {
+        return data.from.address
+    }
+    
+    var fromName: String {
+        return data.from.name
+    }
+    
     init(isComplete: Bool = false, data: MTMessage) {
         self.isComplete = isComplete
         self.data = data

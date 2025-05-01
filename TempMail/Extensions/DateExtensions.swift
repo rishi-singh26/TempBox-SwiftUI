@@ -8,30 +8,60 @@
 import Foundation
 
 extension Date {
+    func formatRelativeString() -> String {
+        let calendar = Calendar.current
+        let today = Date()
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
 
-    func formatRelativeString(useTwentyFourHour: Bool = false) -> String {
-        let dateFormatter = DateFormatter()
-        let calendar = Calendar(identifier: .gregorian)
-        dateFormatter.doesRelativeDateFormatting = true
+        let isToday = calendar.isDate(self, inSameDayAs: today)
+        let isYesterday = calendar.isDate(self, inSameDayAs: yesterday)
 
-        if calendar.isDateInToday(self) {
-            dateFormatter.timeStyle = .short
-            dateFormatter.dateStyle = .none
-        } else if calendar.isDateInYesterday(self){
-            dateFormatter.timeStyle = .none
-            dateFormatter.dateStyle = .medium
-        } else if calendar.compare(Date(), to: self, toGranularity: .weekOfYear) == .orderedSame {
-            let weekday = calendar.dateComponents([.weekday], from: self).weekday ?? 0
-            return dateFormatter.weekdaySymbols[weekday-1]
+        var formattedDate = ""
+        if isToday {
+            // No date prefix
+        } else if isYesterday {
+            formattedDate = "Yesterday, "
         } else {
-            dateFormatter.timeStyle = .none
-            dateFormatter.dateStyle = .short
+            let day = calendar.component(.day, from: self)
+            let month = calendar.component(.month, from: self)
+            let year = calendar.component(.year, from: self)
+            let currentYear = calendar.component(.year, from: today)
+
+            let suffix: String
+            if (11...13).contains(day % 100) {
+                suffix = "th"
+            } else {
+                switch day % 10 {
+                case 1: suffix = "st"
+                case 2: suffix = "nd"
+                case 3: suffix = "rd"
+                default: suffix = "th"
+                }
+            }
+
+            let monthStr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
+
+            if year == currentYear {
+                formattedDate = "\(day)\(suffix) \(monthStr), "
+            } else {
+                formattedDate = "\(day)\(suffix) \(monthStr) \(year), "
+            }
         }
 
-        // Set the time format to 24-hour
-        dateFormatter.dateFormat = useTwentyFourHour ? "HH:mm a" : "HH:mm"
+        // Determine if system uses 24-hour format
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("j") // "j" is time format symbol
 
-        return dateFormatter.string(from: self)
+        let is24Hour = !formatter.dateFormat.contains("a") // "a" means AM/PM
+
+        // Format time
+        formatter.dateFormat = is24Hour ? "HH:mm" : "h:mm a"
+        let timeStr = formatter.string(from: self)
+
+        return "\(formattedDate)\(timeStr)"
     }
+
 }
 

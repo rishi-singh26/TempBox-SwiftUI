@@ -15,7 +15,20 @@ struct MessagesView: View {
     let account: Account
     
     var messages: [Message] {
-        return account.messagesStore?.messages ?? []
+        let safeMessages = account.messagesStore?.messages ?? []
+        if safeMessages.isEmpty {
+            return safeMessages
+        }
+        if controller.searchText.isEmpty {
+            return safeMessages
+        } else {
+            let searchQuery = controller.searchText.lowercased()
+            return safeMessages.filter { message in
+                let subMatches = message.data.subject.lowercased().contains(searchQuery)
+                let fromMatches = message.fromAddress.contains(searchQuery)
+                return subMatches || fromMatches
+            }
+        }
     }
     
     var body: some View {
@@ -28,23 +41,33 @@ struct MessagesView: View {
                 }
             } else {
                 MessagesList(account: account)
-                .listStyle(.plain)
-                .searchable(text: $controller.searchText)
-                .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
-                    Button("Cancel", role: .cancel) {
-                        
+                    .listStyle(.plain)
+                    .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
+                        Button("Cancel", role: .cancel) {
+                            
+                        }
+                        Button("Delete", role: .destructive) {
+                            guard let messForDeletion = controller.selectedMessForDeletion else { return }
+                            accountsController.deleteMessage(message: messForDeletion, account: account)
+                            controller.selectedMessForDeletion = nil
+                        }
+                    } message: {
+                        Text("Are you sure you want to delete this account?")
                     }
-                    Button("Delete", role: .destructive) {
-                        guard let messForDeletion = controller.selectedMessForDeletion else { return }
-                        accountsController.deleteMessage(message: messForDeletion, account: account)
-                        controller.selectedMessForDeletion = nil
-                    }
-                } message: {
-                    Text("Are you sure you want to delete this account?")
-                }
             }
         }
+        .searchable(text: $controller.searchText)
         .navigationTitle(account.name ?? account.address.extractUsername())
+#if os(iOS)
+        .toolbar(content: {
+            ToolbarItem {
+                Button("Message Information", systemImage: "info.circle") {
+                    addressesViewModel.selectedAccForInfoSheet = account
+                    addressesViewModel.isAccountInfoSheetOpen = true
+                }
+            }
+        })
+#endif
     }
     
     @ViewBuilder
@@ -92,4 +115,5 @@ struct MessagesView: View {
 #Preview {
     ContentView()
         .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesViewModel.shared)
 }

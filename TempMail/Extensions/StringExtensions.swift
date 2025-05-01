@@ -5,7 +5,7 @@
 //  Created by Rishi Singh on 23/09/23.
 //
 
-import Foundation
+import SwiftUI
 
 extension String {
     static func generateRandomString(of length: Int, useUpperCase: Bool = false, useNumbers: Bool = false, useSpecialCharacters: Bool = false) -> String {
@@ -57,5 +57,17 @@ extension String {
         let emailRegex = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,64}$"
         let emailPredicate = NSPredicate(format: "SELF MATCHES[c] %@", emailRegex)
         return emailPredicate.evaluate(with: self)
+    }
+    
+    func copyToClipboard() {
+#if os(iOS)
+        UIPasteboard.general.string = self
+#elseif os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(self, forType: .string)
+#else
+        // Handle other platforms if needed, or provide a default
+        print("Clipboard operations not supported on this platform.")
+#endif
     }
 }

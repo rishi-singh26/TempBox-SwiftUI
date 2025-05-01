@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct AddressInfoView: View {
     @Environment(\.dismiss) var dismiss
     let account: Account
@@ -28,7 +26,7 @@ struct AddressInfoView: View {
     func IOSAddressInfo() -> some View {
         NavigationView {
             List {
-                Section(footer: Text("If you wish to use this account on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
+                Section(footer: MarkdownLinkText(markdownText: "If you wish to use this account on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
                     HStack {
                         Text("Status: ")
                             .font(.headline)
@@ -43,7 +41,7 @@ struct AddressInfoView: View {
                         Text(account.address)
                         Spacer()
                         Button {
-                            copyToClipboard(text: account.address)
+                            account.address.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -60,7 +58,7 @@ struct AddressInfoView: View {
                             }
                         Spacer()
                         Button {
-                            copyToClipboard(text: account.password)
+                            account.password.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -125,7 +123,7 @@ struct AddressInfoView: View {
                         Text(account.address)
                         Spacer()
                         Button {
-                            copyToClipboard(text: account.address)
+                            account.address.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -143,7 +141,7 @@ struct AddressInfoView: View {
                             }
                         Spacer()
                         Button {
-                            copyToClipboard(text: account.password)
+                            account.password.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -178,18 +176,6 @@ struct AddressInfoView: View {
         }
     }
 #endif
-    
-    func copyToClipboard(text: String) {
-#if os(iOS)
-        UIPasteboard.general.string = text
-#elseif os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
-#else
-        // Handle other platforms if needed, or provide a default
-        print("Clipboard operations not supported on this platform.")
-#endif
-    }
     
     func getQuotaString(from bytes: Int, unit: SizeUnit) -> String {
         ByteConverterService(bytes: Double(bytes)).toHumanReadable(unit: unit)

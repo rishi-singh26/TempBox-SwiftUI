@@ -21,7 +21,7 @@ struct ContentView: View {
         NavigationSplitView {
             NewAddressBtn()
             AddressesView()
-            Text("Powered by [mail.tm](https://www.mail.tm)")
+            MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                 .font(.footnote)
         } content: {
             Group {
@@ -104,7 +104,7 @@ struct NewAddressBtn: View {
         .padding(.horizontal)
         .padding(.vertical, 5)
         .buttonStyle(.plain)
-        .keyboardShortcut(.init("a", modifiers: [.command]))
+        .keyboardShortcut(.init("n", modifiers: [.command, .shift]))
     }
 }
 

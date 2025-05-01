@@ -39,7 +39,7 @@ struct AddressesView: View {
                         .fontWeight(.bold)
                     }
                     Spacer()
-                    Text("Powered by [mail.tm](https://www.mail.tm)")
+                    MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                         .font(.footnote)
                 }
             }
@@ -101,7 +101,9 @@ struct AddressesView: View {
                     accountsController.selectedAccount
                 }, set: { newVal in
                     DispatchQueue.main.async {
-                        accountsController.selectedAccount = newVal
+                        withAnimation {
+                            accountsController.selectedAccount = newVal
+                        }
                     }
                 })
             ) {

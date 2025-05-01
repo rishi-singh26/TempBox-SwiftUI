@@ -18,6 +18,7 @@ struct MessageHeaderView: View {
         message.data.from.name.isEmpty ? "" : message.data.from.address
     }
     var body: some View {
+        
         HStack {
             Text((messageFromHeader).getInitials())
                 .frame(width: 45, height: 45)
@@ -30,10 +31,12 @@ struct MessageHeaderView: View {
                     .font(.headline)
                 Text(messageFromSubHeader)
                     .foregroundColor(.secondary)
-                    .textSelection(.enabled)
+                    .font(.footnote)
+                //                MarkdownLinkText(markdownText: "[\(message.data.from.address)](mailto:\(message.data.from.address))")
             }
             Spacer()
-            Text(message.data.createdAt.formatRelativeString(useTwentyFourHour: true))
+            Text(message.data.createdAt.formatRelativeString())
+                .font(.footnote)
                 .foregroundColor(.secondary)
         }
         .padding([.vertical, .trailing], 5)

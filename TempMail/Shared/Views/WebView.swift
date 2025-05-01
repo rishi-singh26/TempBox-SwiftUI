@@ -94,6 +94,9 @@ struct WebView: PlatformViewRepresentable {
                                           message: "Do you want to open this link in your browser?\n\n\(url.absoluteString)",
                                           preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Copy", style: .default) { _ in
+                url.absoluteString.copyToClipboard()
+            })
             alert.addAction(UIAlertAction(title: "Open", style: .default) { _ in
                 UIApplication.shared.open(url)
             })
@@ -108,10 +111,14 @@ struct WebView: PlatformViewRepresentable {
             alert.informativeText = "Do you want to open this link in your browser?\n\n\(url.absoluteString)"
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Open")
+            alert.addButton(withTitle: "Copy")
             alert.addButton(withTitle: "Cancel")
             let response = alert.runModal()
             if response == .alertFirstButtonReturn {
                 NSWorkspace.shared.open(url)
+            }
+            if response == .alertSecondButtonReturn {
+                url.absoluteString.copyToClipboard()
             }
             #endif
         }

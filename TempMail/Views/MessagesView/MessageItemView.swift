@@ -31,7 +31,7 @@ struct MessageItemView: View {
                         .fontWeight(.bold)
                         .lineSpacing(1)
                     Spacer()
-                    Text(message.data.createdAt.formatRelativeString(useTwentyFourHour: true))
+                    Text(message.data.createdAt.formatRelativeString())
                         .foregroundColor(.secondary)
                 }
                 Text(message.data.subject)
