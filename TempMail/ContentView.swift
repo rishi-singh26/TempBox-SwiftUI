@@ -24,11 +24,58 @@ struct ContentView: View {
             Text("Powered by [mail.tm](https://www.mail.tm)")
                 .font(.footnote)
         } content: {
-            MessagesView(account: accountsController.selectedAccount)
+            Group {
+                if let safeAccount = accountsController.selectedAccount {
+                    MessagesView(account: safeAccount)
+                } else {
+                    Text("Address not selected")
+                }
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .automatic) {
+                    Button {
+                        accountsController.fetchMessages(for: accountsController.selectedAccount!)
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise.circle")
+                    }
+                    .disabled(accountsController.selectedAccount == nil)
+                    Button {
+                        addressesViewModel.selectedAccForInfoSheet = accountsController.selectedAccount!
+                        addressesViewModel.isAccountInfoSheetOpen = true
+                    } label: {
+                        Label("Account Info", systemImage: "info.square")
+                    }
+                    .disabled(accountsController.selectedAccount == nil)
+                    Button {
+                        addressesViewModel.selectedAccForEditSheet = accountsController.selectedAccount!
+                        addressesViewModel.isEditAccountSheetOpen = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil.circle")
+                    }
+                    .disabled(accountsController.selectedAccount == nil)
+                    Button {
+                    } label: {
+                        Label("Archive", systemImage: "archivebox")
+                    }
+                    .disabled(true)
+                    Button(role: .destructive) {
+                        addressesViewModel.showDeleteAccountAlert = true
+                        addressesViewModel.selectedAccForDeletion = accountsController.selectedAccount!
+                        //                    dataController.deleteAccount(account: account)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    .disabled(accountsController.selectedAccount == nil)
+                }
+            }
         } detail: {
-            MessageDetailView(message: accountsController.selectedMessage, account: accountsController.selectedAccount)
+            if let safeMessage = accountsController.selectedMessage, let safeAccount = accountsController.selectedAccount {
+                MessageDetailView(message: safeMessage, account: safeAccount)
+            } else {
+                Text("No message selected")
+            }
         }
-
+        
 #endif
     }
 }

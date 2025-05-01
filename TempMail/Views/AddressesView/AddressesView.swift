@@ -24,30 +24,9 @@ struct AddressesView: View {
             }
         }
     }
-
+    
     var body: some View {
-        List(selection: $accountsController.selectedAccount) {
-            //                Section(header: Text("Active")) {
-            ForEach(filteredAccounts) { account in
-                NavigationLink {
-                    MessagesView(account: account)
-                } label: {
-                    AddressItemView(account: account)
-                }
-            }
-            //                }
-            //            header: {
-            //                    Text("Active")
-            //                        .font(.title3)
-            //                        .fontWeight(.bold)
-            //                        .foregroundColor(.primary)
-            //                        .textCase(nil)
-            //                }
-        }
-#if os(macOS)
-        .listStyle(.sidebar)
-#endif
-        .navigationTitle("TempBox")
+        AddressesList()
 #if os(iOS)
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
@@ -66,6 +45,7 @@ struct AddressesView: View {
             }
         }
 #endif
+        .navigationTitle("TempBox")
         .searchable(text: $addressesViewModel.searchText, placement: .sidebar)
         .listStyle(.sidebar)
         .sheet(isPresented: $addressesViewModel.isNewAddressSheetOpen) {
@@ -92,16 +72,47 @@ struct AddressesView: View {
         } message: {
             Text("Are you sure you want to delete this account?")
         }
-        
-        //            .toolbar {
-        //                ToolbarItem(placement: .topBarTrailing) {
-        //                    Button {
-        //                        dataController.fetchAccounts()
-        //                    } label: {
-        //                        Label("Refresh", systemImage: "arrow.clockwise.circle")
-        //                    }
-        //                }
-        //            }
+    }
+    
+    @ViewBuilder
+    func AddressesList() -> some View {
+        Group {
+#if os(iOS)
+            List(
+                selection: Binding(get: {
+                    accountsController.selectedAccount
+                }, set: { newVal in
+                    DispatchQueue.main.async {
+                        accountsController.selectedAccount = newVal
+                    }
+                })
+            ) {
+                ForEach(filteredAccounts) { account in
+                    NavigationLink {
+                        MessagesView(account: account)
+                    } label: {
+                        AddressItemView(account: account)
+                    }
+                }
+            }
+#elseif os(macOS)
+            List(
+                selection: Binding(get: {
+                    accountsController.selectedAccount
+                }, set: { newVal in
+                    DispatchQueue.main.async {
+                        accountsController.selectedAccount = newVal
+                    }
+                })
+            ) {
+                ForEach(filteredAccounts) { account in
+                    NavigationLink(value: account) {
+                        AddressItemView(account: account)
+                    }
+                }
+            }
+#endif
+        }
     }
 }
 

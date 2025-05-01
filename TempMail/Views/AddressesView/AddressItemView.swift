@@ -106,6 +106,7 @@ struct AddressItemView: View {
                 } label: {
                     Label("Edit", systemImage: "pencil.circle")
                 }
+                Divider()
                 Button {
                 } label: {
                     Label("Archive", systemImage: "archivebox")

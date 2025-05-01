@@ -26,11 +26,27 @@ class AccountsController: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var error: Error?
     
-    @Published var selectedAccount: Account?
-    @Published var selectedMessage: Message?
+    @Published var selectedAccount: Account? {
+        willSet {
+            selectedMessage = nil
+            selectedCompleteMessage = nil
+        }
+    }
+    @Published var selectedMessage: Message? {
+        willSet {
+            if let safeMessage = newValue?.data, let safeAccount = selectedAccount {
+                selectedCompleteMessage = nil
+                self.fetchCompleteMessage(of: safeMessage, account: safeAccount)
+            }
+        }
+    }
+    @Published var selectedCompleteMessage: CompleteMessage?
     
     // We will fetch complete message when a message from the list is selected
     @Published var loadingCompleteMessage = false
+    
+    private var cancellables = Set<AnyCancellable>()
+    private let baseURL = "https://api.mail.tm"
     
     // MARK: - Initialization
     
@@ -94,18 +110,54 @@ class AccountsController: ObservableObject {
         }
     }
     
-    func fetchCompleteMessage(of message: MTMessage, account: Account) {
+    func fetchCompleteMessage2(of message: MTMessage, account: Account) {
         guard let token = account.token else { return } // handle user alert about any issues
         loadingCompleteMessage = true
         messageService.getMessage(id: message.id, token: token) { (result: Result<MTMessage, MTError>) in
             switch result {
             case .success(let message):
-                self.selectedMessage = Message(isComplete: true, data: message)
+//                self.selectedMessage = Message(isComplete: true, data: message)
+                print(message.id)
             case .failure(let error):
                 print("Error in getting complete message \(error)")
             }
             self.loadingCompleteMessage = false
         }
+    }
+    
+    func fetchCompleteMessage(of message: MTMessage, account: Account) {
+        guard let token = account.token else { return }
+        
+        guard !token.isEmpty else { return }
+        
+        loadingCompleteMessage = true
+        error = nil
+        
+        let url = URL(string: "\(baseURL)/messages/\(message.id)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // Add auth token if available
+        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        URLSession.shared.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: CompleteMessage.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                self.loadingCompleteMessage = false
+                
+                if case .failure(let error) = completion {
+                    self.error = error
+                    print("Error fetching message: \(error.localizedDescription)")
+                }
+            } receiveValue: { message in
+                print(message.subject)
+                self.selectedCompleteMessage = message
+            }
+            .store(in: &cancellables)
     }
     
     func deleteAccountFromServer(account: Account) {

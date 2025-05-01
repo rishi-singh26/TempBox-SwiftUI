@@ -12,97 +12,79 @@ struct MessagesView: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @StateObject private var controller = MessagesViewModel()
     
-    let account: Account?
+    let account: Account
     
     var messages: [Message] {
-        return account?.messagesStore?.messages ?? []
+        return account.messagesStore?.messages ?? []
     }
     
     var body: some View {
-        Group {
-            if let safeAccount = account {
+        VStack {
+            if messages.isEmpty {
                 VStack {
-                    if messages.isEmpty {
-                        VStack {
-                            Spacer()
-                            Text("No messages")
-                            Spacer()
-                        }
-                    } else {
-                        List(selection: $accountsController.selectedMessage) {
-                            ForEach(messages) { message in
-                                NavigationLink {
-                                    //                            Text("message.data.")
-                                    MessageDetailView(message: message, account: safeAccount)
-                                } label: {
-                                    MessageItemView(
-                                        controller: controller, message: message,
-                                        account: safeAccount
-                                    )
-                                    .environmentObject(controller)
-                                }
-                            }
-                            .onDelete { indexSet in
-                                accountsController.deleteMessage(indexSet: indexSet, account: safeAccount)
-                            }
-                        }
-                        .listStyle(.plain)
-                        .searchable(text: $controller.searchText)
-                        .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
-                            Button("Cancel", role: .cancel) {
-                                
-                            }
-                            Button("Delete", role: .destructive) {
-                                guard let messForDeletion = controller.selectedMessForDeletion else { return }
-                                accountsController.deleteMessage(message: messForDeletion, account: safeAccount)
-                                controller.selectedMessForDeletion = nil
-                            }
-                        } message: {
-                            Text("Are you sure you want to delete this account?")
-                        }
-                    }
+                    Spacer()
+                    Text("No messages")
+                    Spacer()
                 }
-                .navigationTitle(safeAccount.name ?? safeAccount.address.extractUsername())
             } else {
-                Text("Address not selected")
+                MessagesList(account: account)
+                .listStyle(.plain)
+                .searchable(text: $controller.searchText)
+                .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
+                    Button("Cancel", role: .cancel) {
+                        
+                    }
+                    Button("Delete", role: .destructive) {
+                        guard let messForDeletion = controller.selectedMessForDeletion else { return }
+                        accountsController.deleteMessage(message: messForDeletion, account: account)
+                        controller.selectedMessForDeletion = nil
+                    }
+                } message: {
+                    Text("Are you sure you want to delete this account?")
+                }
             }
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .automatic) {
-                Button {
-                    accountsController.fetchMessages(for: account!)
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise.circle")
+        .navigationTitle(account.name ?? account.address.extractUsername())
+    }
+    
+    @ViewBuilder
+    func MessagesList(account: Account) -> some View {
+        Group {
+#if os(iOS)
+            List(messages, selection: Binding(get: {
+                accountsController.selectedMessage
+            }, set: { newVal in
+                DispatchQueue.main.async {
+                    accountsController.selectedMessage = newVal
                 }
-                .disabled(account == nil)
-                Button {
-                    addressesViewModel.selectedAccForInfoSheet = account!
-                    addressesViewModel.isAccountInfoSheetOpen = true
-                } label: {
-                    Label("Account Info", systemImage: "info.square")
+            })) { message in
+                NavigationLink {
+                    MessageDetailView(message: message, account: account)
+                }label: {
+                    MessageItemView(
+                        controller: controller, message: message,
+                        account: account
+                    )
+                    .environmentObject(controller)
                 }
-                .disabled(account == nil)
-                Button {
-                    addressesViewModel.selectedAccForEditSheet = account!
-                    addressesViewModel.isEditAccountSheetOpen = true
-                } label: {
-                    Label("Edit", systemImage: "pencil.circle")
-                }
-                .disabled(account == nil)
-                Button {
-                } label: {
-                    Label("Archive", systemImage: "archivebox")
-                }
-                .disabled(true)
-                Button(role: .destructive) {
-                    addressesViewModel.showDeleteAccountAlert = true
-                    addressesViewModel.selectedAccForDeletion = account!
-                    //                    dataController.deleteAccount(account: account)
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-                .disabled(account == nil)
             }
+#elseif os(macOS)
+            List(messages, selection: Binding(get: {
+                accountsController.selectedMessage
+            }, set: { newVal in
+                DispatchQueue.main.async {
+                    accountsController.selectedMessage = newVal
+                }
+            })) { message in
+                NavigationLink(value: message) {
+                    MessageItemView(
+                        controller: controller, message: message,
+                        account: account
+                    )
+                    .environmentObject(controller)
+                }
+            }
+#endif
         }
     }
 }
