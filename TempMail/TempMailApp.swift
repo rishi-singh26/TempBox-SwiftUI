@@ -13,6 +13,7 @@ struct TempMailApp: App {
     @Environment(\.openWindow) var openWindow
     @StateObject private var accountsController = AccountsController()
     @StateObject private var addressViewModel = AddressesViewModel()
+    @StateObject private var settingsViewModel = SettingsViewModel()
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -32,6 +33,7 @@ struct TempMailApp: App {
             ContentView()
                 .environmentObject(accountsController)
                 .environmentObject(addressViewModel)
+                .environmentObject(settingsViewModel)
         }
         .modelContainer(sharedModelContainer)
 #if os(macOS)
@@ -61,6 +63,7 @@ struct TempMailApp: App {
             SettingsView()
                 .environmentObject(accountsController)
                 .environmentObject(addressViewModel)
+                .environmentObject(settingsViewModel)
         }
         .defaultSize(width: 700, height: 400)
         .windowResizability(.contentSize)

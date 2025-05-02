@@ -8,39 +8,120 @@
 import SwiftUI
 
 struct ImportAddressesView: View {
-    @State private var base64Input = ""
-    @State private var decodedString = ""
-    
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    @EnvironmentObject private var accountsController: AccountsController
+    
     var body: some View {
         VStack(alignment: .leading) {
-//            Text("Import Addresses")
-//                .font(.title2)
-//                .padding([.horizontal, .top])
-            ScrollView {
-                MacCustomSection(footer: "If the exported file name does not have any version details then it is 'Export Version 1'") {
+            //            Text("Import Addresses")
+            //                .font(.title2)
+            //                .padding([.horizontal, .top])
+            VStack(alignment: .leading) {
+                MacCustomSection {
                     HStack {
-                        Text("Import from Export Version 1")
-                        Spacer()
-                        FilePickerView(label: {
-                            Text("Choose File")
-                        }, onFilePicked: { content in
-                            print("File content:\n\(content)")
-                        })
-                    }
-                }
-                
-                MacCustomSection(footer: "Version 2 exports will have the export version number specified in the exported file name") {
-                    HStack {
-                        Text("Import from Export Version 2")
+                        Text("Import from file")
                         Spacer()
                         Button("Choose File") {
-                            print("Pick file")
+                            settingsViewModel.pickFileForImport()
                         }
                     }
                 }
+                .padding(.top)
+                if settingsViewModel.v1ImportData != nil {
+                    MacCustomSection {
+                        VStack {
+                            AddressView()
+                            SelectionButtons()
+                        }
+                    }
+                    .padding(.bottom)
+                }
             }
-            .padding(.vertical)
+            .fileImporter(
+                isPresented: $settingsViewModel.isPickingFile,
+                allowedContentTypes: [.plainText],
+                allowsMultipleSelection: false
+            ) { result in
+                settingsViewModel.importData(from: result)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func AddressView() -> some View {
+        List(
+            settingsViewModel.getV1Addresses(accounts: accountsController.accounts),
+            selection: $settingsViewModel.selectedV1Addresses
+        ) { address in
+            HStack {
+                Toggle("", isOn: Binding(get: {
+                    settingsViewModel.selectedV1Addresses.contains(address)
+                }, set: { newVal in
+                    if newVal {
+                        settingsViewModel.selectedV1Addresses.insert(address)
+                    } else {
+                        settingsViewModel.selectedV1Addresses.remove(address)
+                    }
+                }))
+                .toggleStyle(.checkbox)
+                VStack(alignment: .leading) {
+                    Text(address.addressName.isEmpty ? address.authenticatedUser.account.address : address.addressName)
+                        .font(.body)
+                    Text(address.addressName.isEmpty ? "" : address.authenticatedUser.account.address)
+                        .font(.caption)
+                }
+                Spacer()
+                if let safeErrMess = settingsViewModel.errorDict[address.id] {
+                    Text(safeErrMess)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func SelectionButtons() -> some View {
+        HStack {
+            Spacer()
+            Button("Unselect All", role: .cancel) {
+                settingsViewModel.selectedV1Addresses = []
+            }
+            Button("Select All") {
+                settingsViewModel.selectedV1Addresses = Set(settingsViewModel.getV1Addresses(accounts: accountsController.accounts))
+            }
+            Button("Import") {
+                Task {
+                    importAddresses { errorDictionary in
+                        settingsViewModel.errorDict = errorDictionary
+                    }
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(settingsViewModel.selectedV1Addresses.isEmpty)
+        }
+    }
+    
+    func importAddresses(completion: @escaping ([String: String]) -> Void) {
+        let addresses = settingsViewModel.selectedV1Addresses
+        if addresses.isEmpty {
+            completion([:])
+            return
+        }
+
+        var errorMap: [String: String] = [:]
+        let group = DispatchGroup()
+
+        for address in addresses {
+            group.enter()
+            accountsController.loginAndSaveAddress(address: address) { status, message in
+                if !status {
+                    errorMap[address.id] = message
+                }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) {
+            completion(errorMap)
         }
     }
 }

@@ -18,14 +18,21 @@ enum SettingPage {
 
 
 struct SettingsView: View {
-    @StateObject private var settingsViewModel = SettingsViewModel()
-
+    @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    
     var body: some View {
+        Group {
 #if os(macOS)
-        MacOSSettings()
+            MacOSSettings()
 #elseif os(iOS)
-        IOSSettings()
+            IOSSettings()
 #endif
+        }
+        .alert("Error", isPresented: $settingsViewModel.showErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(settingsViewModel.errorMessage)
+        }
     }
     
 #if os(macOS)
@@ -37,9 +44,7 @@ struct SettingsView: View {
                     settingsViewModel.selectedSetting
                 }, set: { newValue in
                     DispatchQueue.main.async {
-                        withAnimation {
-                            settingsViewModel.selectedSetting = newValue
-                        }
+                        settingsViewModel.selectedSetting = newValue
                     }
                 })
             ) {
@@ -79,7 +84,7 @@ struct SettingsView: View {
                 AboutView()
             }
         }
-        .frame(width: 700, height: 400)
+        .frame(minWidth: 700, minHeight: 400)
     }
     
     var navigationToolbar: some ToolbarContent {

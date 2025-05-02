@@ -90,7 +90,7 @@ struct AddAddressView: View {
                     Button {
                         createAccount()
                     } label: {
-                        Text("Done")
+                        Text("Create")
                             .font(.headline)
                     }
                     
@@ -137,7 +137,7 @@ struct AddAddressView: View {
             }
             .padding()
             ScrollView {
-                MacCustomSection(footer: "Address name appears on the addresses list screen.") {
+                MacCustomSection(footer: "Address name appears in the sidebar.") {
                     HStack {
                         Text("Account name (Optional)")
                             .frame(width: 200, alignment: .leading)
@@ -223,7 +223,7 @@ struct AddAddressView: View {
                 Button {
                     createAccount()
                 } label: {
-                    Text("Done")
+                    Text("Create")
                         .font(.headline)
                 }
                 

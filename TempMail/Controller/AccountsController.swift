@@ -160,6 +160,33 @@ class AccountsController: ObservableObject {
             .store(in: &cancellables)
     }
     
+    func loginAndSaveAddress(address: AddressData, completion: @escaping (Bool, String) -> Void) {
+        let newAccount = Account(
+            id: address.id,
+            name: address.addressName,
+            address: address.authenticatedUser.account.address,
+            quota: address.authenticatedUser.account.quota,
+            used: address.authenticatedUser.account.used,
+            createdAt: address.authenticatedUser.account.createdAt.validateAndToDate() ?? Date.now,
+            updatedAt: address.authenticatedUser.account.updatedAt.validateAndToDate() ?? Date.now,
+            token: address.authenticatedUser.token,
+            password: address.password
+        )
+        
+        let auth = MTAuth(address: address.authenticatedUser.account.address, password: address.password)
+        
+        self.accountService.login(using: auth) { [self] (result: Result<String, MTError>) in
+            switch result {
+            case .success(let token):
+                newAccount.token = token
+                addAccount(newAccount)
+                completion(true, "Success")
+            case .failure(let error):
+                completion(false, handleMTError(error: error))
+            }
+        }
+    }
+    
     func deleteAccountFromServer(account: Account) {
         guard let token = account.token else { return } // handle user alert about any issues
         accountService.deleteAccount(id: account.id, token: token) { (result: Result<MTEmptyResult, MTError>) in
@@ -365,5 +392,22 @@ class AccountsController: ObservableObject {
     /// Clears any error message
     func clearError() {
         error = nil
+    }
+    
+    func handleMTError(error: MTError) -> String {
+        switch error {
+        case .networkError(let errorString):
+            // Attempt to extract JSON string from the error string
+            if let jsonStartRange = errorString.range(of: "{"),
+               let jsonString = String(errorString[jsonStartRange.lowerBound...]).data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: jsonString) as? [String: Any],
+               let message = json["message"] as? String {
+                return message
+            } else {
+                return error.localizedDescription
+            }
+        default:
+            return error.localizedDescription
+        }
     }
 }

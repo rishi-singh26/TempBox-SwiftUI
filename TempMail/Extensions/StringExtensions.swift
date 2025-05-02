@@ -70,4 +70,24 @@ extension String {
         print("Clipboard operations not supported on this platform.")
 #endif
     }
+    
+    func isValidISO8601Date(_ dateString: String) -> Bool {
+        let regex = #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$"#
+        return dateString.range(of: regex, options: .regularExpression) != nil
+    }
+    
+    func validateAndToDate() -> Date? {
+        guard isValidISO8601Date(self) else {
+            return nil
+        }
+        
+        return toDate()
+    }
+    
+    func toDate() -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
+        return formatter.date(from: self)
+    }
 }
