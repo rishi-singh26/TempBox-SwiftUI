@@ -39,7 +39,7 @@ struct MessageDetailView: View {
             accountsController.markMessageAsRead(messageData: message, account: account)
         })
         .sheet(isPresented: $showMessageInfoSheet, content: {
-            Text("Hello")
+            MessageInfoView(message: message)
         })
         .toolbar(content: {
             ToolbarItem {
@@ -70,4 +70,5 @@ struct EmptyView: View {
 #Preview {
     ContentView()
         .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesViewModel.shared)
 }

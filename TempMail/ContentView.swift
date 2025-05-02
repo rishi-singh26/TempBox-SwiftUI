@@ -43,7 +43,7 @@ struct ContentView: View {
                         addressesViewModel.selectedAccForInfoSheet = accountsController.selectedAccount!
                         addressesViewModel.isAccountInfoSheetOpen = true
                     } label: {
-                        Label("Account Info", systemImage: "info.square")
+                        Label("Account Info", systemImage: "info.circle")
                     }
                     .disabled(accountsController.selectedAccount == nil)
                     Button {

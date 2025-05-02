@@ -10,6 +10,7 @@ import SwiftData
 
 @main
 struct TempMailApp: App {
+    @Environment(\.openWindow) var openWindow
     @StateObject private var accountsController = AccountsController()
     @StateObject private var addressViewModel = AddressesViewModel()
     
@@ -33,5 +34,37 @@ struct TempMailApp: App {
                 .environmentObject(addressViewModel)
         }
         .modelContainer(sharedModelContainer)
+#if os(macOS)
+        .commands {
+            SidebarCommands()
+            CommandGroup(replacing: .appSettings) {
+                Button(action: {
+                    openWindow(id: "settings")
+                }, label: {
+                    Text("Settings")
+                })
+                .keyboardShortcut(",", modifiers: [.command])
+            }
+        }
+#endif
+        
+#if os(macOS)
+        //
+        //        Window("About TempBox", id: "about") {
+        //            Text("About Temobox")
+        //        }
+        //        .defaultSize(width: 300, height: 720)
+        //        .windowResizability(.contentSize)
+        //        .windowStyle(.hiddenTitleBar)
+        
+        Window("Settings", id: "settings") {
+            SettingsView()
+                .environmentObject(accountsController)
+                .environmentObject(addressViewModel)
+        }
+        .defaultSize(width: 700, height: 400)
+        .windowResizability(.contentSize)
+        .windowStyle(.titleBar)
+#endif
     }
 }

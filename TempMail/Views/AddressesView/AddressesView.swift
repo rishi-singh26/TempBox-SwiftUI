@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct AddressesView: View {
+    @Environment(\.openWindow) var openWindow
     @EnvironmentObject private var accountsController: AccountsController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     
@@ -45,6 +46,17 @@ struct AddressesView: View {
             }
         }
 #endif
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button("About TempBox", systemImage: "gear") {
+#if os(iOS)
+                    addressesViewModel.showSettingsSheet = true
+#elseif os(macOS)
+                    openWindow(id: "settings")
+#endif
+                }
+            }
+        }
         .navigationTitle("TempBox")
         .searchable(text: $addressesViewModel.searchText, placement: .sidebar)
         .listStyle(.sidebar)
@@ -56,6 +68,9 @@ struct AddressesView: View {
         }
         .sheet(isPresented: $addressesViewModel.isEditAccountSheetOpen) {
             EditAddressView(account: addressesViewModel.selectedAccForEditSheet!)
+        }
+        .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
+            SettingsView()
         }
         .refreshable {
             accountsController.fetchAccounts()

@@ -98,7 +98,7 @@ struct AddressItemView: View {
                     addressesViewModel.selectedAccForInfoSheet = account
                     addressesViewModel.isAccountInfoSheetOpen = true
                 } label: {
-                    Label("Account Info", systemImage: "info.square")
+                    Label("Account Info", systemImage: "info.circle")
                 }
                 Button {
                     addressesViewModel.selectedAccForEditSheet = account

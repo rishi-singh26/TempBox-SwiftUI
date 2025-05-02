@@ -31,12 +31,12 @@ struct MessageHeaderView: View {
                     .font(.headline)
                 Text(messageFromSubHeader)
                     .foregroundColor(.secondary)
-                    .font(.footnote)
+                    .font(.caption)
                 //                MarkdownLinkText(markdownText: "[\(message.data.from.address)](mailto:\(message.data.from.address))")
             }
             Spacer()
             Text(message.data.createdAt.formatRelativeString())
-                .font(.footnote)
+                .font(.caption)
                 .foregroundColor(.secondary)
         }
         .padding([.vertical, .trailing], 5)

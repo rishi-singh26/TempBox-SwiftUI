@@ -8,11 +8,69 @@
 import SwiftUI
 
 struct MessageInfoView: View {
+    @Environment(\.dismiss) var dismiss
+    
+    var message: Message
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+#if os(iOS)
+        IOSView()
+#elseif os(macOS)
+        MacOSView()
+#endif
     }
+    
+#if os(iOS)
+    @ViewBuilder
+    func IOSView() -> some View {
+        NavigationView {
+            List {
+                Text("Sender Name: \(message.fromName)")
+                Text("Sender Email: \(message.fromAddress)")
+                Button("Copy Sender Email") {
+                    message.fromAddress.copyToClipboard()
+                }
+                Text("Sent At: \(message.data.createdAt.formatRelativeString())")
+            }
+            .navigationTitle("Message Info")
+        }
+    }
+#endif
+    
+#if os(macOS)
+    @ViewBuilder
+    func MacOSView() -> some View {
+        VStack {
+            HStack {
+                Text("Message Info")
+                    .font(.title.bold())
+                Spacer()
+                Button("Done", role: .cancel) {
+                    dismiss()
+                }
+            }
+            .padding([.horizontal, .top])
+            ScrollView {
+                MacCustomSection {
+                    Text("Sender Name: \(message.fromName)")
+                    Divider()
+                    Text("Sender Email: \(message.fromAddress)")
+                    Divider()
+                    Button("Copy Sender Email") {
+                        message.fromAddress.copyToClipboard()
+                    }
+                    Divider()
+                    Text("Sent At: \(message.data.createdAt.formatRelativeString())")
+                }
+                .padding(.bottom)
+            }
+            .navigationTitle("Message Info")
+        }
+    }
+#endif
 }
 
 #Preview {
-    MessageInfoView()
+    ContentView()
+        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesViewModel.shared)
 }
