@@ -5,7 +5,7 @@
 //  Created by Rishi Singh on 02/05/25.
 //
 
-import Foundation
+import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     static var shared = SettingsViewModel()

@@ -60,6 +60,9 @@ struct AddressesView: View {
         .navigationTitle("TempBox")
         .searchable(text: $addressesViewModel.searchText, placement: .sidebar)
         .listStyle(.sidebar)
+        .refreshable {
+            accountsController.fetchAccounts()
+        }
         .sheet(isPresented: $addressesViewModel.isNewAddressSheetOpen) {
             AddAddressView()
         }
@@ -71,9 +74,6 @@ struct AddressesView: View {
         }
         .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
             SettingsView()
-        }
-        .refreshable {
-            accountsController.fetchAccounts()
         }
         .alert("Alert!", isPresented: $addressesViewModel.showDeleteAccountAlert) {
             Button("Cancel", role: .cancel) {

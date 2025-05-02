@@ -12,38 +12,102 @@ struct ImportAddressesView: View {
     @EnvironmentObject private var accountsController: AccountsController
     
     var body: some View {
+#if os(iOS)
+        IOSView()
+#elseif os(macOS)
+        MacOSView()
+#endif
+    }
+    
+#if os(iOS)
+    @ViewBuilder
+    func IOSView() -> some View {
+        List(
+            settingsViewModel.getV1Addresses(accounts: accountsController.accounts),
+            id: \.self,
+            selection: $settingsViewModel.selectedV1Addresses
+        ) { address in
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(address.addressName.isEmpty ? address.authenticatedUser.account.address : address.addressName)
+                    Text(address.addressName.isEmpty ? "" : address.authenticatedUser.account.address)
+                        .font(.caption.bold())
+                    if let safeErrMess = settingsViewModel.errorDict[address.id] {
+                        Text(safeErrMess)
+                            .font(.caption.bold())
+                            .foregroundStyle(.red)
+                    }
+                }
+                Spacer()
+            }
+        }
+        .environment(\.editMode, .constant(.active))
+        .toolbar {
+            Button("Choose File") {
+                settingsViewModel.pickFileForImport()
+            }
+        }
+        .toolbar(content: {
+            ToolbarItemGroup(placement: .bottomBar) {
+                Button("Unselect All") {
+                    settingsViewModel.selectedV1Addresses = []
+                }
+                Button("Select All") {
+                    settingsViewModel.selectedV1Addresses = Set(settingsViewModel.getV1Addresses(accounts: accountsController.accounts))
+                }
+                Spacer()
+                Button("Import") {
+                    Task {
+                        importAddresses { errorDictionary in
+                            settingsViewModel.errorDict = errorDictionary
+                        }
+                    }
+                }
+                .disabled(settingsViewModel.selectedV1Addresses.isEmpty)
+            }
+        })
+        .navigationTitle("Import Addresses")
+        .navigationBarTitleDisplayMode(.inline)
+        .fileImporter(
+            isPresented: $settingsViewModel.isPickingFile,
+            allowedContentTypes: [.plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            settingsViewModel.importData(from: result)
+        }
+    }
+#endif
+    
+#if os(macOS)
+    @ViewBuilder
+    func MacOSView() -> some View {
         VStack(alignment: .leading) {
-            //            Text("Import Addresses")
-            //                .font(.title2)
-            //                .padding([.horizontal, .top])
-            VStack(alignment: .leading) {
+            MacCustomSection {
+                HStack {
+                    Text("Import from file")
+                    Spacer()
+                    Button("Choose File") {
+                        settingsViewModel.pickFileForImport()
+                    }
+                }
+            }
+            .padding(.top)
+            if settingsViewModel.v1ImportData != nil {
                 MacCustomSection {
-                    HStack {
-                        Text("Import from file")
-                        Spacer()
-                        Button("Choose File") {
-                            settingsViewModel.pickFileForImport()
-                        }
+                    VStack {
+                        AddressView()
+                        SelectionButtons()
                     }
                 }
-                .padding(.top)
-                if settingsViewModel.v1ImportData != nil {
-                    MacCustomSection {
-                        VStack {
-                            AddressView()
-                            SelectionButtons()
-                        }
-                    }
-                    .padding(.bottom)
-                }
+                .padding(.bottom)
             }
-            .fileImporter(
-                isPresented: $settingsViewModel.isPickingFile,
-                allowedContentTypes: [.plainText],
-                allowsMultipleSelection: false
-            ) { result in
-                settingsViewModel.importData(from: result)
-            }
+        }
+        .fileImporter(
+            isPresented: $settingsViewModel.isPickingFile,
+            allowedContentTypes: [.plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            settingsViewModel.importData(from: result)
         }
     }
     
@@ -99,6 +163,7 @@ struct ImportAddressesView: View {
             .disabled(settingsViewModel.selectedV1Addresses.isEmpty)
         }
     }
+#endif
     
     func importAddresses(completion: @escaping ([String: String]) -> Void) {
         let addresses = settingsViewModel.selectedV1Addresses

@@ -38,7 +38,7 @@ class FileService {
                 defer { selectedFile.stopAccessingSecurityScopedResource() }
                 
                 let data = try Data(contentsOf: selectedFile)
-                let content = try String(contentsOf: selectedFile)
+                let content = try String(contentsOf: selectedFile, encoding: .utf8)
 //                    let content = String(data: data, encoding: .utf8) // another way of getting the string
                 return (data, content, "Success")
             } else {

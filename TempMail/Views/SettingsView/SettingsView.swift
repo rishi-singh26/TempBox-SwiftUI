@@ -109,39 +109,38 @@ struct SettingsView: View {
             List {
                 Section {
                     NavigationLink {
-                        Label("Import Addresses", systemImage: "square.and.arrow.down")
-                    } label: {
                         ImportAddressesView()
+                    } label: {
+                        Label("Import Addresses", systemImage: "square.and.arrow.down")
                     }
                     NavigationLink {
-                        Label("Export Addresses", systemImage: "square.and.arrow.up")
-                    } label: {
                         ExportAddressesView()
+                    } label: {
+                        Label("Export Addresses", systemImage: "square.and.arrow.up")
                     }
                 }
-                
+
                 Section {
                     NavigationLink {
-                        Label("Change App Icon", systemImage: "command")
-                    } label: {
                         AppIconView()
+                    } label: {
+                        Label("Change App Icon", systemImage: "command")
                     }
                     NavigationLink {
-                        Label("Change App Color", systemImage: "paintpalette")
-                    } label: {
                         AppColorView()
+                    } label: {
+                        Label("Change App Color", systemImage: "paintpalette")
                     }
                 }
-                
+
                 Section {
                     NavigationLink {
-                        Label("About TempBox", systemImage: "info.circle")
-                    } label: {
                         AboutView()
+                    } label: {
+                        Label("About TempBox", systemImage: "info.circle")
                     }
                 }
             }
-            .listStyle(.sidebar)
             .navigationTitle("Settings")
         }
     }
