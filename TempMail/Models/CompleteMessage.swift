@@ -9,23 +9,17 @@ import Foundation
 
 struct CompleteMessage: Codable, Identifiable {
     // Use the server's ID as our Identifiable ID
-    var id: String {
-        return messageId ?? ""
-    }
-    
-    let messageId: String?
-    let from: Address?
-    let to: [Address]?
-    let cc: [Address]?
-    let bcc: [Address]?
+    let id: String
+    let msgid: String
+    let from: Address
+    let to: [Address]
+    let cc, bcc: [Address]?
     let subject: String
-    let intro: String
-    let seen: Bool
-    let isDeleted: Bool
+    let seen, isDeleted, flagged: Bool
     let hasAttachments: Bool
     let size: Int
-    let retention: Bool?
-    let retentionDate: String?
+    let retention: Bool
+    let retentionDate: String
     let text: String?
     let html: [String]?
     let attachments: [Attachment]?
@@ -34,57 +28,20 @@ struct CompleteMessage: Codable, Identifiable {
     let createdAt: String
     let updatedAt: String?
     let accountId: String?
-    
-    init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        messageId = try container.decodeIfPresent(String.self, forKey: .messageId)
-        from = try container.decodeIfPresent(Address.self, forKey: .from)
-        to = try container.decodeIfPresent([Address].self, forKey: .to)
-        cc = try container.decodeIfPresent([Address].self, forKey: .cc)
-        bcc = try container.decodeIfPresent([Address].self, forKey: .bcc)
-        subject = try container.decode(String.self, forKey: .subject)
-        intro = try container.decode(String.self, forKey: .intro)
-        seen = try container.decode(Bool.self, forKey: .seen)
-        isDeleted = try container.decode(Bool.self, forKey: .isDeleted)
-        hasAttachments = try container.decode(Bool.self, forKey: .hasAttachments)
-        size = try container.decode(Int.self, forKey: .size)
-        retention = try container.decodeIfPresent(Bool.self, forKey: .retention)
-        retentionDate = try container.decodeIfPresent(String.self, forKey: .retentionDate)
-        text = try container.decodeIfPresent(String.self, forKey: .text)
-        html = try container.decodeIfPresent([String].self, forKey: .html)
-        attachments = try container.decodeIfPresent([Attachment].self, forKey: .attachments)
-        downloadUrl = try container.decodeIfPresent(String.self, forKey: .downloadUrl)
-        sourceUrl = try container.decodeIfPresent(String.self, forKey: .sourceUrl)
-        createdAt = try container.decode(String.self, forKey: .createdAt)
-        updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
-        accountId = try container.decodeIfPresent(String.self, forKey: .accountId)
-    }
 
     enum CodingKeys: String, CodingKey {
-        case messageId = "msgid"
-        case from, to, cc, bcc, subject, intro, seen, isDeleted, hasAttachments, size
+        case id, msgid
+        case from, to, cc, bcc, subject, seen, isDeleted, flagged, hasAttachments, size
         case retention, retentionDate, text, html, attachments
         case downloadUrl, sourceUrl, createdAt, updatedAt, accountId
     }
 
     var fromAddress: String {
-        if let safeFrom = from {
-            return "\(safeFrom.name) <\(safeFrom.address)>"
-        } else {
-            return ""
-        }
+        "\(from.name) <\(from.address)>"
     }
     
     var toAddress: String {
-        if let safeTo = to {
-            if safeTo.isEmpty {
-                return "No recipients"
-            }
-            return safeTo.map { "\($0.name) <\($0.address)>" }.joined(separator: ", ")
-        } else {
-            return ""
-        }
+        to.map { "\($0.name) <\($0.address)>" }.joined(separator: ", ")
     }
     
     var formattedDate: String {

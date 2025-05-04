@@ -24,19 +24,21 @@ struct MessageDetailView: View {
             MessageHeaderView(message: message)
             Text(message.data.subject)
                 .font(.title3.bold())
-            if let selectedMessage = accountsController.selectedCompleteMessage, let html = selectedMessage.html?.first {
-                WebView(html: html)
+            if let selectedMessage = accountsController.selectedCompleteMessage,
+               selectedMessage.id == message.id,
+               let html = selectedMessage.html?.first {
+                    WebView(html: html)
             }
-//            else {
-//                WebView(html: getHeaderHTML(message))
-//            }
+            else {
+                Spacer()
+            }
             if accountsController.loadingCompleteMessage {
                 EmptyView()
             }
         }
         .onAppear(perform: {
             accountsController.fetchCompleteMessage(of: message.data, account: account)
-            accountsController.markMessageAsRead(messageData: message, account: account)
+            accountsController.updateMessage(messageData: message, account: account, data: ["seen": true])
         })
         .sheet(isPresented: $showMessageInfoSheet, content: {
             MessageInfoView(message: message)

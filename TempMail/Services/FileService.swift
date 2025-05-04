@@ -34,12 +34,20 @@ class FileService {
         do {
             guard let selectedFile: URL = try result.get().first else { return (nil, nil, "Invalid URL") }
             
-            if selectedFile.startAccessingSecurityScopedResource() {
-                defer { selectedFile.stopAccessingSecurityScopedResource() }
+            return getFileContentsFromURL(url: selectedFile)
+        } catch {
+            return (nil, nil, "Failed to read file: \(error.localizedDescription)")
+        }
+    }
+    
+    static func getFileContentsFromURL(url: URL) -> (Data?, String?, String) {
+        do {
+            if url.startAccessingSecurityScopedResource() {
+                defer { url.stopAccessingSecurityScopedResource() }
                 
-                let data = try Data(contentsOf: selectedFile)
-                let content = try String(contentsOf: selectedFile, encoding: .utf8)
-//                    let content = String(data: data, encoding: .utf8) // another way of getting the string
+                let data = try Data(contentsOf: url)
+                let content = try String(contentsOf: url, encoding: .utf8)
+                //                    let content = String(data: data, encoding: .utf8) // another way of getting the string
                 return (data, content, "Success")
             } else {
                 return (nil, nil, "Could not access security-scoped resource.")

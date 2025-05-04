@@ -24,7 +24,9 @@ class AccountsController: ObservableObject {
     // Published properties for UI updates
     @Published var accounts: [Account] = []
     @Published var isLoading: Bool = false
-    @Published var error: Error?
+    // For showing error or success message to user
+    @Published var message: String?
+    @Published var showMessage: Bool = false
     
     @Published var selectedAccount: Account? {
         willSet {
@@ -41,7 +43,6 @@ class AccountsController: ObservableObject {
         }
     }
     @Published var selectedCompleteMessage: CompleteMessage?
-    
     // We will fetch complete message when a message from the list is selected
     @Published var loadingCompleteMessage = false
     
@@ -76,10 +77,10 @@ class AccountsController: ObservableObject {
                 predicate: #Predicate<Account> { account in
                     !account.isDeleted
                 },
-                sortBy: [SortDescriptor(\Account.name)]
+                sortBy: [SortDescriptor(\Account.updatedAt, order: .reverse)]
             )
             accounts = try modelContext.fetch(descriptor)
-            error = nil
+            self.clearMessage()
             
             /// Fetch messages for each account
             for account in self.accounts {
@@ -87,16 +88,30 @@ class AccountsController: ObservableObject {
                 self.fetchMessages(for: account)
             }
         } catch {
-            self.error = error
+            self.show(message: error.localizedDescription)
             print("Error fetching accounts: \(error.localizedDescription)")
         }
         
         isLoading = false
     }
     
+    func getAccount(withID accountId: String) -> Account? {
+        return accounts.first { account in
+            account.id == accountId
+        }
+    }
+    
+    /// Get messages for accointId
+    func fetchMessages(for accountId: String) {
+        if let account = getAccount(withID: accountId) {
+            fetchMessages(for: account)
+        }
+    }
+    
+    /// Get messages for account
     func fetchMessages(for account: Account) {
         guard let token = account.token else { return }
-        messageService.getAllMessages(token: token) { (result: Result<[MTMessage], MTError>) in
+        messageService.getAllMessages(page: 1, token: token) { (result: Result<[MTMessage], MTError>) in
             switch result {
               case .success(let messages):
                 var messagesArr = [Message]()
@@ -110,54 +125,70 @@ class AccountsController: ObservableObject {
         }
     }
     
-    func fetchCompleteMessage2(of message: MTMessage, account: Account) {
-        guard let token = account.token else { return } // handle user alert about any issues
-        loadingCompleteMessage = true
-        messageService.getMessage(id: message.id, token: token) { (result: Result<MTMessage, MTError>) in
-            switch result {
-            case .success(let message):
-//                self.selectedMessage = Message(isComplete: true, data: message)
-                print(message.id)
-            case .failure(let error):
-                print("Error in getting complete message \(error)")
-            }
-            self.loadingCompleteMessage = false
-        }
-    }
-    
     func fetchCompleteMessage(of message: MTMessage, account: Account) {
-        guard let token = account.token else { return }
+        guard let url = URL(string: "\(baseURL)/messages/\(message.id)") else {
+            self.show(message: "InvalidURL")
+            return
+        }
         
-        guard !token.isEmpty else { return }
-        
-        loadingCompleteMessage = true
-        error = nil
-        
-        let url = URL(string: "\(baseURL)/messages/\(message.id)")!
+        guard let token = account.token, !token.isEmpty else { return }
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-        
-        // Add auth token if available
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        URLSession.shared.dataTaskPublisher(for: request)
-            .map(\.data)
-            .decode(type: CompleteMessage.self, decoder: JSONDecoder())
-            .receive(on: DispatchQueue.main)
-            .sink { completion in
-                self.loadingCompleteMessage = false
-                
-                if case .failure(let error) = completion {
-                    self.error = error
-                    print("Error fetching message: \(error.localizedDescription)")
+        loadingCompleteMessage = true
+        self.clearMessage()
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.loadingCompleteMessage = false
+                    self.show(message: error.localizedDescription)
                 }
-            } receiveValue: { message in
-                print(message.subject)
-                self.selectedCompleteMessage = message
+                return
             }
-            .store(in: &cancellables)
+
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    self.loadingCompleteMessage = false
+                    self.show(message: "NoData")
+                }
+                return
+            }
+
+            do {
+//                print(String(data: data, encoding: .utf8) ?? "Error One")
+                let message = try JSONDecoder().decode(CompleteMessage.self, from: data)
+                DispatchQueue.main.async {
+                    self.loadingCompleteMessage = false
+                    self.selectedCompleteMessage = message
+                }
+            } catch let decodingError as DecodingError {
+                switch decodingError {
+                case .keyNotFound(let key, let context):
+                    print("Key '\(key)' not found: \(context.debugDescription)")
+                case .typeMismatch(let type, let context):
+                    print("Type '\(type)' mismatch: \(context.debugDescription)")
+                case .valueNotFound(let type, let context):
+                    print("Value '\(type)' not found: \(context.debugDescription)")
+                case .dataCorrupted(let context):
+                    print("Data corrupted: \(context.debugDescription)")
+                default:
+                    print("Decoding error: \(decodingError.localizedDescription)")
+                }
+                DispatchQueue.main.async {
+                    self.loadingCompleteMessage = false
+                }
+            } catch {
+                print(error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.loadingCompleteMessage = false
+                    self.show(message: error.localizedDescription)
+                }
+            }
+        }.resume()
     }
     
     func loginAndSaveAddress(address: AddressData, completion: @escaping (Bool, String) -> Void) {
@@ -230,19 +261,74 @@ class AccountsController: ObservableObject {
         }
     }
     
-    func markMessageAsRead(messageData: Message, account: Account, seen: Bool = true) {
-        guard let messageIndex = account.messagesStore?.messages.firstIndex(where: { mes in
-            mes.id == messageData.id
-        }) else { return }
-        guard let token = account.token else { return }
-        messageService.markMessageAs(id: messageData.id, seen: seen, token: token) { (result: Result<MTMessage, MTError>) in
-            switch result {
-              case .success(let message):
-                self.updateMessageInStore(for: account, with: message, at: messageIndex)
-              case .failure(let error):
-                print("Error occurred \(error)")
-            }
+    func updateMessage(messageData: Message, account: Account, data: [String: Bool]) {
+        guard let token = account.token, !token.isEmpty else {
+            self.show(message: "Unauthorized access attempt: Auth Token not available")
+            return
         }
+        
+        // Verify that the keys in data is only seen, flagged or isDeleted
+        let allowedKeys: Set<String> = ["seen", "flagged", "isDeleted"]
+        let invalidKeys = data.keys.filter { !allowedKeys.contains($0) }
+
+        guard invalidKeys.isEmpty else {
+            self.show(message: "Invalid keys in update: \(invalidKeys.joined(separator: ", "))")
+            return
+        }
+        
+        self.clearMessage()
+        
+        let url = URL(string: "\(baseURL)/messages/\(messageData.id)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/merge-patch+json", forHTTPHeaderField: "Content-Type")
+                
+        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: data, options: [])
+        } catch {
+            self.show(message: "Failed to encode request body")
+            return // "Failed to encode request body"
+        }
+        
+        let accountId = account.id
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.show(message: error.localizedDescription)
+                }
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                DispatchQueue.main.async {
+                    self.show(message: "Invalid response")
+                }
+                return
+            }
+            
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    self.show(message: "No data received")
+                }
+                return
+            }
+            
+            if (200...299).contains(httpResponse.statusCode) {
+                let responseString = String(data: data, encoding: .utf8) ?? "Success but couldn't parse response"
+                DispatchQueue.main.async {
+                    self.fetchMessages(for: accountId)
+                    self.show(message: "Success: \(responseString)")
+                }
+            } else {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                DispatchQueue.main.async {
+                    self.show(message: "HTTP \(httpResponse.statusCode): \(errorMessage)")
+                }
+            }
+        }.resume()
     }
     
     func downloadMessageSource(message: Message, account: Account) {
@@ -334,20 +420,20 @@ class AccountsController: ObservableObject {
     }
     
     /// Gets a specific account by ID
-    func getAccount(withID id: String) -> Account? {
-        do {
-            let descriptor = FetchDescriptor<Account>(
-                predicate: #Predicate<Account> { account in
-                    account.id == id && !account.isDeleted
-                }
-            )
-            let results = try modelContext.fetch(descriptor)
-            return results.first
-        } catch {
-            print("Error fetching account: \(error.localizedDescription)")
-            return nil
-        }
-    }
+//    func getAccount(withID id: String) -> Account? {
+//        do {
+//            let descriptor = FetchDescriptor<Account>(
+//                predicate: #Predicate<Account> { account in
+//                    account.id == id && !account.isDeleted
+//                }
+//            )
+//            let results = try modelContext.fetch(descriptor)
+//            return results.first
+//        } catch {
+//            print("Error fetching account: \(error.localizedDescription)")
+//            return nil
+//        }
+//    }
     
     /// Toggles the disabled status of an account
     func toggleAccountStatus(_ account: Account) {
@@ -384,14 +470,20 @@ class AccountsController: ObservableObject {
         do {
             try modelContext.save()
         } catch {
-            self.error = error
+            self.show(message: error.localizedDescription)
             print("Error saving context: \(error.localizedDescription)")
         }
     }
     
     /// Clears any error message
-    func clearError() {
-        error = nil
+    func clearMessage() {
+        self.message = nil
+        self.showMessage = false
+    }
+    
+    func show(message: String) {
+        self.message = message
+        self.showMessage = true
     }
     
     func handleMTError(error: MTError) -> String {

@@ -136,5 +136,6 @@ struct AddressesView: View {
 #Preview {
     ContentView()
         .environmentObject(AccountsController.shared)
+        .environmentObject(SettingsViewModel.shared)
         .environmentObject(AddressesViewModel.shared)
 }

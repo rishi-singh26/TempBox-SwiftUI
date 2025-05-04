@@ -17,6 +17,10 @@ struct Message: Hashable, Identifiable {
         data.id
     }
     
+    var msgId: String {
+        data.msgid
+    }
+    
     var fromAddress: String {
         return data.from.address
     }

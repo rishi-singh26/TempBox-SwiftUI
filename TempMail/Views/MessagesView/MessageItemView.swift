@@ -43,7 +43,7 @@ struct MessageItemView: View {
         }
         .swipeActions(edge: .leading) {
             Button {
-                accountsController.markMessageAsRead(messageData: message, account: account, seen: !message.data.seen)
+                accountsController.updateMessage(messageData: message, account: account, data: ["seen": !message.data.seen])
             } label: {
                 Label(message.data.seen ? "Unread" : "Read", systemImage: message.data.seen ? "envelope.badge.fill" : "envelope.open.fill")
             }
@@ -60,7 +60,7 @@ struct MessageItemView: View {
         }
         .contextMenu {
             Button {
-                accountsController.markMessageAsRead(messageData: message, account: account)
+                accountsController.updateMessage(messageData: message, account: account, data: ["seen": !message.data.seen])
             } label: {
                 Label(message.data.seen ? "Mark as unread" : "Mark as read", systemImage: message.data.seen ? "envelope.badge" : "envelope.open")
             }
