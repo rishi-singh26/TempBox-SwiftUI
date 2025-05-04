@@ -1,5 +1,5 @@
 //
-//  AccountsController.swift
+//  AddressesController.swift
 //  TempMail
 //
 //  Created by Rishi Singh on 01/05/25.
@@ -11,8 +11,8 @@ import Combine
 import MailTMSwift
 
 @MainActor
-class AccountsController: ObservableObject {
-    static let shared = AccountsController()
+class AddressesController: ObservableObject {
+    static let shared = AddressesController()
     
     // SwiftData modelContainer and modelContext
     private let modelContainer: ModelContainer
@@ -22,13 +22,13 @@ class AccountsController: ObservableObject {
     private let accountService = MTAccountService()
     
     // Published properties for UI updates
-    @Published var accounts: [Account] = []
+    @Published var addresses: [Address] = []
     @Published var isLoading: Bool = false
     // For showing error or success message to user
     @Published var message: String?
     @Published var showMessage: Bool = false
     
-    @Published var selectedAccount: Account? {
+    @Published var selectedAddress: Address? {
         willSet {
             selectedMessage = nil
             selectedCompleteMessage = nil
@@ -36,9 +36,9 @@ class AccountsController: ObservableObject {
     }
     @Published var selectedMessage: Message? {
         willSet {
-            if let safeMessage = newValue?.data, let safeAccount = selectedAccount {
+            if let safeMessage = newValue?.data, let safeAddress = selectedAddress {
                 selectedCompleteMessage = nil
-                self.fetchCompleteMessage(of: safeMessage, account: safeAccount)
+                self.fetchCompleteMessage(of: safeMessage, address: safeAddress)
             }
         }
     }
@@ -54,13 +54,13 @@ class AccountsController: ObservableObject {
     init() {
         // Set up SwiftData container
         do {
-            let schema = Schema([Account.self])
+            let schema = Schema([Address.self])
             let configuration = ModelConfiguration(isStoredInMemoryOnly: false)
             modelContainer = try ModelContainer(for: schema, configurations: [configuration])
             modelContext = modelContainer.mainContext
             
-            // Load accounts on initialization
-            Task { fetchAccounts() }
+            // Load addresses on initialization
+            Task { fetchAddresses() }
         } catch {
             fatalError("Failed to create ModelContainer: \(error.localizedDescription)")
         }
@@ -68,49 +68,49 @@ class AccountsController: ObservableObject {
     
     // MARK: - Data Operations
     
-    /// Fetches all accounts from SwiftData
-    func fetchAccounts() {
+    /// Fetches all addresses from SwiftData
+    func fetchAddresses() {
         isLoading = true
         
         do {
-            let descriptor = FetchDescriptor<Account>(
-                predicate: #Predicate<Account> { account in
-                    !account.isDeleted
+            let descriptor = FetchDescriptor<Address>(
+                predicate: #Predicate<Address> { address in
+                    !address.isDeleted
                 },
-                sortBy: [SortDescriptor(\Account.updatedAt, order: .reverse)]
+                sortBy: [SortDescriptor(\Address.updatedAt, order: .reverse)]
             )
-            accounts = try modelContext.fetch(descriptor)
+            addresses = try modelContext.fetch(descriptor)
             self.clearMessage()
             
-            /// Fetch messages for each account
-            for account in self.accounts {
-                self.updateMessageStore(for: account, store: MessageStore(isFetching: true, error: nil, messages: account.messagesStore?.messages ?? []))
-                self.fetchMessages(for: account)
+            /// Fetch messages for each address
+            for address in self.addresses {
+                self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: address.messagesStore?.messages ?? []))
+                self.fetchMessages(for: address)
             }
         } catch {
             self.show(message: error.localizedDescription)
-            print("Error fetching accounts: \(error.localizedDescription)")
+            print("Error fetching addresses: \(error.localizedDescription)")
         }
         
         isLoading = false
     }
     
-    func getAccount(withID accountId: String) -> Account? {
-        return accounts.first { account in
-            account.id == accountId
+    func getAddress(withID addressId: String) -> Address? {
+        return addresses.first { address in
+            address.id == addressId
         }
     }
     
     /// Get messages for accointId
-    func fetchMessages(for accountId: String) {
-        if let account = getAccount(withID: accountId) {
-            fetchMessages(for: account)
+    func fetchMessages(for addressId: String) {
+        if let address = getAddress(withID: addressId) {
+            fetchMessages(for: address)
         }
     }
     
-    /// Get messages for account
-    func fetchMessages(for account: Account) {
-        guard let token = account.token else { return }
+    /// Get messages for address
+    func fetchMessages(for address: Address) {
+        guard let token = address.token else { return }
         messageService.getAllMessages(page: 1, token: token) { (result: Result<[MTMessage], MTError>) in
             switch result {
               case .success(let messages):
@@ -118,20 +118,20 @@ class AccountsController: ObservableObject {
                 for message in messages {
                     messagesArr.append(Message(isComplete: true, data: message))
                 }
-                self.updateMessageStore(for: account, store: MessageStore(isFetching: false, error: nil, messages: messagesArr))
+                self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messagesArr))
               case .failure(let error):
-                self.updateMessageStore(for: account, store: MessageStore(isFetching: false, error: error, messages: account.messagesStore?.messages ?? []))
+                self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: error, messages: address.messagesStore?.messages ?? []))
             }
         }
     }
     
-    func fetchCompleteMessage(of message: MTMessage, account: Account) {
+    func fetchCompleteMessage(of message: MTMessage, address: Address) {
         guard let url = URL(string: "\(baseURL)/messages/\(message.id)") else {
             self.show(message: "InvalidURL")
             return
         }
         
-        guard let token = account.token, !token.isEmpty else { return }
+        guard let token = address.token, !token.isEmpty else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -192,7 +192,7 @@ class AccountsController: ObservableObject {
     }
     
     func loginAndSaveAddress(address: AddressData, completion: @escaping (Bool, String) -> Void) {
-        let newAccount = Account(
+        let newAddress = Address(
             id: address.id,
             name: address.addressName,
             address: address.authenticatedUser.account.address,
@@ -209,8 +209,8 @@ class AccountsController: ObservableObject {
         self.accountService.login(using: auth) { [self] (result: Result<String, MTError>) in
             switch result {
             case .success(let token):
-                newAccount.token = token
-                addAccount(newAccount)
+                newAddress.token = token
+                addAddress(newAddress)
                 completion(true, "Success")
             case .failure(let error):
                 completion(false, handleMTError(error: error))
@@ -218,51 +218,51 @@ class AccountsController: ObservableObject {
         }
     }
     
-    func deleteAccountFromServer(account: Account) {
-        guard let token = account.token else { return } // handle user alert about any issues
-        accountService.deleteAccount(id: account.id, token: token) { (result: Result<MTEmptyResult, MTError>) in
+    func deleteAddressFromServer(address: Address) {
+        guard let token = address.token else { return } // handle user alert about any issues
+        accountService.deleteAccount(id: address.id, token: token) { (result: Result<MTEmptyResult, MTError>) in
             if case let .failure(error) = result {
-                print("Error Occurred while deleting account from mail.tm server: \(error)")
+                print("Error Occurred while deleting address from mail.tm server: \(error)")
                 if let _ = error.errorDescription?.contains("Invalid JWT Token") {
-                    // deleting account from coredata because it has been deactivated from mail.tm server
-                    self.permanentlyDeleteAccount(account)
+                    // deleting address from swiftdata because it has been deactivated from mail.tm server
+                    self.permanentlyDeleteAddress(address)
                 }
                 return
             }
-            self.permanentlyDeleteAccount(account)
+            self.permanentlyDeleteAddress(address)
         }
     }
     
-    func deleteMessage(message: Message, account: Account) {
-        guard let index = account.messagesStore?.messages.firstIndex(where: { mes in
+    func deleteMessage(message: Message, address: Address) {
+        guard let index = address.messagesStore?.messages.firstIndex(where: { mes in
             mes.id == message.id
         }) else { return }
-        guard let token = account.token else { return }
+        guard let token = address.token else { return }
         messageService.deleteMessage(id: message.id, token: token) { (result: Result<MTEmptyResult, MTError>) in
             if case let .failure(error) = result {
                 print("Error Occurred: \(error)")
                 return
             }
-            self.deleteMessageFromStore(for: account, at: index)
+            self.deleteMessageFromStore(for: address, at: index)
         }
     }
     
-    func deleteMessage(indexSet: IndexSet, account: Account) {
+    func deleteMessage(indexSet: IndexSet, address: Address) {
         for index in indexSet {
-            let message = account.messagesStore?.messages[index]
-            guard let id = message?.id, let token = account.token else { return }
+            let message = address.messagesStore?.messages[index]
+            guard let id = message?.id, let token = address.token else { return }
             messageService.deleteMessage(id: id, token: token) { (result: Result<MTEmptyResult, MTError>) in
                 if case let .failure(error) = result {
                     print("Error Occurred: \(error)")
                     return
                 }
-                self.deleteMessageFromStore(for: account, at: index)
+                self.deleteMessageFromStore(for: address, at: index)
             }
         }
     }
     
-    func updateMessage(messageData: Message, account: Account, data: [String: Bool]) {
-        guard let token = account.token, !token.isEmpty else {
+    func updateMessage(messageData: Message, address: Address, data: [String: Bool]) {
+        guard let token = address.token, !token.isEmpty else {
             self.show(message: "Unauthorized access attempt: Auth Token not available")
             return
         }
@@ -292,7 +292,7 @@ class AccountsController: ObservableObject {
             return // "Failed to encode request body"
         }
         
-        let accountId = account.id
+        let addressId = address.id
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -319,7 +319,7 @@ class AccountsController: ObservableObject {
             if (200...299).contains(httpResponse.statusCode) {
                 let responseString = String(data: data, encoding: .utf8) ?? "Success but couldn't parse response"
                 DispatchQueue.main.async {
-                    self.fetchMessages(for: accountId)
+                    self.fetchMessages(for: addressId)
                     self.show(message: "Success: \(responseString)")
                 }
             } else {
@@ -331,8 +331,8 @@ class AccountsController: ObservableObject {
         }.resume()
     }
     
-    func downloadMessageSource(message: Message, account: Account) {
-        guard let token = account.token else { return }
+    func downloadMessageSource(message: Message, address: Address) {
+        guard let token = address.token else { return }
         messageService.getSource(id: message.id, token: token) { (result: Result<MTMessageSource, MTError>) in
             switch result {
               case .success(let messageSource):
@@ -356,11 +356,11 @@ class AccountsController: ObservableObject {
         }
     }
     
-    /// Add a new account from MTAccount
-    func addAccount(account: MTAccount, token: String, password: String, accountName: String) {
-        let newAccount = Account(
+    /// Add a new address from MTAccount
+    func addAddress(account: MTAccount, token: String, password: String, addressName: String) {
+        let newAddress = Address(
             id: account.id,
-            name: accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : accountName,
+            name: addressName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : addressName,
             address: account.address,
             quota: account.quotaLimit,
             used: account.quotaUsed,
@@ -369,97 +369,97 @@ class AccountsController: ObservableObject {
             token: token,
             password: password
         )
-        self.addAccount(newAccount)
+        self.addAddress(newAddress)
     }
     
-    /// Adds a new account
-    func addAccount(_ account: Account) {
-        modelContext.insert(account)
+    /// Adds a new address
+    func addAddress(_ address: Address) {
+        modelContext.insert(address)
         saveChanges()
-        fetchAccounts()
+        fetchAddresses()
     }
     
-    /// Updates an existing account
-    func updateAccount(_ account: Account) {
-        account.updatedAt = Date.now
+    /// Updates an existing address
+    func updateAdress(_ address: Address) {
+        address.updatedAt = Date.now
         saveChanges()
 //        fetchAccounts()
     }
     
-    /// Delete account based on its index in the list
-    func deleteAccount(indexSet: IndexSet) {
+    /// Delete address based on its index in the list
+    func deleteAddress(indexSet: IndexSet) {
         for index in indexSet {
-            let account = accounts[index]
-            deleteAccount(account)
+            let address = addresses[index]
+            deleteAddress(address)
         }
     }
     
-    /// Delete account based on its id
-    func deleteAccount(id: String) {
-        let account = accounts.first { acc in
-            acc.id == id
+    /// Delete address based on its id
+    func deleteAddress(id: String) {
+        let address = addresses.first { add in
+            add.id == id
         }
-        if let account = account {
-            deleteAccount(account)
+        if let address = address {
+            deleteAddress(address)
         }
     }
     
-    /// Soft deletes an account
-    func deleteAccount(_ account: Account) {
-        account.isDeleted = true
-        account.updatedAt = Date.now
+    /// Soft deletes an address
+    func deleteAddress(_ address: Address) {
+        address.isDeleted = true
+        address.updatedAt = Date.now
         saveChanges()
-        fetchAccounts()
+        fetchAddresses()
     }
     
-    /// Hard deletes an account from the database
-    func permanentlyDeleteAccount(_ account: Account) {
-        modelContext.delete(account)
+    /// Hard deletes an address from the database
+    func permanentlyDeleteAddress(_ address: Address) {
+        modelContext.delete(address)
         saveChanges()
-        fetchAccounts()
+        fetchAddresses()
     }
     
-    /// Gets a specific account by ID
-//    func getAccount(withID id: String) -> Account? {
+    /// Gets a specific address by ID
+//    func getAddress(withID id: String) -> Address? {
 //        do {
-//            let descriptor = FetchDescriptor<Account>(
-//                predicate: #Predicate<Account> { account in
-//                    account.id == id && !account.isDeleted
+//            let descriptor = FetchDescriptor<Address>(
+//                predicate: #Predicate<Address> { address in
+//                    address.id == id && !address.isDeleted
 //                }
 //            )
 //            let results = try modelContext.fetch(descriptor)
 //            return results.first
 //        } catch {
-//            print("Error fetching account: \(error.localizedDescription)")
+//            print("Error fetching address: \(error.localizedDescription)")
 //            return nil
 //        }
 //    }
     
-    /// Toggles the disabled status of an account
-    func toggleAccountStatus(_ account: Account) {
-        account.isDisabled.toggle()
-        account.updatedAt = Date.now
+    /// Toggles the disabled status of an address
+    func toggleAddressStatus(_ address: Address) {
+        address.isDisabled.toggle()
+        address.updatedAt = Date.now
         saveChanges()
-        fetchAccounts()
+        fetchAddresses()
     }
     
-    /// Sets an account's fetching messages status
-    func updateMessageStore(for account: Account, store: MessageStore) {
+    /// Sets an address's fetching messages status
+    func updateMessageStore(for address: Address, store: MessageStore) {
         // Note: This only updates the transient property, not saved to SwiftData
-        account.messagesStore = store
+        address.messagesStore = store
         // No need to save changes or refetch as this property is transient
-        // Just notify observers that the account object has changed
+        // Just notify observers that the address object has changed
         objectWillChange.send()
     }
     
-    func updateMessageInStore(for account: Account, with message: MTMessage, at index: Int) {
-        account.messagesStore?.messages[index].data = message
-        account.messagesStore?.messages.remove(at: index)
+    func updateMessageInStore(for address: Address, with message: MTMessage, at index: Int) {
+        address.messagesStore?.messages[index].data = message
+        address.messagesStore?.messages.remove(at: index)
         objectWillChange.send()
     }
     
-    func deleteMessageFromStore(for account: Account, at index: Int) {
-        account.messagesStore?.messages.remove(at: index)
+    func deleteMessageFromStore(for address: Address, at index: Int) {
+        address.messagesStore?.messages.remove(at: index)
         objectWillChange.send()
     }
     

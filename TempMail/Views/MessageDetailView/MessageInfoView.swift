@@ -71,6 +71,6 @@ struct MessageInfoView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
         .environmentObject(AddressesViewModel.shared)
 }

@@ -16,8 +16,8 @@ class AddAddressViewModel: ObservableObject {
     private let accountService = MTAccountService()
     let domainService = MTDomainService()
     
-    // MARK: - Account variables
-    @Published var accountName: String = ""
+    // MARK: - Address variables
+    @Published var addressName: String = ""
     @Published var address: String = ""
     @Published var shouldUseRandomAddress: Bool = false {
         willSet {
@@ -52,14 +52,14 @@ class AddAddressViewModel: ObservableObject {
     @Published var errorMessage = ""
     @Published var showErrorAlert = false
     
-    // MARK: Create Account properties
-    @Published var isCreatingAccount = false
+    // MARK: Create Address properties
+    @Published var isCreatingAddress = false
     var subscriptions: Set<AnyCancellable> = []
     
-    // MARK: - Add account or Login
+    // MARK: - Add address or Login
     let authOptions = ["New", "Login"]
     @Published var selectedAuthMode = "New"
-    @Published var isCreatingNewAccount = true
+    @Published var isCreatingNewAddress = true
     
     init() {
         loadDomains()
@@ -89,7 +89,7 @@ class AddAddressViewModel: ObservableObject {
     }
     
     func getEmail() -> String {
-        return isCreatingNewAccount ? "\(self.address)@\(self.selectedDomain.domain)" : self.address
+        return isCreatingNewAddress ? "\(self.address)@\(self.selectedDomain.domain)" : self.address
     }
     
     func validateInput() -> Bool {
@@ -100,8 +100,8 @@ class AddAddressViewModel: ObservableObject {
             return false
         }
 
-        // Additional validation for new account creation
-        if isCreatingNewAccount && selectedDomain.id.isEmpty {
+        // Additional validation for new address creation
+        if isCreatingNewAddress && selectedDomain.id.isEmpty {
             self.errorMessage = "Please select a domain"
             self.showErrorAlert = true
             return false

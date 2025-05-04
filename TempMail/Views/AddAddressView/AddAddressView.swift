@@ -10,8 +10,8 @@ import MailTMSwift
 
 struct AddAddressView: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject private var addressesController: AddressesController
     @StateObject var controller = AddAddressViewModel()
-    @EnvironmentObject private var accountsController: AccountsController
     private let accountService = MTAccountService()
 
     var body: some View {
@@ -28,10 +28,10 @@ struct AddAddressView: View {
         NavigationView {
             Form {
                 Section(footer: Text("Address name appears on the addresses list screen.")) {
-                    TextField("Account name (Optional)", text: $controller.accountName)
+                    TextField("Address name (Optional)", text: $controller.addressName)
                 }
                 
-                if controller.isCreatingNewAccount {
+                if controller.isCreatingNewAddress {
                     Section {
                         Picker(selection: $controller.selectedDomain) {
                             ForEach(controller.domains, id: \.self) { domain in
@@ -49,7 +49,7 @@ struct AddAddressView: View {
                     }
                 }
                 
-                if !controller.isCreatingNewAccount {
+                if !controller.isCreatingNewAddress {
                     Section {
                         TextField("Address", text: $controller.address)
 #if os(iOS)
@@ -59,12 +59,12 @@ struct AddAddressView: View {
                 }
                 
                 Section {
-                    if !controller.shouldUseRandomPassword || !controller.isCreatingNewAccount {
+                    if !controller.shouldUseRandomPassword || !controller.isCreatingNewAddress {
                         SecureField("Password", text: $controller.password)
                             .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
                             .autocorrectionDisabled(true)
                     }
-                    if controller.isCreatingNewAccount {
+                    if controller.isCreatingNewAddress {
                         Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
                     }
                 }
@@ -88,7 +88,7 @@ struct AddAddressView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        createAccount()
+                        createAddress()
                     } label: {
                         Text("Create")
                             .font(.headline)
@@ -106,12 +106,12 @@ struct AddAddressView: View {
                 //                    .onChange(of: controller.selectedAuthMode) { newValue in
                 //                        if newValue == "New" {
                 //                            withAnimation {
-                //                                controller.isCreatingNewAccount = true
+                //                                controller.isCreatingNewAddress = true
                 //                                controller.shouldUseRandomPassword ? controller.generateRandomPass() : nil
                 //                            }
                 //                        } else {
                 //                            withAnimation {
-                //                                controller.isCreatingNewAccount = false
+                //                                controller.isCreatingNewAddress = false
                 //                                controller.password = ""
                 //                            }
                 //                        }
@@ -139,17 +139,17 @@ struct AddAddressView: View {
             ScrollView {
                 MacCustomSection(footer: "Address name appears in the sidebar.") {
                     HStack {
-                        Text("Account name (Optional)")
+                        Text("Address name (Optional)")
                             .frame(width: 200, alignment: .leading)
                         Spacer()
-                        TextField("", text: $controller.accountName)
+                        TextField("", text: $controller.addressName)
                             .textFieldStyle(.roundedBorder)
                     }
                 }
                 
-                if controller.isCreatingNewAccount {
+                if controller.isCreatingNewAddress {
                     MacCustomSection {
-                        if !controller.shouldUseRandomAddress || !controller.isCreatingNewAccount {
+                        if !controller.shouldUseRandomAddress || !controller.isCreatingNewAddress {
                             HStack {
                                 Text("Address")
                                     .frame(width: 100, alignment: .leading)
@@ -158,7 +158,7 @@ struct AddAddressView: View {
                                     .textFieldStyle(.roundedBorder)
                             }
                         }
-                        if controller.isCreatingNewAccount {
+                        if controller.isCreatingNewAddress {
                             HStack(alignment: .center) {
                                 Text("Use random address")
                                     .frame(width: 200, alignment: .leading)
@@ -181,7 +181,7 @@ struct AddAddressView: View {
                 }
                 
                 MacCustomSection {
-                    if !controller.shouldUseRandomPassword || !controller.isCreatingNewAccount {
+                    if !controller.shouldUseRandomPassword || !controller.isCreatingNewAddress {
                         HStack {
                             Text("Password")
                                 .frame(width: 100, alignment: .leading)
@@ -190,7 +190,7 @@ struct AddAddressView: View {
                                 .textFieldStyle(.roundedBorder)
                         }
                     }
-                    if controller.isCreatingNewAccount {
+                    if controller.isCreatingNewAddress {
                         HStack(alignment: .center) {
                             Text("Use random password")
                                 .frame(width: 200, alignment: .leading)
@@ -221,7 +221,7 @@ struct AddAddressView: View {
             
             ToolbarItem(placement: .confirmationAction) {
                 Button {
-                    createAccount()
+                    createAddress()
                 } label: {
                     Text("Create")
                         .font(.headline)
@@ -235,7 +235,7 @@ struct AddAddressView: View {
     }
 #endif
     
-    func createAccount() {
+    func createAddress() {
         if !controller.validateInput() { return }
         let auth = MTAuth(address: controller.getEmail(), password: controller.password)
         accountService.createAccount(using: auth) { [self] (accountResult: Result<MTAccount, MTError>) in
@@ -254,11 +254,11 @@ struct AddAddressView: View {
         accountService.login(using: auth) { [self] (result: Result<String, MTError>) in
           switch result {
             case .success(let token):
-              accountsController.addAccount(
+              addressesController.addAddress(
                 account: account,
                 token: token,
                 password: controller.password,
-                accountName: controller.accountName
+                addressName: controller.addressName
               )
               dismiss()
             case .failure(let error):
@@ -271,5 +271,5 @@ struct AddAddressView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
 }

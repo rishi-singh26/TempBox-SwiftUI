@@ -11,13 +11,13 @@ import SwiftData
 @main
 struct TempMailApp: App {
     @Environment(\.openWindow) var openWindow
-    @StateObject private var accountsController = AccountsController()
+    @StateObject private var addressesController = AddressesController()
     @StateObject private var addressViewModel = AddressesViewModel()
     @StateObject private var settingsViewModel = SettingsViewModel()
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Account.self,
+            Address.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -31,7 +31,7 @@ struct TempMailApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(accountsController)
+                .environmentObject(addressesController)
                 .environmentObject(addressViewModel)
                 .environmentObject(settingsViewModel)
         }
@@ -61,7 +61,7 @@ struct TempMailApp: App {
         
         Window("Settings", id: "settings") {
             SettingsView()
-                .environmentObject(accountsController)
+                .environmentObject(addressesController)
                 .environmentObject(addressViewModel)
                 .environmentObject(settingsViewModel)
         }

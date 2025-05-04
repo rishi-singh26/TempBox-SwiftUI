@@ -14,7 +14,7 @@ struct VersionContainer: Codable {
 struct ExportVersionTwo: Codable {
     let version: String = "2.0.0"
     let exportDate: String
-    let addresses: [Account]
+    let addresses: [Address]
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -27,7 +27,7 @@ struct ExportVersionTwo: Codable {
             )
         }
         exportDate = try container.decode(String.self, forKey: .exportDate)
-        addresses = try container.decode([Account].self, forKey: .addresses)
+        addresses = try container.decode([Address].self, forKey: .addresses)
     }
 
     /// Encodes the object to JSON data or a JSON string

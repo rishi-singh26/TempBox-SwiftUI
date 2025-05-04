@@ -8,20 +8,24 @@
 import SwiftUI
 
 struct AddressItemView: View {
-    let account: Account
-    @EnvironmentObject private var accountsController: AccountsController
+    let address: Address
+    @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     
     var isMessagesFetching: Bool {
-        account.messagesStore?.isFetching ?? false
+        address.messagesStore?.isFetching ?? false
     }
     
     var isMessagesFetchingFailed: Bool {
-        account.messagesStore?.error != nil
+        address.messagesStore?.error != nil
     }
     
     var unreadMessagesCount: Int {
-        account.messagesStore?.unreadMessagesCount ?? 0
+        address.messagesStore?.unreadMessagesCount ?? 0
+    }
+    
+    var addresName: String {
+        address.name == nil || (address.name?.isEmpty ?? false) ? address.address : address.name!
     }
     
     var body: some View {
@@ -29,16 +33,9 @@ struct AddressItemView: View {
             Image(systemName: "tray")
                 .foregroundColor(.accentColor)
             HStack {
-                Text(account.name ?? account.address)
-//                VStack(alignment: .leading) {
-//                    Text(account.accountName ?? account.address ?? "No address")
-//                    if account.accountName != nil {
-//                        Text(account.address ?? "No address")
-//                            .foregroundColor(.secondary)
-//                    }
-//                }
+                Text(addresName)
                 Spacer()
-                if !account.isDisabled && !account.isDeleted {
+                if !address.isDisabled && !address.isDeleted {
                     if isMessagesFetching {
                         ProgressView()
                             .controlSize(.small)
@@ -53,21 +50,21 @@ struct AddressItemView: View {
         }
             .swipeActions(edge: .leading) {
                 Button {
-                    addressesViewModel.selectedAccForInfoSheet = account
-                    addressesViewModel.isAccountInfoSheetOpen = true
+                    addressesViewModel.selectedAddForInfoSheet = address
+                    addressesViewModel.isAddressInfoSheetOpen = true
                 } label: {
-                    Label("Account Info", systemImage: "info.square")
+                    Label("Address Info", systemImage: "info.square")
                 }
                 .tint(.yellow)
                 Button {
-                    accountsController.fetchMessages(for: account)
+                    addressesController.fetchMessages(for: address)
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
                 }
                 .tint(.blue)
                 Button {
-                    addressesViewModel.selectedAccForEditSheet = account
-                    addressesViewModel.isEditAccountSheetOpen = true
+                    addressesViewModel.selectedAddForEditSheet = address
+                    addressesViewModel.isEditAddressSheetOpen = true
                 } label: {
                     Label("Edit", systemImage: "pencil.circle")
                 }
@@ -75,9 +72,8 @@ struct AddressItemView: View {
             }
             .swipeActions(edge: .trailing) {
                 Button(role: .destructive) {
-                    addressesViewModel.showDeleteAccountAlert = true
-                    addressesViewModel.selectedAccForDeletion = account
-//                    dataController.deleteAccount(account: account)
+                    addressesViewModel.showDeleteAddressAlert = true
+                    addressesViewModel.selectedAddForDeletion = address
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
@@ -90,19 +86,19 @@ struct AddressItemView: View {
             }
             .contextMenu(menuItems: {
                 Button {
-                    accountsController.fetchMessages(for: account)
+                    addressesController.fetchMessages(for: address)
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
                 }
                 Button {
-                    addressesViewModel.selectedAccForInfoSheet = account
-                    addressesViewModel.isAccountInfoSheetOpen = true
+                    addressesViewModel.selectedAddForInfoSheet = address
+                    addressesViewModel.isAddressInfoSheetOpen = true
                 } label: {
-                    Label("Account Info", systemImage: "info.circle")
+                    Label("Address Info", systemImage: "info.circle")
                 }
                 Button {
-                    addressesViewModel.selectedAccForEditSheet = account
-                    addressesViewModel.isEditAccountSheetOpen = true
+                    addressesViewModel.selectedAddForEditSheet = address
+                    addressesViewModel.isEditAddressSheetOpen = true
                 } label: {
                     Label("Edit", systemImage: "pencil.circle")
                 }
@@ -112,9 +108,8 @@ struct AddressItemView: View {
                     Label("Archive", systemImage: "archivebox")
                 }
                 Button(role: .destructive) {
-                    addressesViewModel.showDeleteAccountAlert = true
-                    addressesViewModel.selectedAccForDeletion = account
-//                    dataController.deleteAccount(account: account)
+                    addressesViewModel.showDeleteAddressAlert = true
+                    addressesViewModel.selectedAddForDeletion = address
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
@@ -125,6 +120,6 @@ struct AddressItemView: View {
 
 #Preview {
     ContentView()
-            .environmentObject(AccountsController.shared)
+            .environmentObject(AddressesController.shared)
             .environmentObject(AddressesViewModel.shared)
 }

@@ -10,15 +10,15 @@ import MailTMSwift
 
 struct EditAddressView: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject private var accountsController: AccountsController
+    @EnvironmentObject private var addressesController: AddressesController
     
-    @State private var accountName: String = ""
+    @State private var addressName: String = ""
     
-    var account: Account
+    var address: Address
     
-    init(account: Account) {
-        self.account = account
-        self.accountName = account.name ?? ""
+    init(address: Address) {
+        self.address = address
+        self.addressName = address.name ?? ""
     }
 
     var body: some View {
@@ -33,8 +33,8 @@ struct EditAddressView: View {
     func IOSEditAddress() -> some View {
         NavigationView {
             Form {
-                Section(footer: Text("Account name appears on the accounts list screen.")) {
-                    TextField("Account name", text: $accountName)
+                Section(footer: Text("Address name appears on the addresses list screen.")) {
+                    TextField("Address name", text: $addressName)
                 }
             }
             .navigationTitle("Edit Address Name")
@@ -47,8 +47,8 @@ struct EditAddressView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        account.name = accountName
-                        accountsController.updateAccount(account)
+                        address.name = addressName
+                        addressesController.updateAdress(address)
                         dismiss()
                     } label: {
                         Text("Done")
@@ -74,10 +74,10 @@ struct EditAddressView: View {
                 Form {
                     MacCustomSection(footer: "Address name appears on the addresses list screen.") {
                         HStack {
-                            Text("Account name (Optional)")
+                            Text("Address name (Optional)")
                                 .frame(width: 200, alignment: .leading)
                             Spacer()
-                            TextField("", text: $accountName)
+                            TextField("", text: $addressName)
                                 .textFieldStyle(.roundedBorder)
                         }
                     }
@@ -91,8 +91,8 @@ struct EditAddressView: View {
                     
                     ToolbarItem(placement: .confirmationAction) {
                         Button {
-                            account.name = accountName
-                            accountsController.updateAccount(account)
+                            address.name = addressName
+                            addressesController.updateAdress(address)
                             dismiss()
                         } label: {
                             Text("Done")
@@ -109,5 +109,5 @@ struct EditAddressView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
 }

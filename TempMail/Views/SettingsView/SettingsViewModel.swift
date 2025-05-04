@@ -27,11 +27,11 @@ class SettingsViewModel: ObservableObject {
     /// Data captured from version 2 import file
     @Published var v2ImportData: ExportVersionTwo? = nil
     
-    /// Address in the selected import, the accounts already in swift data are filtered out
-    func getV1Addresses(accounts: [Account]) -> [AddressData] {
+    /// Address in the selected import, the addresses already in swift data are filtered out
+    func getV1Addresses(addresses: [Address]) -> [AddressData] {
         return (v1ImportData?.addresses ?? []).filter { address in
-            let idMatches = accounts.first(where: { account in
-                account.id == address.id && !account.isDeleted
+            let idMatches = addresses.first(where: { existingAddress in
+                address.id == existingAddress.id && !existingAddress.isDeleted
             })
             return idMatches == nil
         }

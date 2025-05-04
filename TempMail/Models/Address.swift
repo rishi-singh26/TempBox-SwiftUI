@@ -1,5 +1,5 @@
 //
-//  Account.swift
+//  Address.swift
 //  TempMail
 //
 //  Created by Rishi Singh on 01/05/25.
@@ -10,7 +10,7 @@ import Foundation
 import MailTMSwift
 
 @Model
-class Account: Identifiable, Codable {
+class Address: Identifiable, Codable {
     @Attribute(.unique) var id: String = ""
     var name: String? = nil
     var address: String = ""

@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @EnvironmentObject private var accountsController: AccountsController
+    @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     
@@ -71,8 +71,8 @@ struct ContentView: View {
                 .font(.footnote)
         } content: {
             Group {
-                if let safeAccount = accountsController.selectedAccount {
-                    MessagesView(accountId: safeAccount.id)
+                if let safeAddress = addressesController.selectedAddress {
+                    MessagesView(addressId: safeAddress.id)
                 } else {
                     Text("Address not selected")
                 }
@@ -80,43 +80,42 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .automatic) {
                     Button {
-                        accountsController.fetchMessages(for: accountsController.selectedAccount!)
+                        addressesController.fetchMessages(for: addressesController.selectedAddress!)
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise.circle")
                     }
-                    .disabled(accountsController.selectedAccount == nil)
+                    .disabled(addressesController.selectedAddress == nil)
                     Button {
-                        addressesViewModel.selectedAccForInfoSheet = accountsController.selectedAccount!
-                        addressesViewModel.isAccountInfoSheetOpen = true
+                        addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
+                        addressesViewModel.isAddressInfoSheetOpen = true
                     } label: {
-                        Label("Account Info", systemImage: "info.circle")
+                        Label("Address Info", systemImage: "info.circle")
                     }
-                    .disabled(accountsController.selectedAccount == nil)
+                    .disabled(addressesController.selectedAddress == nil)
                     Button {
-                        addressesViewModel.selectedAccForEditSheet = accountsController.selectedAccount!
-                        addressesViewModel.isEditAccountSheetOpen = true
+                        addressesViewModel.selectedAddForEditSheet = addressesController.selectedAddress!
+                        addressesViewModel.isEditAddressSheetOpen = true
                     } label: {
                         Label("Edit", systemImage: "pencil.circle")
                     }
-                    .disabled(accountsController.selectedAccount == nil)
+                    .disabled(addressesController.selectedAddress == nil)
                     Button {
                     } label: {
                         Label("Archive", systemImage: "archivebox")
                     }
                     .disabled(true)
                     Button(role: .destructive) {
-                        addressesViewModel.showDeleteAccountAlert = true
-                        addressesViewModel.selectedAccForDeletion = accountsController.selectedAccount!
-                        //                    dataController.deleteAccount(account: account)
+                        addressesViewModel.showDeleteAddressAlert = true
+                        addressesViewModel.selectedAddForDeletion = addressesController.selectedAddress!
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
-                    .disabled(accountsController.selectedAccount == nil)
+                    .disabled(addressesController.selectedAddress == nil)
                 }
             }
         } detail: {
-            if let safeMessage = accountsController.selectedMessage, let safeAccount = accountsController.selectedAccount {
-                MessageDetailView(message: safeMessage, account: safeAccount)
+            if let safeMessage = addressesController.selectedMessage, let safeAddress = addressesController.selectedAddress {
+                MessageDetailView(message: safeMessage, address: safeAddress)
             } else {
                 Text("No message selected")
             }
@@ -124,12 +123,12 @@ struct ContentView: View {
 #endif
     }
     
-#if os(iOS)
+//#if os(iOS)
     /// This method will save the address to swiftdata
     func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) {
         let addresses = (v1Data?.addresses ?? []).filter { address in
-            let idMatches = accountsController.accounts.first(where: { account in
-                account.id == address.id
+            let idMatches = addressesController.addresses.first(where: { existingAddress in
+                existingAddress.id == address.id
             })
             return idMatches == nil
         }
@@ -144,7 +143,7 @@ struct ContentView: View {
         
         for address in addresses {
             group.enter()
-            accountsController.loginAndSaveAddress(address: address) { status, message in
+            addressesController.loginAndSaveAddress(address: address) { status, message in
                 if !status {
                     errorMap[address.id] = message
                 }
@@ -157,7 +156,7 @@ struct ContentView: View {
         }
         didMigrateData = true
     }
-#endif
+//#endif
 }
 
 struct NewAddressBtn: View {
@@ -190,7 +189,7 @@ struct NewAddressBtn: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
         .environmentObject(SettingsViewModel.shared)
         .environmentObject(AddressesViewModel.shared)
 }

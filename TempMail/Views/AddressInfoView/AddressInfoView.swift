@@ -9,7 +9,7 @@ import SwiftUI
 
 struct AddressInfoView: View {
     @Environment(\.dismiss) var dismiss
-    let account: Account
+    let address: Address
     
     @State private var isPasswordBlurred = true
     
@@ -26,22 +26,22 @@ struct AddressInfoView: View {
     func IOSAddressInfo() -> some View {
         NavigationView {
             List {
-                Section(footer: MarkdownLinkText(markdownText: "If you wish to use this account on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
+                Section(footer: MarkdownLinkText(markdownText: "If you wish to use this address on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
                     HStack {
                         Text("Status: ")
                             .font(.headline)
                         Circle()
-                            .fill(account.isDisabled ? .red : .green)
+                            .fill(address.isDisabled ? .red : .green)
                             .frame(width: 10, height: 10)
-                        Text(account.isDisabled ? "Disabled" : "Active")
+                        Text(address.isDisabled ? "Disabled" : "Active")
                     }
                     HStack {
                         Text("Address: ")
                             .font(.headline)
-                        Text(account.address)
+                        Text(address.address)
                         Spacer()
                         Button {
-                            account.address.copyToClipboard()
+                            address.address.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -49,7 +49,7 @@ struct AddressInfoView: View {
                     HStack {
                         Text("Password: ")
                             .font(.headline)
-                        Text(account.password)
+                        Text(address.password)
                             .blur(radius: isPasswordBlurred ? 5 : 0)
                             .onTapGesture {
                                 withAnimation {
@@ -58,7 +58,7 @@ struct AddressInfoView: View {
                             }
                         Spacer()
                         Button {
-                            account.password.copyToClipboard()
+                            address.password.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -71,15 +71,15 @@ struct AddressInfoView: View {
                             Text("Quota usage")
                                 .font(.headline)
                             Spacer()
-                            Text("\(getQuotaString(from: account.used, unit: SizeUnit.KB))/\(getQuotaString(from: account.quota, unit: SizeUnit.MB))")
+                            Text("\(getQuotaString(from: address.used, unit: SizeUnit.KB))/\(getQuotaString(from: address.quota, unit: SizeUnit.MB))")
                                 .font(.footnote)
                         }
                         .padding(.bottom, 6)
-                        ProgressView(value: (Double(account.used) / 100.0), total: (Double(account.quota) / 100.0))
+                        ProgressView(value: (Double(address.used) / 100.0), total: (Double(address.quota) / 100.0))
                     }
                 }
             }
-            .navigationTitle(account.name ?? account.address.extractUsername())
+            .navigationTitle(address.name ?? address.address.extractUsername())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -100,30 +100,30 @@ struct AddressInfoView: View {
     func MacOSAddressInfo() -> some View {
         VStack {
             HStack {
-                Text(account.name ?? account.address.extractUsername())
+                Text(address.name ?? address.address.extractUsername())
                     .font(.title.bold())
                 Spacer()
             }
             .padding()
             ScrollView {
-                MacCustomSection(footer: "If you wish to use this account on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.") {
+                MacCustomSection(footer: "If you wish to use this address on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.") {
                     HStack {
                         Text("Status: ")
                             .font(.headline)
                         Circle()
-                            .fill(account.isDisabled ? .red : .green)
+                            .fill(address.isDisabled ? .red : .green)
                             .frame(width: 10, height: 10)
-                        Text(account.isDisabled ? "Disabled" : "Active")
+                        Text(address.isDisabled ? "Disabled" : "Active")
                         Spacer()
                     }
                     Divider()
                     HStack {
                         Text("Address: ")
                             .font(.headline)
-                        Text(account.address)
+                        Text(address.address)
                         Spacer()
                         Button {
-                            account.address.copyToClipboard()
+                            address.address.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -132,7 +132,7 @@ struct AddressInfoView: View {
                     HStack {
                         Text("Password: ")
                             .font(.headline)
-                        Text(account.password)
+                        Text(address.password)
                             .blur(radius: isPasswordBlurred ? 5 : 0)
                             .onTapGesture {
                                 withAnimation {
@@ -141,7 +141,7 @@ struct AddressInfoView: View {
                             }
                         Spacer()
                         Button {
-                            account.password.copyToClipboard()
+                            address.password.copyToClipboard()
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
@@ -154,12 +154,12 @@ struct AddressInfoView: View {
                             Text("Quota usage")
                                 .font(.headline)
                             Spacer()
-                            Text("\(getQuotaString(from: account.used, unit: SizeUnit.KB))/\(getQuotaString(from: account.quota, unit: SizeUnit.MB))")
+                            Text("\(getQuotaString(from: address.used, unit: SizeUnit.KB))/\(getQuotaString(from: address.quota, unit: SizeUnit.MB))")
                                 .font(.footnote)
                         }
                         .padding(.bottom, 6)
                         Divider()
-                        ProgressView(value: (Double(account.used) / 100.0), total: (Double(account.quota) / 100.0))
+                        ProgressView(value: (Double(address.used) / 100.0), total: (Double(address.quota) / 100.0))
                     }
                 }
             }
@@ -182,30 +182,7 @@ struct AddressInfoView: View {
     }
 }
 
-//struct AccountInfoView_Previews: PreviewProvider {
-//    
-//    static var previews: some View {
-//        List {
-//            Section(footer: Text("If you wish to use this account on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
-//                HStack {
-//                    Text("Status")
-//                    Text("Data")
-//                        .blur(radius: 5)
-//                }
-//            }
-//            VStack {
-//                ProgressView(value: 50.0, total: 100.0) {
-//                    Text("20.0 MB / 40.0 MB")
-//                        .font(.footnote)
-//                }
-//                .padding(.vertical)
-//            }
-//        }
-//    }
-//}
-
-
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
 }

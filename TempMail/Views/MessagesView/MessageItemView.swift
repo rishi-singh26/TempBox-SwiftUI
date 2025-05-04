@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct MessageItemView: View {
-    @EnvironmentObject private var accountsController: AccountsController
+    @EnvironmentObject private var addressesController: AddressesController
     @ObservedObject var controller: MessagesViewModel
     
     let message: Message
-    let account: Account
+    let address: Address
     
     var messageHeader: String {
         message.data.from.name == "" ? message.data.from.address : message.data.from.name
@@ -43,7 +43,7 @@ struct MessageItemView: View {
         }
         .swipeActions(edge: .leading) {
             Button {
-                accountsController.updateMessage(messageData: message, account: account, data: ["seen": !message.data.seen])
+                addressesController.updateMessage(messageData: message, address: address, data: ["seen": !message.data.seen])
             } label: {
                 Label(message.data.seen ? "Unread" : "Read", systemImage: message.data.seen ? "envelope.badge.fill" : "envelope.open.fill")
             }
@@ -60,7 +60,7 @@ struct MessageItemView: View {
         }
         .contextMenu {
             Button {
-                accountsController.updateMessage(messageData: message, account: account, data: ["seen": !message.data.seen])
+                addressesController.updateMessage(messageData: message, address: address, data: ["seen": !message.data.seen])
             } label: {
                 Label(message.data.seen ? "Mark as unread" : "Mark as read", systemImage: message.data.seen ? "envelope.badge" : "envelope.open")
             }
@@ -78,5 +78,5 @@ struct MessageItemView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
 }

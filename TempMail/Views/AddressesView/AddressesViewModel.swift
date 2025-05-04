@@ -13,17 +13,17 @@ class AddressesViewModel: ObservableObject {
     @Published var searchText = ""
     @Published var isNewAddressSheetOpen = false
     
-    @Published var showDeleteAccountAlert = false
-    @Published var selectedAccForDeletion: Account?
+    @Published var showDeleteAddressAlert = false
+    @Published var selectedAddForDeletion: Address?
         
     @Published var showingErrorAlert = false
     @Published var errorAlertMessage = ""
     
-    @Published var isAccountInfoSheetOpen = false
-    var selectedAccForInfoSheet: Account?
+    @Published var isAddressInfoSheetOpen = false
+    var selectedAddForInfoSheet: Address?
     
-    @Published var isEditAccountSheetOpen = false
-    var selectedAccForEditSheet: Account?
+    @Published var isEditAddressSheetOpen = false
+    var selectedAddForEditSheet: Address?
     
     @Published var showSettingsSheet = false
         

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ImportAddressesView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
-    @EnvironmentObject private var accountsController: AccountsController
+    @EnvironmentObject private var addressesController: AddressesController
     
     var body: some View {
 #if os(iOS)
@@ -23,7 +23,7 @@ struct ImportAddressesView: View {
     @ViewBuilder
     func IOSView() -> some View {
         List(
-            settingsViewModel.getV1Addresses(accounts: accountsController.accounts),
+            settingsViewModel.getV1Addresses(addresses: addressesController.addresses),
             id: \.self,
             selection: $settingsViewModel.selectedV1Addresses
         ) { address in
@@ -53,7 +53,7 @@ struct ImportAddressesView: View {
                     settingsViewModel.selectedV1Addresses = []
                 }
                 Button("Select All") {
-                    settingsViewModel.selectedV1Addresses = Set(settingsViewModel.getV1Addresses(accounts: accountsController.accounts))
+                    settingsViewModel.selectedV1Addresses = Set(settingsViewModel.getV1Addresses(addresses: addressesController.addresses))
                 }
                 Spacer()
                 Button("Import") {
@@ -114,7 +114,7 @@ struct ImportAddressesView: View {
     @ViewBuilder
     func AddressView() -> some View {
         List(
-            settingsViewModel.getV1Addresses(accounts: accountsController.accounts),
+            settingsViewModel.getV1Addresses(addresses: addressesController.addresses),
             selection: $settingsViewModel.selectedV1Addresses
         ) { address in
             HStack {
@@ -150,7 +150,7 @@ struct ImportAddressesView: View {
                 settingsViewModel.selectedV1Addresses = []
             }
             Button("Select All") {
-                settingsViewModel.selectedV1Addresses = Set(settingsViewModel.getV1Addresses(accounts: accountsController.accounts))
+                settingsViewModel.selectedV1Addresses = Set(settingsViewModel.getV1Addresses(addresses: addressesController.addresses))
             }
             Button("Import") {
                 Task {
@@ -177,7 +177,7 @@ struct ImportAddressesView: View {
 
         for address in addresses {
             group.enter()
-            accountsController.loginAndSaveAddress(address: address) { status, message in
+            addressesController.loginAndSaveAddress(address: address) { status, message in
                 if !status {
                     errorMap[address.id] = message
                 }
@@ -193,7 +193,7 @@ struct ImportAddressesView: View {
 
 #Preview {
     SettingsView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
         .environmentObject(AddressesViewModel.shared)
         .environmentObject(SettingsViewModel.shared)
 }

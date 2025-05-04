@@ -8,18 +8,18 @@
 import SwiftUI
 
 struct MessagesView: View {
-    @EnvironmentObject private var accountsController: AccountsController
+    @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @StateObject private var controller = MessagesViewModel()
     
-    let accountId: String
+    let addressId: String
     
-    var account: Account? {
-        accountsController.getAccount(withID: accountId)
+    var address: Address? {
+        addressesController.getAddress(withID: addressId)
     }
     
     var messages: [Message] {
-        let safeMessages = accountsController.getAccount(withID: accountId)?.messagesStore?.messages ?? []
+        let safeMessages = addressesController.getAddress(withID: addressId)?.messagesStore?.messages ?? []
         if safeMessages.isEmpty {
             return safeMessages
         }
@@ -36,7 +36,7 @@ struct MessagesView: View {
     }
     
     var body: some View {
-        if let account = account {
+        if let address = address {
             VStack {
                 if messages.isEmpty {
                     VStack {
@@ -45,7 +45,7 @@ struct MessagesView: View {
                         Spacer()
                     }
                 } else {
-                    MessagesList(account: account)
+                    MessagesList(address: address)
                         .listStyle(.plain)
                         .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
                             Button("Cancel", role: .cancel) {
@@ -53,22 +53,22 @@ struct MessagesView: View {
                             }
                             Button("Delete", role: .destructive) {
                                 guard let messForDeletion = controller.selectedMessForDeletion else { return }
-                                accountsController.deleteMessage(message: messForDeletion, account: account)
+                                addressesController.deleteMessage(message: messForDeletion, address: address)
                                 controller.selectedMessForDeletion = nil
                             }
                         } message: {
-                            Text("Are you sure you want to delete this account?")
+                            Text("Are you sure you want to delete this address?")
                         }
                 }
             }
             .searchable(text: $controller.searchText)
-            .navigationTitle(account.name ?? account.address.extractUsername())
+            .navigationTitle(address.name ?? address.address.extractUsername())
 #if os(iOS)
             .toolbar(content: {
                 ToolbarItem {
                     Button("Message Information", systemImage: "info.circle") {
-                        addressesViewModel.selectedAccForInfoSheet = account
-                        addressesViewModel.isAccountInfoSheetOpen = true
+                        addressesViewModel.selectedAddForInfoSheet = address
+                        addressesViewModel.isAddressInfoSheetOpen = true
                     }
                 }
             })
@@ -79,38 +79,38 @@ struct MessagesView: View {
     }
     
     @ViewBuilder
-    func MessagesList(account: Account) -> some View {
+    func MessagesList(address: Address) -> some View {
         Group {
 #if os(iOS)
             List(messages, selection: Binding(get: {
-                accountsController.selectedMessage
+                addressesController.selectedMessage
             }, set: { newVal in
                 DispatchQueue.main.async {
-                    accountsController.selectedMessage = newVal
+                    addressesController.selectedMessage = newVal
                 }
             })) { message in
                 NavigationLink {
-                    MessageDetailView(message: message, account: account)
+                    MessageDetailView(message: message, address: address)
                 }label: {
                     MessageItemView(
                         controller: controller, message: message,
-                        account: account
+                        address: address
                     )
                     .environmentObject(controller)
                 }
             }
 #elseif os(macOS)
             List(messages, selection: Binding(get: {
-                accountsController.selectedMessage
+                addressesController.selectedMessage
             }, set: { newVal in
                 DispatchQueue.main.async {
-                    accountsController.selectedMessage = newVal
+                    addressesController.selectedMessage = newVal
                 }
             })) { message in
                 NavigationLink(value: message) {
                     MessageItemView(
                         controller: controller, message: message,
-                        account: account
+                        address: address
                     )
                     .environmentObject(controller)
                 }
@@ -122,6 +122,6 @@ struct MessagesView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
         .environmentObject(AddressesViewModel.shared)
 }

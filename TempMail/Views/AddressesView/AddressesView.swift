@@ -10,17 +10,17 @@ import SwiftData
 
 struct AddressesView: View {
     @Environment(\.openWindow) var openWindow
-    @EnvironmentObject private var accountsController: AccountsController
+    @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     
-    var filteredAccounts: [Account] {
+    var filteredAddresses: [Address] {
         if addressesViewModel.searchText.isEmpty {
-            return accountsController.accounts
+            return addressesController.addresses
         } else {
             let searchQuery = addressesViewModel.searchText.lowercased()
-            return accountsController.accounts.filter { account in
-                let nameMatches = account.name?.lowercased().contains(searchQuery)
-                let addressMatches = account.address.lowercased().contains(searchQuery)
+            return addressesController.addresses.filter { address in
+                let nameMatches = address.name?.lowercased().contains(searchQuery)
+                let addressMatches = address.address.lowercased().contains(searchQuery)
                 return nameMatches ?? false || addressMatches
             }
         }
@@ -61,31 +61,31 @@ struct AddressesView: View {
         .searchable(text: $addressesViewModel.searchText, placement: .sidebar)
         .listStyle(.sidebar)
         .refreshable {
-            accountsController.fetchAccounts()
+            addressesController.fetchAddresses()
         }
         .sheet(isPresented: $addressesViewModel.isNewAddressSheetOpen) {
             AddAddressView()
         }
-        .sheet(isPresented: $addressesViewModel.isAccountInfoSheetOpen) {
-            AddressInfoView(account: addressesViewModel.selectedAccForInfoSheet!)
+        .sheet(isPresented: $addressesViewModel.isAddressInfoSheetOpen) {
+            AddressInfoView(address: addressesViewModel.selectedAddForInfoSheet!)
         }
-        .sheet(isPresented: $addressesViewModel.isEditAccountSheetOpen) {
-            EditAddressView(account: addressesViewModel.selectedAccForEditSheet!)
+        .sheet(isPresented: $addressesViewModel.isEditAddressSheetOpen) {
+            EditAddressView(address: addressesViewModel.selectedAddForEditSheet!)
         }
         .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
             SettingsView()
         }
-        .alert("Alert!", isPresented: $addressesViewModel.showDeleteAccountAlert) {
+        .alert("Alert!", isPresented: $addressesViewModel.showDeleteAddressAlert) {
             Button("Cancel", role: .cancel) {
                 
             }
             Button("Delete", role: .destructive) {
-                guard let accountForDeletion = addressesViewModel.selectedAccForDeletion else { return }
-                accountsController.deleteAccount(accountForDeletion)
-                addressesViewModel.selectedAccForDeletion = nil
+                guard let addressForDeletion = addressesViewModel.selectedAddForDeletion else { return }
+                addressesController.deleteAddress(addressForDeletion)
+                addressesViewModel.selectedAddForDeletion = nil
             }
         } message: {
-            Text("Are you sure you want to delete this account?")
+            Text("Are you sure you want to delete this address?")
         }
     }
     
@@ -95,36 +95,36 @@ struct AddressesView: View {
 #if os(iOS)
             List(
                 selection: Binding(get: {
-                    accountsController.selectedAccount
+                    addressesController.selectedAddress
                 }, set: { newVal in
                     DispatchQueue.main.async {
-                        accountsController.selectedAccount = newVal
+                        addressesController.selectedAddress = newVal
                     }
                 })
             ) {
-                ForEach(filteredAccounts) { account in
+                ForEach(filteredAddresses) { address in
                     NavigationLink {
-                        MessagesView(account: account)
+                        MessagesView(addressId: address.id)
                     } label: {
-                        AddressItemView(account: account)
+                        AddressItemView(address: address)
                     }
                 }
             }
 #elseif os(macOS)
             List(
                 selection: Binding(get: {
-                    accountsController.selectedAccount
+                    addressesController.selectedAddress
                 }, set: { newVal in
                     DispatchQueue.main.async {
                         withAnimation {
-                            accountsController.selectedAccount = newVal
+                            addressesController.selectedAddress = newVal
                         }
                     }
                 })
             ) {
-                ForEach(filteredAccounts) { account in
-                    NavigationLink(value: account) {
-                        AddressItemView(account: account)
+                ForEach(filteredAddresses) { address in
+                    NavigationLink(value: address) {
+                        AddressItemView(address: address)
                     }
                 }
             }
@@ -135,7 +135,7 @@ struct AddressesView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
         .environmentObject(SettingsViewModel.shared)
         .environmentObject(AddressesViewModel.shared)
 }

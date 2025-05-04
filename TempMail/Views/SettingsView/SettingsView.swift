@@ -149,7 +149,7 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
-        .environmentObject(AccountsController.shared)
+        .environmentObject(AddressesController.shared)
         .environmentObject(AddressesViewModel.shared)
         .environmentObject(SettingsViewModel.shared)
 }

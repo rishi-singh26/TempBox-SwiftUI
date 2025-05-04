@@ -11,9 +11,9 @@ struct CompleteMessage: Codable, Identifiable {
     // Use the server's ID as our Identifiable ID
     let id: String
     let msgid: String
-    let from: Address
-    let to: [Address]
-    let cc, bcc: [Address]?
+    let from: EmailUser
+    let to: [EmailUser]
+    let cc, bcc: [EmailUser]?
     let subject: String
     let seen, isDeleted, flagged: Bool
     let hasAttachments: Bool
@@ -58,7 +58,7 @@ struct CompleteMessage: Codable, Identifiable {
     }
 }
 
-struct Address: Codable {
+struct EmailUser: Codable {
     let address: String
     let name: String
 
