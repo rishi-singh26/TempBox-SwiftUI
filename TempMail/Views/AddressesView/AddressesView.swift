@@ -104,7 +104,7 @@ struct AddressesView: View {
             ) {
                 ForEach(filteredAddresses) { address in
                     NavigationLink {
-                        MessagesView(addressId: address.id)
+                        MessagesView(address: address)
                     } label: {
                         AddressItemView(address: address)
                     }

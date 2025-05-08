@@ -12,14 +12,10 @@ struct MessagesView: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @StateObject private var controller = MessagesViewModel()
     
-    let addressId: String
-    
-    var address: Address? {
-        addressesController.getAddress(withID: addressId)
-    }
+    var address: Address
     
     var messages: [Message] {
-        let safeMessages = addressesController.getAddress(withID: addressId)?.messagesStore?.messages ?? []
+        let safeMessages = address.messagesStore?.messages ?? []
         if safeMessages.isEmpty {
             return safeMessages
         }
@@ -36,46 +32,42 @@ struct MessagesView: View {
     }
     
     var body: some View {
-        if let address = address {
-            VStack {
-                if messages.isEmpty {
-                    VStack {
-                        Spacer()
-                        Text("No messages")
-                        Spacer()
-                    }
-                } else {
-                    MessagesList(address: address)
-                        .listStyle(.plain)
-                        .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
-                            Button("Cancel", role: .cancel) {
-                                
-                            }
-                            Button("Delete", role: .destructive) {
-                                guard let messForDeletion = controller.selectedMessForDeletion else { return }
-                                addressesController.deleteMessage(message: messForDeletion, address: address)
-                                controller.selectedMessForDeletion = nil
-                            }
-                        } message: {
-                            Text("Are you sure you want to delete this address?")
+        VStack {
+            if messages.isEmpty {
+                VStack {
+                    Spacer()
+                    Text("No messages")
+                    Spacer()
+                }
+            } else {
+                MessagesList(address: address)
+                    .listStyle(.plain)
+                    .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
+                        Button("Cancel", role: .cancel) {
+                            
                         }
+                        Button("Delete", role: .destructive) {
+                            guard let messForDeletion = controller.selectedMessForDeletion else { return }
+                            addressesController.deleteMessage(message: messForDeletion, address: address)
+                            controller.selectedMessForDeletion = nil
+                        }
+                    } message: {
+                        Text("Are you sure you want to delete this address?")
+                    }
+            }
+        }
+        .searchable(text: $controller.searchText)
+        .navigationTitle(address.name ?? address.address.extractUsername())
+#if os(iOS)
+        .toolbar(content: {
+            ToolbarItem {
+                Button("Message Information", systemImage: "info.circle") {
+                    addressesViewModel.selectedAddForInfoSheet = address
+                    addressesViewModel.isAddressInfoSheetOpen = true
                 }
             }
-            .searchable(text: $controller.searchText)
-            .navigationTitle(address.name ?? address.address.extractUsername())
-#if os(iOS)
-            .toolbar(content: {
-                ToolbarItem {
-                    Button("Message Information", systemImage: "info.circle") {
-                        addressesViewModel.selectedAddForInfoSheet = address
-                        addressesViewModel.isAddressInfoSheetOpen = true
-                    }
-                }
-            })
+        })
 #endif
-        } else {
-            Text("Selected Address not available")
-        }
     }
     
     @ViewBuilder

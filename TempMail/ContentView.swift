@@ -72,7 +72,7 @@ struct ContentView: View {
         } content: {
             Group {
                 if let safeAddress = addressesController.selectedAddress {
-                    MessagesView(addressId: safeAddress.id)
+                    MessagesView(address: safeAddress)
                 } else {
                     Text("Address not selected")
                 }

@@ -183,6 +183,7 @@ struct ImportAddressesView: View {
                 }
                 group.leave()
             }
+            settingsViewModel.selectedV1Addresses.remove(address)
         }
 
         group.notify(queue: .main) {
