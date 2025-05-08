@@ -1,5 +1,5 @@
 {
-  "originHash" : "ce0c70ff28d2130cc1fecfd8cf9720e5f6fb1d6cecc2a14f139f399ee318e60a",
+  "originHash" : "a3bbeff17afbce55a6121aeecb655dec21ca7bcdce0f1c37c6ddd41426d01b9c",
   "pins" : [
     {
       "identity" : "mailtmswift",
@@ -8,6 +8,24 @@
       "state" : {
         "branch" : "main",
         "revision" : "b5f571d389e0c979972fd499fe579cd5cab89ba7"
+      }
+    },
+    {
+      "identity" : "resolver",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/hmlongco/Resolver.git",
+      "state" : {
+        "revision" : "47602af1ac8d7952299fbd0bda3cfbd12cf3a8ca",
+        "version" : "1.5.1"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "0ca3004e98712ea2b39dd881d28448630cce1c99",
+        "version" : "2.7.0"
       }
     },
     {
