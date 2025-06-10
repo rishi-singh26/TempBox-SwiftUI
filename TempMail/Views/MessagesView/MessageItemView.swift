@@ -15,13 +15,17 @@ struct MessageItemView: View {
     let address: Address
     
     var messageHeader: String {
-        message.data.from.name == "" ? message.data.from.address : message.data.from.name
+        if let name = message.from.name, !name.isEmpty {
+            return name
+        } else {
+            return message.from.address
+        }
     }
     
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Circle()
-                .fill(.blue.opacity(message.data.seen ? 0 : 1))
+                .fill(.blue.opacity(message.seen ? 0 : 1))
                 .frame(width: 12)
                 .padding(0)
             VStack(alignment: .leading) {
@@ -31,21 +35,23 @@ struct MessageItemView: View {
                         .fontWeight(.bold)
                         .lineSpacing(1)
                     Spacer()
-                    Text(message.data.createdAt.formatRelativeString())
+                    Text(message.createdAtFormatted)
                         .foregroundColor(.secondary)
                 }
-                Text(message.data.subject)
+                Text(message.subject)
                     .lineLimit(1, reservesSpace: true)
-                Text(message.data.intro ?? "")
+                Text(message.intro ?? "")
                     .foregroundColor(.secondary)
                     .lineLimit(2, reservesSpace: true)
             }
         }
         .swipeActions(edge: .leading) {
             Button {
-                addressesController.updateMessage(messageData: message, address: address, data: ["seen": !message.data.seen])
+                Task {
+                    await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !message.seen)
+                }
             } label: {
-                Label(message.data.seen ? "Unread" : "Read", systemImage: message.data.seen ? "envelope.badge.fill" : "envelope.open.fill")
+                Label(message.seen ? "Unread" : "Read", systemImage: message.seen ? "envelope.badge.fill" : "envelope.open.fill")
             }
             .tint(.blue)
         }
@@ -60,9 +66,11 @@ struct MessageItemView: View {
         }
         .contextMenu {
             Button {
-                addressesController.updateMessage(messageData: message, address: address, data: ["seen": !message.data.seen])
+                Task {
+                    await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !message.seen)
+                }
             } label: {
-                Label(message.data.seen ? "Mark as unread" : "Mark as read", systemImage: message.data.seen ? "envelope.badge" : "envelope.open")
+                Label(message.seen ? "Mark as unread" : "Mark as read", systemImage: message.seen ? "envelope.badge" : "envelope.open")
             }
             Divider()
             Button(role: .destructive) {

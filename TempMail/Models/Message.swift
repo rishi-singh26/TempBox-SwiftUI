@@ -6,38 +6,108 @@
 //
 
 import Foundation
-import MailTMSwift
 
-struct Message: Hashable, Identifiable {
-    
-    var isComplete: Bool = false
-    var data: MTMessage
-        
-    var id: String {
-        data.id
+struct Message: Codable, Identifiable {
+    let id: String
+    let accountId: String
+    let msgid: String
+    let from: EmailAddress
+    let to: [EmailAddress]
+    let cc: [EmailAddress]?
+    let bcc: [EmailAddress]?
+    let subject: String
+    let intro: String?
+    let text: String?
+    let html: [String]?
+    let seen: Bool
+    let flagged: Bool?
+    let isDeleted: Bool
+    let verifications: MessageVerifications?
+    let retention: Bool?
+    let retentionDate: String?
+    let hasAttachments: Bool
+    let attachments: [Attachment]?
+    let size: Int
+    let downloadUrl: String
+    let sourceUrl: String
+    let createdAt: String
+    let updatedAt: String
+}
+
+extension Message: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
-    
-    var msgId: String {
-        data.msgid
-    }
-    
-    var fromAddress: String {
-        return data.from.address
-    }
-    
-    var fromName: String {
-        return data.from.name
-    }
-    
-    init(isComplete: Bool = false, data: MTMessage) {
-        self.isComplete = isComplete
-        self.data = data
-    }
-    
 }
 
 extension Message: Equatable {
     static func == (lhs: Message, rhs: Message) -> Bool {
-        lhs.data.id == rhs.data.id
+        lhs.id == rhs.id
     }
+}
+
+extension Message {
+    var createdAtFormatted: String { createdAt.validateAndToDate()?.formatRelativeString() ?? "" }
+
+    var updatedAtDate: String { updatedAt.validateAndToDate()?.formatRelativeString() ?? "" }
+
+    var fromAddress: String { "\(from.name != nil ? "\(from.name!) " : "")<\(from.address)>" }
+
+    var fromName: String { from.name ?? "" }
+
+    var toAddress: String {
+        to.map {
+            if let name = $0.name, !name.isEmpty {
+                return "\(name) <\($0.address)>"
+            } else {
+                return "<\($0.address)>"
+            }
+        }.joined(separator: ", ")
+    }
+
+    var formattedDate: String {
+        // Format the date string
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        guard let date = dateFormatter.date(from: createdAt) else {
+            return createdAt
+        }
+        
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .short
+        return dateFormatter.string(from: date)
+    }
+}
+
+struct Attachment: Codable, Identifiable {
+    let id: String
+    let filename: String
+    let contentType: String
+    let disposition: String
+    let transferEncoding: String
+    let related: Bool
+    let size: Int
+    let downloadUrl: String
+}
+
+struct EmailAddress: Codable {
+    let name: String?
+    let address: String
+}
+
+struct MessageVerifications: Codable {
+    struct TLS: Codable {
+        let name: String
+        let standardName: String
+        let version: String
+    }
+    
+    let tls: TLS
+    let spf: Bool
+    let dkim: Bool
+}
+
+
+struct MarkAsReadResponse: Codable {
+    let seen: Bool
 }

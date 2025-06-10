@@ -22,7 +22,7 @@ struct MessageDetailView: View {
     var body: some View {
         VStack(alignment: .leading) {
             MessageHeaderView(message: message)
-            Text(message.data.subject)
+            Text(message.subject)
                 .font(.title3.bold())
             if let selectedMessage = addressesController.selectedCompleteMessage,
                selectedMessage.id == message.id,
@@ -37,8 +37,10 @@ struct MessageDetailView: View {
             }
         }
         .onAppear(perform: {
-            addressesController.fetchCompleteMessage(of: message.data, address: address)
-            addressesController.updateMessage(messageData: message, address: address, data: ["seen": true])
+            Task {
+                await addressesController.fetchCompleteMessage(of: message, address: address)
+                await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: true)
+            }
         })
         .sheet(isPresented: $showMessageInfoSheet, content: {
             MessageInfoView(message: message)

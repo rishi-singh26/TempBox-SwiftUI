@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import MailTMSwift
 
 struct EditAddressView: View {
     @Environment(\.dismiss) var dismiss

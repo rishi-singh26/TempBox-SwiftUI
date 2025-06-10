@@ -8,7 +8,6 @@
 import SwiftUI
 import SwiftData
 import Combine
-import MailTMSwift
 
 @MainActor
 class AddressesController: ObservableObject {
@@ -17,10 +16,7 @@ class AddressesController: ObservableObject {
     // SwiftData modelContainer and modelContext
     private let modelContainer: ModelContainer
     private let modelContext: ModelContext
-    
-    private let messageService = MTMessageService()
-    private let accountService = MTAccountService()
-    
+        
     // Published properties for UI updates
     @Published var addresses: [Address] = []
     @Published var isLoading: Bool = false
@@ -36,13 +32,15 @@ class AddressesController: ObservableObject {
     }
     @Published var selectedMessage: Message? {
         willSet {
-            if let safeMessage = newValue?.data, let safeAddress = selectedAddress {
+            if let safeMessage = newValue, let safeAddress = selectedAddress {
                 selectedCompleteMessage = nil
-                self.fetchCompleteMessage(of: safeMessage, address: safeAddress)
+                Task {
+                    await fetchCompleteMessage(of: safeMessage, address: safeAddress)
+                }
             }
         }
     }
-    @Published var selectedCompleteMessage: CompleteMessage?
+    @Published var selectedCompleteMessage: Message?
     // We will fetch complete message when a message from the list is selected
     @Published var loadingCompleteMessage = false
     
@@ -60,7 +58,7 @@ class AddressesController: ObservableObject {
             modelContext = modelContainer.mainContext
             
             // Load addresses on initialization
-            Task { fetchAddresses() }
+            Task { await fetchAddresses() }
         } catch {
             fatalError("Failed to create ModelContainer: \(error.localizedDescription)")
         }
@@ -69,7 +67,7 @@ class AddressesController: ObservableObject {
     // MARK: - Data Operations
     
     /// Fetches all addresses from SwiftData
-    func fetchAddresses() {
+    func fetchAddresses() async {
         isLoading = true
         
         do {
@@ -85,7 +83,7 @@ class AddressesController: ObservableObject {
             /// Fetch messages for each address
             for address in self.addresses {
                 self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: address.messagesStore?.messages ?? []))
-                self.fetchMessages(for: address)
+                await self.fetchMessages(for: address)
             }
         } catch {
             self.show(message: error.localizedDescription)
@@ -102,96 +100,56 @@ class AddressesController: ObservableObject {
     }
     
     /// Get messages for accointId
-    func fetchMessages(for addressId: String) {
+    func fetchMessages(for addressId: String) async {
         if let address = getAddress(withID: addressId) {
-            fetchMessages(for: address)
+            await fetchMessages(for: address)
         }
     }
     
     /// Get messages for address
-    func fetchMessages(for address: Address) {
-        guard let token = address.token else { return }
-        messageService.getAllMessages(page: 1, token: token) { (result: Result<[MTMessage], MTError>) in
-            switch result {
-              case .success(let messages):
-                var messagesArr = [Message]()
-                for message in messages {
-                    messagesArr.append(Message(isComplete: true, data: message))
-                }
-                self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messagesArr))
-              case .failure(let error):
-                self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: error, messages: address.messagesStore?.messages ?? []))
-            }
-        }
-    }
-    
-    func fetchCompleteMessage(of message: MTMessage, address: Address) {
-        guard let url = URL(string: "\(baseURL)/messages/\(message.id)") else {
-            self.show(message: "InvalidURL")
-            return
-        }
-        
+    func fetchMessages(for address: Address) async {
         guard let token = address.token, !token.isEmpty else { return }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        loadingCompleteMessage = true
-        self.clearMessage()
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.loadingCompleteMessage = false
-                    self.show(message: error.localizedDescription)
-                }
-                return
-            }
-
-            guard let data = data else {
-                DispatchQueue.main.async {
-                    self.loadingCompleteMessage = false
-                    self.show(message: "NoData")
-                }
-                return
-            }
-
-            do {
-//                print(String(data: data, encoding: .utf8) ?? "Error One")
-                let message = try JSONDecoder().decode(CompleteMessage.self, from: data)
-                DispatchQueue.main.async {
-                    self.loadingCompleteMessage = false
-                    self.selectedCompleteMessage = message
-                }
-            } catch let decodingError as DecodingError {
-                switch decodingError {
-                case .keyNotFound(let key, let context):
-                    print("Key '\(key)' not found: \(context.debugDescription)")
-                case .typeMismatch(let type, let context):
-                    print("Type '\(type)' mismatch: \(context.debugDescription)")
-                case .valueNotFound(let type, let context):
-                    print("Value '\(type)' not found: \(context.debugDescription)")
-                case .dataCorrupted(let context):
-                    print("Data corrupted: \(context.debugDescription)")
-                default:
-                    print("Decoding error: \(decodingError.localizedDescription)")
-                }
-                DispatchQueue.main.async {
-                    self.loadingCompleteMessage = false
-                }
-            } catch {
-                print(error.localizedDescription)
-                DispatchQueue.main.async {
-                    self.loadingCompleteMessage = false
-                    self.show(message: error.localizedDescription)
-                }
-            }
-        }.resume()
+        do {
+            let messages = try await MailTMService.fetchMessages(token: token)
+            self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messages))
+        } catch {
+            self.updateMessageStore(
+                for: address,
+                store: MessageStore(
+                    isFetching: false,
+                    error: error.localizedDescription,
+                    messages: address.messagesStore?.messages ?? []
+                )
+            )
+        }
     }
     
-    func loginAndSaveAddress(address: AddressData, completion: @escaping (Bool, String) -> Void) {
+    func fetchCompleteMessage(of message: Message, address: Address) async {
+        guard let token = address.token, !token.isEmpty else { return }
+        do {
+            loadingCompleteMessage = true
+            defer { loadingCompleteMessage = false }
+            let message = try await MailTMService.fetchMessage(id: message.id, token: token)
+            self.selectedCompleteMessage = message
+        } catch let decodingError as DecodingError {
+            switch decodingError {
+            case .keyNotFound(let key, let context):
+                print("Key '\(key)' not found: \(context.debugDescription)")
+            case .typeMismatch(let type, let context):
+                print("Type '\(type)' mismatch: \(context.debugDescription)")
+            case .valueNotFound(let type, let context):
+                print("Value '\(type)' not found: \(context.debugDescription)")
+            case .dataCorrupted(let context):
+                print("Data corrupted: \(context.debugDescription)")
+            default:
+                print("Decoding error: \(decodingError.localizedDescription)")
+            }
+        } catch {
+            self.show(message: error.localizedDescription)
+        }
+    }
+    
+    func loginAndSaveAddress(address: AddressData, completion: @escaping (Bool, String) -> Void) async {
         let newAddress = Address(
             id: address.id,
             name: address.addressName,
@@ -204,179 +162,115 @@ class AddressesController: ObservableObject {
             password: address.password
         )
         
-        let auth = MTAuth(address: address.authenticatedUser.account.address, password: address.password)
-        
-        self.accountService.login(using: auth) { [self] (result: Result<String, MTError>) in
-            switch result {
-            case .success(let token):
-                newAddress.token = token
-                addAddress(newAddress)
-                completion(true, "Success")
-            case .failure(let error):
-                completion(false, handleMTError(error: error))
-            }
+        do {
+            let tokenData = try await MailTMService.authenticate(address: address.authenticatedUser.account.address, password: address.password)
+            newAddress.token = tokenData.token
+            await addAddress(newAddress)
+            completion(true, "Success")
+        } catch {
+            completion(false, error.localizedDescription)
+            self.show(message: error.localizedDescription)
         }
     }
     
-    func deleteAddressFromServer(address: Address) {
-        guard let token = address.token else { return } // handle user alert about any issues
-        accountService.deleteAccount(id: address.id, token: token) { (result: Result<MTEmptyResult, MTError>) in
-            if case let .failure(error) = result {
-                print("Error Occurred while deleting address from mail.tm server: \(error)")
-                if let _ = error.errorDescription?.contains("Invalid JWT Token") {
-                    // deleting address from swiftdata because it has been deactivated from mail.tm server
-                    self.permanentlyDeleteAddress(address)
-                }
-                return
-            }
-            self.permanentlyDeleteAddress(address)
+    func deleteAddressFromServer(address: Address) async {
+        guard let token = address.token, !token.isEmpty else { return } // handle user alert about any issues
+        do {
+            try await MailTMService.deleteAccount(id: address.id, token: token)
+            await permanentlyDeleteAddress(address)
+        } catch {
+            await permanentlyDeleteAddress(address)
         }
     }
     
-    func deleteMessage(message: Message, address: Address) {
-        guard let index = address.messagesStore?.messages.firstIndex(where: { mes in
-            mes.id == message.id
-        }) else { return }
-        guard let token = address.token else { return }
-        messageService.deleteMessage(id: message.id, token: token) { (result: Result<MTEmptyResult, MTError>) in
-            if case let .failure(error) = result {
-                print("Error Occurred: \(error)")
-                return
-            }
+    func deleteMessage(message: Message, address: Address) async {
+        guard let token = address.token, !token.isEmpty else { return }
+        do {
+            try await MailTMService.deleteMessage(id: message.id, token: token)
+            
+            guard let index = address.messagesStore?.messages.firstIndex(where: { mes in
+                mes.id == message.id
+            }) else { return }
             self.deleteMessageFromStore(for: address, at: index)
+        } catch {
+            self.show(message: error.localizedDescription)
         }
     }
     
-    func deleteMessage(indexSet: IndexSet, address: Address) {
+    func deleteMessage(indexSet: IndexSet, address: Address) async {
         for index in indexSet {
             let message = address.messagesStore?.messages[index]
-            guard let id = message?.id, let token = address.token else { return }
-            messageService.deleteMessage(id: id, token: token) { (result: Result<MTEmptyResult, MTError>) in
-                if case let .failure(error) = result {
-                    print("Error Occurred: \(error)")
-                    return
-                }
-                self.deleteMessageFromStore(for: address, at: index)
+            if let safeMessage = message {
+                await self.deleteMessage(message: safeMessage, address: address)
             }
         }
     }
     
-    func updateMessage(messageData: Message, address: Address, data: [String: Bool]) {
+    func updateMessageSeenStatus(messageData: Message, address: Address, seen: Bool) async {
         guard let token = address.token, !token.isEmpty else {
             self.show(message: "Unauthorized access attempt: Auth Token not available")
             return
         }
         
-        // Verify that the keys in data is only seen, flagged or isDeleted
-        let allowedKeys: Set<String> = ["seen", "flagged", "isDeleted"]
-        let invalidKeys = data.keys.filter { !allowedKeys.contains($0) }
-
-        guard invalidKeys.isEmpty else {
-            self.show(message: "Invalid keys in update: \(invalidKeys.joined(separator: ", "))")
-            return
-        }
-        
         self.clearMessage()
-        
-        let url = URL(string: "\(baseURL)/messages/\(messageData.id)")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "PATCH"
-        request.setValue("application/merge-patch+json", forHTTPHeaderField: "Content-Type")
-                
-        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
+
         do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: data, options: [])
+            let _ = try await MailTMService.updateMessageSeenStatus(id: messageData.id, token: token, seen: seen)
+            await self.fetchMessages(for: address.id)
         } catch {
-            self.show(message: "Failed to encode request body")
-            return // "Failed to encode request body"
+            self.show(message: error.localizedDescription)
         }
-        
-        let addressId = address.id
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.show(message: error.localizedDescription)
-                }
-                return
-            }
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                DispatchQueue.main.async {
-                    self.show(message: "Invalid response")
-                }
-                return
-            }
-            
-            guard let data = data else {
-                DispatchQueue.main.async {
-                    self.show(message: "No data received")
-                }
-                return
-            }
-            
-            if (200...299).contains(httpResponse.statusCode) {
-                let responseString = String(data: data, encoding: .utf8) ?? "Success but couldn't parse response"
-                DispatchQueue.main.async {
-                    self.fetchMessages(for: addressId)
-                    self.show(message: "Success: \(responseString)")
-                }
-            } else {
-                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
-                DispatchQueue.main.async {
-                    self.show(message: "HTTP \(httpResponse.statusCode): \(errorMessage)")
-                }
-            }
-        }.resume()
     }
     
-    func downloadMessageSource(message: Message, address: Address) {
-        guard let token = address.token else { return }
-        messageService.getSource(id: message.id, token: token) { (result: Result<MTMessageSource, MTError>) in
-            switch result {
-              case .success(let messageSource):
-                let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-                let fileName: String
-                if message.data.subject.isEmpty {
-                    fileName = "message.eml"
-                } else {
-                    fileName = "\(message.data.subject).eml"
-                }
-                let file = paths[0].appendingPathComponent(fileName)
-                do {
-                    try messageSource.data.write(to: file, atomically: true, encoding: String.Encoding.utf8)
-                } catch {
-                    print("Error occurred \(error.localizedDescription)")
-                    // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
-                }
-              case .failure(let error):
-                print("Error occurred \(error)")
+    func downloadMessageSource(message: Message, address: Address) async {
+        guard let token = address.token, !token.isEmpty else { return }
+        
+        do {
+            let (_, data) = try await MailTMService.fetchMessageSource(id: message.id, token: token)
+            
+            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+            
+            let fileName: String
+            if message.subject.isEmpty {
+                fileName = "message.eml"
+            } else {
+                fileName = "\(message.subject).eml"
             }
+            
+            let file = paths[0].appendingPathComponent(fileName)
+            
+            do {
+                try data.write(to: file)
+            } catch {
+                print("Error occurred \(error.localizedDescription)")
+                // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
+            }
+        } catch {
+            self.show(message: error.localizedDescription)
         }
     }
     
     /// Add a new address from MTAccount
-    func addAddress(account: MTAccount, token: String, password: String, addressName: String) {
+    func addAddress(account: Account, token: String, password: String, addressName: String) async {
         let newAddress = Address(
             id: account.id,
             name: addressName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : addressName,
             address: account.address,
-            quota: account.quotaLimit,
-            used: account.quotaUsed,
-            createdAt: account.createdAt,
-            updatedAt: account.updatedAt,
+            quota: account.quota,
+            used: account.used,
+            createdAt: account.createdAtDate,
+            updatedAt: account.updatedAtDate,
             token: token,
             password: password
         )
-        self.addAddress(newAddress)
+        await addAddress(newAddress)
     }
     
     /// Adds a new address
-    func addAddress(_ address: Address) {
+    func addAddress(_ address: Address) async {
         modelContext.insert(address)
         saveChanges()
-        fetchAddresses()
+        await fetchAddresses()
     }
     
     /// Updates an existing address
@@ -387,36 +281,36 @@ class AddressesController: ObservableObject {
     }
     
     /// Delete address based on its index in the list
-    func deleteAddress(indexSet: IndexSet) {
+    func deleteAddress(indexSet: IndexSet) async {
         for index in indexSet {
             let address = addresses[index]
-            deleteAddress(address)
+            await deleteAddress(address)
         }
     }
     
     /// Delete address based on its id
-    func deleteAddress(id: String) {
+    func deleteAddress(id: String) async {
         let address = addresses.first { add in
             add.id == id
         }
         if let address = address {
-            deleteAddress(address)
+            await deleteAddress(address)
         }
     }
     
     /// Soft deletes an address
-    func deleteAddress(_ address: Address) {
+    func deleteAddress(_ address: Address) async {
         address.isDeleted = true
         address.updatedAt = Date.now
         saveChanges()
-        fetchAddresses()
+        await fetchAddresses()
     }
     
     /// Hard deletes an address from the database
-    func permanentlyDeleteAddress(_ address: Address) {
+    func permanentlyDeleteAddress(_ address: Address) async {
         modelContext.delete(address)
         saveChanges()
-        fetchAddresses()
+        await fetchAddresses()
     }
     
     /// Gets a specific address by ID
@@ -436,11 +330,11 @@ class AddressesController: ObservableObject {
 //    }
     
     /// Toggles the disabled status of an address
-    func toggleAddressStatus(_ address: Address) {
+    func toggleAddressStatus(_ address: Address) async {
         address.isDisabled.toggle()
         address.updatedAt = Date.now
         saveChanges()
-        fetchAddresses()
+        await fetchAddresses()
     }
     
     /// Sets an address's fetching messages status
@@ -452,14 +346,19 @@ class AddressesController: ObservableObject {
         objectWillChange.send()
     }
     
-    func updateMessageInStore(for address: Address, with message: MTMessage, at index: Int) {
-        address.messagesStore?.messages[index].data = message
-        address.messagesStore?.messages.remove(at: index)
+    func updateMessageInStore(for address: Address, with message: Message, at index: Int) {
+        guard let safeAddress = getAddress(withID: address.id) else { return }
+        safeAddress.messagesStore?.messages[index] = message
         objectWillChange.send()
     }
     
     func deleteMessageFromStore(for address: Address, at index: Int) {
-        address.messagesStore?.messages.remove(at: index)
+        // Find address index
+        guard let addressIndex: Array<Address>.Index = addresses.firstIndex(where: { addr in
+            addr.id == address.id
+        }) else { return }
+        // Remove the message from the address at the addressIndex in addresses array
+        addresses[addressIndex].messagesStore?.messages.remove(at: index)
         objectWillChange.send()
     }
     
@@ -484,22 +383,5 @@ class AddressesController: ObservableObject {
     func show(message: String) {
         self.message = message
         self.showMessage = true
-    }
-    
-    func handleMTError(error: MTError) -> String {
-        switch error {
-        case .networkError(let errorString):
-            // Attempt to extract JSON string from the error string
-            if let jsonStartRange = errorString.range(of: "{"),
-               let jsonString = String(errorString[jsonStartRange.lowerBound...]).data(using: .utf8),
-               let json = try? JSONSerialization.jsonObject(with: jsonString) as? [String: Any],
-               let message = json["message"] as? String {
-                return message
-            } else {
-                return error.localizedDescription
-            }
-        default:
-            return error.localizedDescription
-        }
     }
 }

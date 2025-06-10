@@ -57,7 +57,9 @@ struct AddressItemView: View {
                 }
                 .tint(.yellow)
                 Button {
-                    addressesController.fetchMessages(for: address)
+                    Task {
+                        await addressesController.fetchMessages(for: address)
+                    }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
                 }
@@ -86,7 +88,9 @@ struct AddressItemView: View {
             }
             .contextMenu(menuItems: {
                 Button {
-                    addressesController.fetchMessages(for: address)
+                    Task {
+                        await addressesController.fetchMessages(for: address)
+                    }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
                 }

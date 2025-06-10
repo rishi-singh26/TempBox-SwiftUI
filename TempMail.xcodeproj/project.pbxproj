@@ -6,12 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		5B2263022DC3450A0092D6D8 /* MailTMSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 5B2263012DC3450A0092D6D8 /* MailTMSwift */; };
-		5BD8D5762DCC5EBF008C73EE /* Resolver in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD8D5752DCC5EBF008C73EE /* Resolver */; };
-		5BD8D5792DCC5F94008C73EE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD8D5782DCC5F94008C73EE /* Sparkle */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		5B2262E22DC344880092D6D8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -71,9 +65,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5BD8D5792DCC5F94008C73EE /* Sparkle in Frameworks */,
-				5BD8D5762DCC5EBF008C73EE /* Resolver in Frameworks */,
-				5B2263022DC3450A0092D6D8 /* MailTMSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,7 +91,6 @@
 				5B2262D22DC344860092D6D8 /* TempMail */,
 				5B2262E42DC344880092D6D8 /* TempMailTests */,
 				5B2262EE2DC344880092D6D8 /* TempMailUITests */,
-				5B2263002DC3450A0092D6D8 /* Frameworks */,
 				5B2262D12DC344860092D6D8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -113,13 +103,6 @@
 				5B2262EB2DC344880092D6D8 /* TempMailUITests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		5B2263002DC3450A0092D6D8 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -142,9 +125,6 @@
 			);
 			name = TempMail;
 			packageProductDependencies = (
-				5B2263012DC3450A0092D6D8 /* MailTMSwift */,
-				5BD8D5752DCC5EBF008C73EE /* Resolver */,
-				5BD8D5782DCC5F94008C73EE /* Sparkle */,
 			);
 			productName = TempMail;
 			productReference = 5B2262D02DC344860092D6D8 /* TempMail.app */;
@@ -229,9 +209,6 @@
 			mainGroup = 5B2262C72DC344860092D6D8;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				5B2262FF2DC344F80092D6D8 /* XCRemoteSwiftPackageReference "MailTMSwift" */,
-				5BD8D5742DCC5EBF008C73EE /* XCRemoteSwiftPackageReference "Resolver" */,
-				5BD8D5772DCC5F94008C73EE /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5B2262D12DC344860092D6D8 /* Products */;
@@ -633,51 +610,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		5B2262FF2DC344F80092D6D8 /* XCRemoteSwiftPackageReference "MailTMSwift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/devwaseem/MailTMSwift";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-		5BD8D5742DCC5EBF008C73EE /* XCRemoteSwiftPackageReference "Resolver" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/hmlongco/Resolver.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.5.1;
-			};
-		};
-		5BD8D5772DCC5F94008C73EE /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.7.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		5B2263012DC3450A0092D6D8 /* MailTMSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5B2262FF2DC344F80092D6D8 /* XCRemoteSwiftPackageReference "MailTMSwift" */;
-			productName = MailTMSwift;
-		};
-		5BD8D5752DCC5EBF008C73EE /* Resolver */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5BD8D5742DCC5EBF008C73EE /* XCRemoteSwiftPackageReference "Resolver" */;
-			productName = Resolver;
-		};
-		5BD8D5782DCC5F94008C73EE /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5BD8D5772DCC5F94008C73EE /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5B2262C82DC344860092D6D8 /* Project object */;
 }
