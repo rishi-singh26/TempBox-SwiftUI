@@ -15,7 +15,7 @@ struct MessagesView: View {
     var address: Address
     
     var messages: [Message] {
-        let safeMessages = address.messagesStore?.messages ?? []
+        let safeMessages = addressesController.messageStore[address.id]?.messages ?? []
         if safeMessages.isEmpty {
             return safeMessages
         }

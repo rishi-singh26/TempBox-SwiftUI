@@ -21,9 +21,7 @@ class Address: Identifiable, Codable {
     var updatedAt: Date = Date.now
     var token: String?
     var password: String = ""
-    
-    @Transient var messagesStore: MessageStore? = nil
-    
+        
     init(
         id: String,
         name: String?,

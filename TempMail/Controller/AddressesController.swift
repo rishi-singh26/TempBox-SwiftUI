@@ -20,6 +20,7 @@ class AddressesController: ObservableObject {
     // Published properties for UI updates
     @Published var addresses: [Address] = []
     @Published var isLoading: Bool = false
+    @Published var messageStore: [String: MessageStore] = [:]
     // For showing error or success message to user
     @Published var message: String?
     @Published var showMessage: Bool = false
@@ -82,7 +83,7 @@ class AddressesController: ObservableObject {
             
             /// Fetch messages for each address
             for address in self.addresses {
-                self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: address.messagesStore?.messages ?? []))
+                self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: messageStore[address.id]?.messages ?? []))
                 await self.fetchMessages(for: address)
             }
         } catch {
@@ -118,7 +119,7 @@ class AddressesController: ObservableObject {
                 store: MessageStore(
                     isFetching: false,
                     error: error.localizedDescription,
-                    messages: address.messagesStore?.messages ?? []
+                    messages: messageStore[address.id]?.messages ?? []
                 )
             )
         }
@@ -188,7 +189,7 @@ class AddressesController: ObservableObject {
         do {
             try await MailTMService.deleteMessage(id: message.id, token: token)
             
-            guard let index = address.messagesStore?.messages.firstIndex(where: { mes in
+            guard let index = messageStore[address.id]?.messages.firstIndex(where: { mes in
                 mes.id == message.id
             }) else { return }
             self.deleteMessageFromStore(for: address, at: index)
@@ -199,7 +200,7 @@ class AddressesController: ObservableObject {
     
     func deleteMessage(indexSet: IndexSet, address: Address) async {
         for index in indexSet {
-            let message = address.messagesStore?.messages[index]
+            let message = messageStore[address.id]?.messages[index]
             if let safeMessage = message {
                 await self.deleteMessage(message: safeMessage, address: address)
             }
@@ -216,7 +217,11 @@ class AddressesController: ObservableObject {
 
         do {
             let _ = try await MailTMService.updateMessageSeenStatus(id: messageData.id, token: token, seen: seen)
-            await self.fetchMessages(for: address.id)
+//            await self.fetchMessages(for: address.id)
+            guard let index = messageStore[address.id]?.messages.firstIndex(where: { mes in
+                mes.id == messageData.id
+            }) else { return }
+            updateMessageInStore(for: address, with: messageData.copyWith(seen: seen), at: index)
         } catch {
             self.show(message: error.localizedDescription)
         }
@@ -340,15 +345,19 @@ class AddressesController: ObservableObject {
     /// Sets an address's fetching messages status
     func updateMessageStore(for address: Address, store: MessageStore) {
         // Note: This only updates the transient property, not saved to SwiftData
-        address.messagesStore = store
+        messageStore[address.id] = store
         // No need to save changes or refetch as this property is transient
         // Just notify observers that the address object has changed
         objectWillChange.send()
     }
     
     func updateMessageInStore(for address: Address, with message: Message, at index: Int) {
-        guard let safeAddress = getAddress(withID: address.id) else { return }
-        safeAddress.messagesStore?.messages[index] = message
+        guard let safeAddress = getAddress(withID: address.id),
+              var store = messageStore[safeAddress.id],
+              store.messages.indices.contains(index) else { return }
+
+        store.messages[index] = message
+        messageStore[safeAddress.id] = store // This triggers @Published update
         objectWillChange.send()
     }
     
@@ -358,7 +367,7 @@ class AddressesController: ObservableObject {
             addr.id == address.id
         }) else { return }
         // Remove the message from the address at the addressIndex in addresses array
-        addresses[addressIndex].messagesStore?.messages.remove(at: index)
+        messageStore[addresses[addressIndex].id]?.messages.remove(at: index)
         objectWillChange.send()
     }
     

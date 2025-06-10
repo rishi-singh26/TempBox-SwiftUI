@@ -79,6 +79,37 @@ extension Message {
     }
 }
 
+extension Message {
+    func copyWith(seen: Bool) -> Message {
+        Message(
+            id: self.id,
+            accountId: self.accountId,
+            msgid: self.msgid,
+            from: self.from,
+            to: self.to,
+            cc: self.cc,
+            bcc: self.bcc,
+            subject: self.subject,
+            intro: self.intro,
+            text: self.text,
+            html: self.html,
+            seen: seen,
+            flagged: self.flagged,
+            isDeleted: self.isDeleted,
+            verifications: self.verifications,
+            retention: self.retention,
+            retentionDate: self.retentionDate,
+            hasAttachments: self.hasAttachments,
+            attachments: self.attachments,
+            size: self.size,
+            downloadUrl: self.downloadUrl,
+            sourceUrl: self.sourceUrl,
+            createdAt: self.createdAt,
+            updatedAt: self.updatedAt
+        )
+    }
+}
+
 struct Attachment: Codable, Identifiable {
     let id: String
     let filename: String
