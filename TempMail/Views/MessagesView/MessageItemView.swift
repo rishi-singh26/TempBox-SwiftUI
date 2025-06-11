@@ -25,7 +25,7 @@ struct MessageItemView: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Circle()
-                .fill(.blue.opacity(message.seen ? 0 : 1))
+                .fill(.accent.opacity(message.seen ? 0 : 1))
                 .frame(width: 12)
                 .padding(0)
             VStack(alignment: .leading) {
