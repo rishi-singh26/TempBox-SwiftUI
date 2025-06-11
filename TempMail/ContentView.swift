@@ -199,4 +199,5 @@ struct NewAddressBtn: View {
         .environmentObject(AddressesController.shared)
         .environmentObject(SettingsViewModel.shared)
         .environmentObject(AddressesViewModel.shared)
+        .environmentObject(AppController.shared)
 }

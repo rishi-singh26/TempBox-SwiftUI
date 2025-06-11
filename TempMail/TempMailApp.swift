@@ -14,6 +14,7 @@ struct TempMailApp: App {
     @StateObject private var addressesController = AddressesController()
     @StateObject private var addressViewModel = AddressesViewModel()
     @StateObject private var settingsViewModel = SettingsViewModel()
+    @StateObject private var appController = AppController()
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -34,6 +35,7 @@ struct TempMailApp: App {
                 .environmentObject(addressesController)
                 .environmentObject(addressViewModel)
                 .environmentObject(settingsViewModel)
+                .environmentObject(appController)
         }
         .modelContainer(sharedModelContainer)
 #if os(macOS)
