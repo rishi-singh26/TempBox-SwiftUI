@@ -15,7 +15,7 @@ struct MessagesView: View {
     var address: Address
     
     var messages: [Message] {
-        let safeMessages = address.messagesStore?.messages ?? []
+        let safeMessages = addressesController.messageStore[address.id]?.messages ?? []
         if safeMessages.isEmpty {
             return safeMessages
         }
@@ -24,7 +24,7 @@ struct MessagesView: View {
         } else {
             let searchQuery = controller.searchText.lowercased()
             return safeMessages.filter { message in
-                let subMatches = message.data.subject.lowercased().contains(searchQuery)
+                let subMatches = message.subject.lowercased().contains(searchQuery)
                 let fromMatches = message.fromAddress.contains(searchQuery)
                 return subMatches || fromMatches
             }
@@ -47,12 +47,14 @@ struct MessagesView: View {
                             
                         }
                         Button("Delete", role: .destructive) {
-                            guard let messForDeletion = controller.selectedMessForDeletion else { return }
-                            addressesController.deleteMessage(message: messForDeletion, address: address)
-                            controller.selectedMessForDeletion = nil
+                            Task {
+                                guard let messForDeletion = controller.selectedMessForDeletion else { return }
+                                await addressesController.deleteMessage(message: messForDeletion, address: address)
+                                controller.selectedMessForDeletion = nil
+                            }
                         }
                     } message: {
-                        Text("Are you sure you want to delete this address?")
+                        Text("Are you sure you want to delete this message?")
                     }
             }
         }

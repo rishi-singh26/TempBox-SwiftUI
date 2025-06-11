@@ -7,7 +7,6 @@
 
 import SwiftData
 import Foundation
-import MailTMSwift
 
 @Model
 class Address: Identifiable, Codable {
@@ -22,9 +21,7 @@ class Address: Identifiable, Codable {
     var updatedAt: Date = Date.now
     var token: String?
     var password: String = ""
-    
-    @Transient var messagesStore: MessageStore? = nil
-    
+        
     init(
         id: String,
         name: String?,
@@ -70,14 +67,14 @@ class Address: Identifiable, Codable {
         
         // Handle Date - parse from string if needed
         if let createdAtString = try? container.decode(String.self, forKey: .createdAt),
-           let date = ISO8601DateFormatter().date(from: createdAtString) {
+           let date = createdAtString.toDate() {
             createdAt = date
         } else {
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date.now
         }
         
         if let updatedAtString = try? container.decode(String.self, forKey: .updatedAt),
-           let date = ISO8601DateFormatter().date(from: updatedAtString) {
+           let date = updatedAtString.toDate() {
             updatedAt = date
         } else {
             updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? Date.now

@@ -13,15 +13,15 @@ struct AddressItemView: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     
     var isMessagesFetching: Bool {
-        address.messagesStore?.isFetching ?? false
+        addressesController.messageStore[address.id]?.isFetching ?? false
     }
     
     var isMessagesFetchingFailed: Bool {
-        address.messagesStore?.error != nil
+        addressesController.messageStore[address.id]?.error != nil
     }
     
     var unreadMessagesCount: Int {
-        address.messagesStore?.unreadMessagesCount ?? 0
+        addressesController.messageStore[address.id]?.unreadMessagesCount ?? 0
     }
     
     var addresName: String {
@@ -57,7 +57,9 @@ struct AddressItemView: View {
                 }
                 .tint(.yellow)
                 Button {
-                    addressesController.fetchMessages(for: address)
+                    Task {
+                        await addressesController.fetchMessages(for: address)
+                    }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
                 }
@@ -86,7 +88,9 @@ struct AddressItemView: View {
             }
             .contextMenu(menuItems: {
                 Button {
-                    addressesController.fetchMessages(for: address)
+                    Task {
+                        await addressesController.fetchMessages(for: address)
+                    }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
                 }

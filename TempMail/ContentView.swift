@@ -46,7 +46,9 @@ struct ContentView: View {
                                 print(content)
                                 let (v1Data, _, message) = ImportExportService.decodeDataForImport(from: content)
                                 print(v1Data ?? "Version one data not available", message)
-                                importAddresses(v1Data: v1Data) { _ in
+                                Task {
+                                    await importAddresses(v1Data: v1Data) { _ in
+                                    }
                                 }
                             } else {
                                 didMigrateData = true
@@ -80,7 +82,9 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .automatic) {
                     Button {
-                        addressesController.fetchMessages(for: addressesController.selectedAddress!)
+                        Task {
+                            await addressesController.fetchMessages(for: addressesController.selectedAddress!)
+                        }
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise.circle")
                     }
@@ -125,7 +129,7 @@ struct ContentView: View {
     
 //#if os(iOS)
     /// This method will save the address to swiftdata
-    func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) {
+    func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) async {
         let addresses = (v1Data?.addresses ?? []).filter { address in
             let idMatches = addressesController.addresses.first(where: { existingAddress in
                 existingAddress.id == address.id
@@ -143,7 +147,7 @@ struct ContentView: View {
         
         for address in addresses {
             group.enter()
-            addressesController.loginAndSaveAddress(address: address) { status, message in
+            await addressesController.loginAndSaveAddress(address: address) { status, message in
                 if !status {
                     errorMap[address.id] = message
                 }

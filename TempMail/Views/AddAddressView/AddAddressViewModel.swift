@@ -6,16 +6,12 @@
 //
 
 import Foundation
-import MailTMSwift
 import Combine
 import CoreData
 import SwiftUI
 
+@MainActor
 class AddAddressViewModel: ObservableObject {
-    // MARK: - Services
-    private let accountService = MTAccountService()
-    let domainService = MTDomainService()
-    
     // MARK: - Address variables
     @Published var addressName: String = ""
     @Published var address: String = ""
@@ -45,8 +41,16 @@ class AddAddressViewModel: ObservableObject {
     }
     
     // MARK: - Domain variables
-    @Published var domains = [MTDomain]()
-    @Published var selectedDomain: MTDomain = MTDomain(id: "", domain: "", isActive: false, isPrivate: false, createdAt: Date.now, updatedAt: Date.now)
+    @Published var domains = [Domain]()
+    // TODO: Remove the defalut domain
+    @Published var selectedDomain: Domain = Domain(
+        id: "",
+        domain: "",
+        isActive: false,
+        isPrivate: false,
+        createdAt: Date.now.ISO8601Format(),
+        updatedAt: Date.now.ISO8601Format()
+    )
     
     // MARK: - Error Alert variables
     @Published var errorMessage = ""
@@ -62,21 +66,21 @@ class AddAddressViewModel: ObservableObject {
     @Published var isCreatingNewAddress = true
     
     init() {
-        loadDomains()
+        Task {
+            await loadDomains()
+        }
     }
     
-    func loadDomains() {
-        domainService.getAllDomains { (result: Result<[MTDomain], MTError>) in
-            switch result {
-              case .success(let domains):
-                self.domains = domains
-                if !domains.isEmpty {
-                    self.selectedDomain = domains[0]
-                }
-              case .failure(let error):
-                self.errorMessage = error.localizedDescription
-                self.showErrorAlert = true
+    func loadDomains() async {
+        do {
+            let domainResponse = try await MailTMService.fetchDomains()
+            domains = domainResponse
+            if !domains.isEmpty {
+                self.selectedDomain = domains[0]
             }
+        } catch {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
         }
     }
     

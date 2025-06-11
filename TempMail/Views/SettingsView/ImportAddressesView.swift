@@ -58,7 +58,7 @@ struct ImportAddressesView: View {
                 Spacer()
                 Button("Import") {
                     Task {
-                        importAddresses { errorDictionary in
+                        await importAddresses { errorDictionary in
                             settingsViewModel.errorDict = errorDictionary
                         }
                     }
@@ -154,7 +154,7 @@ struct ImportAddressesView: View {
             }
             Button("Import") {
                 Task {
-                    importAddresses { errorDictionary in
+                    await importAddresses { errorDictionary in
                         settingsViewModel.errorDict = errorDictionary
                     }
                 }
@@ -165,7 +165,7 @@ struct ImportAddressesView: View {
     }
 #endif
     
-    func importAddresses(completion: @escaping ([String: String]) -> Void) {
+    func importAddresses(completion: @escaping ([String: String]) -> Void) async {
         let addresses = settingsViewModel.selectedV1Addresses
         if addresses.isEmpty {
             completion([:])
@@ -177,7 +177,7 @@ struct ImportAddressesView: View {
 
         for address in addresses {
             group.enter()
-            addressesController.loginAndSaveAddress(address: address) { status, message in
+            await addressesController.loginAndSaveAddress(address: address) { status, message in
                 if !status {
                     errorMap[address.id] = message
                 }

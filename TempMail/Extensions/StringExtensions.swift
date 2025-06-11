@@ -71,13 +71,14 @@ extension String {
 #endif
     }
     
-    func isValidISO8601Date(_ dateString: String) -> Bool {
-        let regex = #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$"#
-        return dateString.range(of: regex, options: .regularExpression) != nil
+    func isValidISO8601Date() -> Bool {
+        // let regex = #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$"#
+        let regex = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+        return self.range(of: regex, options: .regularExpression) != nil
     }
     
     func validateAndToDate() -> Date? {
-        guard isValidISO8601Date(self) else {
+        guard isValidISO8601Date() else {
             return nil
         }
         
@@ -86,8 +87,16 @@ extension String {
     
     func toDate() -> Date? {
         let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
+        // Try parsing with fractional seconds first
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: self) {
+            return date
+        }
+        
+        // Fallback to parsing without fractional seconds
+        formatter.formatOptions = [.withInternetDateTime]
         return formatter.date(from: self)
     }
+
 }

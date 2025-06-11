@@ -61,7 +61,9 @@ struct AddressesView: View {
         .searchable(text: $addressesViewModel.searchText, placement: .sidebar)
         .listStyle(.sidebar)
         .refreshable {
-            addressesController.fetchAddresses()
+            Task {
+                await addressesController.fetchAddresses()
+            }
         }
         .sheet(isPresented: $addressesViewModel.isNewAddressSheetOpen) {
             AddAddressView()
@@ -77,12 +79,13 @@ struct AddressesView: View {
         }
         .alert("Alert!", isPresented: $addressesViewModel.showDeleteAddressAlert) {
             Button("Cancel", role: .cancel) {
-                
             }
             Button("Delete", role: .destructive) {
-                guard let addressForDeletion = addressesViewModel.selectedAddForDeletion else { return }
-                addressesController.deleteAddress(addressForDeletion)
-                addressesViewModel.selectedAddForDeletion = nil
+                Task {
+                    guard let addressForDeletion = addressesViewModel.selectedAddForDeletion else { return }
+                    await addressesController.deleteAddressFromServer(address: addressForDeletion)
+                    addressesViewModel.selectedAddForDeletion = nil
+                }
             }
         } message: {
             Text("Are you sure you want to delete this address?")

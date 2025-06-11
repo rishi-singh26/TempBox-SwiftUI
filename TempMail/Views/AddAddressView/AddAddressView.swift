@@ -6,13 +6,11 @@
 //
 
 import SwiftUI
-import MailTMSwift
 
 struct AddAddressView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject private var addressesController: AddressesController
     @StateObject var controller = AddAddressViewModel()
-    private let accountService = MTAccountService()
 
     var body: some View {
 #if os(iOS)
@@ -88,12 +86,13 @@ struct AddAddressView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        createAddress()
+                        Task {
+                            await createAddress()
+                        }
                     } label: {
                         Text("Create")
                             .font(.headline)
                     }
-                    
                 }
                 //                ToolbarItem(placement: .principal) {
                 //                    Picker("Select auth mode", selection: $controller.selectedAuthMode) {
@@ -221,7 +220,9 @@ struct AddAddressView: View {
             
             ToolbarItem(placement: .confirmationAction) {
                 Button {
-                    createAddress()
+                    Task {
+                        await createAddress()
+                    }
                 } label: {
                     Text("Create")
                         .font(.headline)
@@ -235,36 +236,30 @@ struct AddAddressView: View {
     }
 #endif
     
-    func createAddress() {
+    func createAddress() async {
         if !controller.validateInput() { return }
-        let auth = MTAuth(address: controller.getEmail(), password: controller.password)
-        accountService.createAccount(using: auth) { [self] (accountResult: Result<MTAccount, MTError>) in
-          switch accountResult {
-            case .success(let account):
-              login(account: account)
-            case .failure(let error):
-              controller.errorMessage = error.localizedDescription
-              controller.showErrorAlert = true
-          }
+        do {
+            let account = try await MailTMService.createAccount(address: controller.getEmail(), password: controller.password)
+            await login(account: account)
+        } catch {
+            controller.errorMessage = error.localizedDescription
+            controller.showErrorAlert = true
         }
     }
     
-    func login(account: MTAccount) {
-        let auth = MTAuth(address: controller.getEmail(), password: controller.password)
-        accountService.login(using: auth) { [self] (result: Result<String, MTError>) in
-          switch result {
-            case .success(let token):
-              addressesController.addAddress(
-                account: account,
-                token: token,
-                password: controller.password,
-                addressName: controller.addressName
-              )
-              dismiss()
-            case .failure(let error):
-              controller.errorMessage = error.localizedDescription
-              controller.showErrorAlert = true
-          }
+    func login(account: Account) async {
+        do {
+            let tokenData = try await MailTMService.authenticate(address: controller.getEmail(), password: controller.password)
+            await addressesController.addAddress(
+              account: account,
+              token: tokenData.token,
+              password: controller.password,
+              addressName: controller.addressName
+            )
+            dismiss()
+        } catch {
+            controller.errorMessage = error.localizedDescription
+            controller.showErrorAlert = true
         }
     }
 }

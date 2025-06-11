@@ -11,11 +11,11 @@ struct MessageHeaderView: View {
     let message: Message
     
     var messageFromHeader: String {
-        message.data.from.name.isEmpty ? message.data.from.address : message.data.from.name
+        message.fromName.isEmpty ? message.from.address : message.fromName
     }
     
     var messageFromSubHeader: String {
-        message.data.from.name.isEmpty ? "" : message.data.from.address
+        message.fromName.isEmpty ? "" : message.from.address
     }
     var body: some View {
         
@@ -35,7 +35,7 @@ struct MessageHeaderView: View {
                 //                MarkdownLinkText(markdownText: "[\(message.data.from.address)](mailto:\(message.data.from.address))")
             }
             Spacer()
-            Text(message.data.createdAt.formatRelativeString())
+            Text(message.createdAtFormatted)
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

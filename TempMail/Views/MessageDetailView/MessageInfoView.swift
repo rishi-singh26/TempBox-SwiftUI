@@ -29,7 +29,7 @@ struct MessageInfoView: View {
                 Button("Copy Sender Email") {
                     message.fromAddress.copyToClipboard()
                 }
-                Text("Received At: \(message.data.createdAt.formatRelativeString())")
+                Text("Received At: \(message.createdAtFormatted)")
             }
             .navigationTitle("Message Info")
         }
@@ -59,7 +59,7 @@ struct MessageInfoView: View {
                         message.fromAddress.copyToClipboard()
                     }
                     Divider()
-                    Text("Received At: \(message.data.createdAt.formatRelativeString())")
+                    Text("Received At: \(message.createdAtFormatted)")
                 }
                 .padding(.bottom)
             }
