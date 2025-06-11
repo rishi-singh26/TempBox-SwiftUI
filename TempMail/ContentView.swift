@@ -143,22 +143,25 @@ struct ContentView: View {
         }
         
         var errorMap: [String: String] = [:]
-        let group = DispatchGroup()
         
-        for address in addresses {
-            group.enter()
-            await addressesController.loginAndSaveAddress(address: address) { status, message in
-                if !status {
-                    errorMap[address.id] = message
+        await withTaskGroup(of: (String, String?)?.self) { group in
+            for address in addresses {
+                group.addTask {
+                    let (status, message) = await addressesController.loginAndSaveAddress(address: address)
+                    return status ? nil : (address.id, message)
                 }
-                group.leave()
+            }
+            
+            for await result in group {
+                if let (id, message) = result {
+                    errorMap[id] = message
+                }
             }
         }
         
-        group.notify(queue: .main) {
-            completion(errorMap)
-        }
+        settingsViewModel.selectedV1Addresses.removeAll()
         didMigrateData = true
+        completion(errorMap)
     }
 //#endif
 }

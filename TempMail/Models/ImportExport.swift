@@ -28,6 +28,7 @@ struct VersionContainer: Codable {
 // MARK: - Export Version Two models
 struct ExportVersionTwo: Codable, JSONEncodable {
     let version: String = "2.0.0"
+    static let staticVersion: String = "2.0.0"
     let exportDate: String
     let addresses: [ExportVersionTwoAddress]
     
@@ -101,19 +102,36 @@ struct ExportVersionTwo: Codable, JSONEncodable {
     }
 }
 
-struct ExportVersionTwoAddress: Codable {
+struct ExportVersionTwoAddress: Codable, Hashable, Identifiable {
     let addressName: String?
     let id: String
     let email: String
     let password: String
     let archived: String
+    
+    var ifNameElseAddress: String {
+        if let name = addressName, !name.isEmpty {
+            return name
+        } else {
+            return email
+        }
+    }
+        
+    var ifNameThenAddress: String {
+        if let name = addressName, !name.isEmpty {
+            return email
+        } else {
+            return ""
+        }
+    }
 }
 
 // MARK: - Export Version One models
 struct ExportVersionOne: Codable {
+    static let staticVersion: String = "1.0.0"
     let version: String = "1.0.0"
     let exportDate: String
-    let addresses: [AddressData]
+    let addresses: [ExportVersionOneAddress]
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -126,7 +144,7 @@ struct ExportVersionOne: Codable {
             )
         }
         exportDate = try container.decode(String.self, forKey: .exportDate)
-        addresses = try container.decode([AddressData].self, forKey: .addresses)
+        addresses = try container.decode([ExportVersionOneAddress].self, forKey: .addresses)
     }
     
     /// Encodes the object to JSON data or a JSON string
@@ -146,7 +164,7 @@ struct ExportVersionOne: Codable {
     }
 }
 
-struct AddressData: Codable, Equatable, Identifiable, Hashable {
+struct ExportVersionOneAddress: Codable, Equatable, Identifiable, Hashable {
     var id: String {
         authenticatedUser.account.id
     }
@@ -159,7 +177,7 @@ struct AddressData: Codable, Equatable, Identifiable, Hashable {
         hasher.combine(authenticatedUser.account.address)
     }
 
-    static func == (lhs: AddressData, rhs: AddressData) -> Bool {
+    static func == (lhs: ExportVersionOneAddress, rhs: ExportVersionOneAddress) -> Bool {
         return lhs.authenticatedUser.account.id == rhs.authenticatedUser.account.id
         
     }

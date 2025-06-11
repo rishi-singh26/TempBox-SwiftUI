@@ -150,7 +150,7 @@ class AddressesController: ObservableObject {
         }
     }
     
-    func loginAndSaveAddress(address: AddressData, completion: @escaping (Bool, String) -> Void) async {
+    func loginAndSaveAddress(address: ExportVersionOneAddress) async -> (Bool, String) {
         let newAddress = Address(
             id: address.id,
             name: address.addressName,
@@ -167,10 +167,40 @@ class AddressesController: ObservableObject {
             let tokenData = try await MailTMService.authenticate(address: address.authenticatedUser.account.address, password: address.password)
             newAddress.token = tokenData.token
             await addAddress(newAddress)
-            completion(true, "Success")
+            return (true, "Success")
         } catch {
-            completion(false, error.localizedDescription)
             self.show(message: error.localizedDescription)
+            return (false, error.localizedDescription)
+        }
+    }
+    
+    func loginAndSaveAddress(address: ExportVersionTwoAddress) async -> (Bool, String) {
+        let newAddress = Address(
+            id: address.id,
+            name: address.addressName,
+            address: address.email,
+            quota: 0,
+            used: 0,
+            isDisabled: address.archived == "Yes" ? true : false,
+            createdAt: Date.now,
+            updatedAt: Date.now,
+            token: "",
+            password: address.password
+        )
+        
+        do {
+            let tokenData = try await MailTMService.authenticate(address: address.email, password: address.password)
+            newAddress.token = tokenData.token
+            let accountData = try await MailTMService.fetchAccount(id: tokenData.id, token: tokenData.token)
+            newAddress.quota = accountData.quota
+            newAddress.used = accountData.used
+            newAddress.createdAt = accountData.createdAtDate
+            newAddress.updatedAt = accountData.updatedAtDate
+            await addAddress(newAddress)
+            return (true, "Success")
+        } catch {
+            self.show(message: error.localizedDescription)
+            return (false, error.localizedDescription)
         }
     }
     

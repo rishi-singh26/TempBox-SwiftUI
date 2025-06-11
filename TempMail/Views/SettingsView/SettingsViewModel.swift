@@ -21,20 +21,53 @@ class SettingsViewModel: ObservableObject {
     @Published var isPickingFile: Bool = false
     /// Data captured from import file
     @Published var v1ImportData: ExportVersionOne? = nil
-    /// Selected addresses for import/
-    @Published var selectedV1Addresses: Set<AddressData> = []
+    /// Selected V1 addresses for import/
+    @Published var selectedV1Addresses: Set<ExportVersionOneAddress> = []
     /// Dictonary of errors after import attempt [messageId: errorMessage]
     @Published var errorDict: [String: String] = [:]
     /// Data captured from version 2 import file
     @Published var v2ImportData: ExportVersionTwo? = nil
+    /// Selected V2 addresses for import/
+    @Published var selectedV2Addresses: Set<ExportVersionTwoAddress> = []
+    /// Version of the import data, application logic will deped on this
+    @Published var importDataVersion: String? = nil
+    var isImportButtonDisabled: Bool {
+        selectedV1Addresses.isEmpty && selectedV2Addresses.isEmpty
+    }
     
     /// Address in the selected import, the addresses already in swift data are filtered out
-    func getV1Addresses(addresses: [Address]) -> [AddressData] {
+    func getV1Addresses(addresses: [Address]) -> [ExportVersionOneAddress] {
         return (v1ImportData?.addresses ?? []).filter { address in
             let idMatches = addresses.first(where: { existingAddress in
                 address.id == existingAddress.id && !existingAddress.isDeleted
             })
             return idMatches == nil
+        }
+    }
+    
+    /// Address in the selected import file, the addresses already in swift data are filtered out
+    func getV2Addresses(addresses: [Address]) -> [ExportVersionTwoAddress] {
+        return (v2ImportData?.addresses ?? []).filter { address in
+            let idMatches = addresses.first(where: { existingAddress in
+                address.id == existingAddress.id && !existingAddress.isDeleted
+            })
+            return idMatches == nil
+        }
+    }
+    
+    func selectAllAddresses(addresses: [Address]) {
+        if importDataVersion == ExportVersionOne.staticVersion {
+            selectedV1Addresses = Set(getV1Addresses(addresses: addresses))
+        } else if importDataVersion == ExportVersionTwo.staticVersion {
+            selectedV2Addresses = Set(getV2Addresses(addresses: addresses))
+        }
+    }
+    
+    func unSelectAllAddresses() {
+        if importDataVersion == ExportVersionOne.staticVersion {
+            selectedV1Addresses = []
+        } else if importDataVersion == ExportVersionTwo.staticVersion {
+            selectedV2Addresses = []
         }
     }
     
@@ -125,10 +158,14 @@ class SettingsViewModel: ObservableObject {
         
         self.v1ImportData = v1Data
         self.v2ImportData = v2Data
+        selectedV1Addresses = []
+        selectedV2Addresses = []
 
         if v1Data == nil && v2Data == nil {
             showAlert(with: message)
         }
+        
+        importDataVersion = v1Data?.version ?? v2Data?.version ?? nil
     }
     
     
