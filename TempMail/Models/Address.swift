@@ -53,6 +53,22 @@ class Address: Identifiable, Codable {
         case id, name, address, quota, used, isDisabled, isDeleted, createdAt, updatedAt, token, password, isActive
     }
     
+    var ifNameElseAddress: String {
+        if let name = name, !name.isEmpty {
+            return name
+        } else {
+            return address
+        }
+    }
+    
+    var ifNameThenAddress: String {
+        if let name = name, !name.isEmpty {
+            return address
+        } else {
+            return ""
+        }
+    }
+    
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 

@@ -8,8 +8,8 @@
 import Foundation
 
 class ImportExportService {
-    static func decodeDataForImport(from base64: String) -> (ExportVersionOne?, ExportVersionTwo?, String) {
-        guard let json = Base64Service.decodeBase64(base64),
+    static func decodeDataForImport(from importContent: String) -> (ExportVersionOne?, ExportVersionTwo?, String) {
+        guard let json = Base64Service.validateAndDecodeBase64(importContent),
               let jsonData = json.data(using: .utf8) else {
             return (nil, nil, "Decoding from base64 failed")
         }

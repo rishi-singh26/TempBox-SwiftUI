@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 class SettingsViewModel: ObservableObject {
     static var shared = SettingsViewModel()
@@ -35,6 +36,65 @@ class SettingsViewModel: ObservableObject {
             })
             return idMatches == nil
         }
+    }
+    
+    // MARK: - Export page properties
+    @Published var selectedExportAddresses: Set<Address> = []
+    @Published var selectedExportType: ExportTypes = .encoded
+    
+    @Published var textFileDocument = TextFileDocument(text: "Hello World!")
+    @Published var isExportingTextFile: Bool = false
+    @Published var jsonFileDocument = JSONFileDocument.dummyDoc
+    @Published var isExportingJSONFile: Bool = false
+    @Published var csvFileDocument = CSVFileDocument(csvText: "")
+    @Published var isExportingCSVFile: Bool = false
+    
+    var exportFileName: String {
+        "TempBoxExport-\(Date.now.dd_mmm_yyyy())"
+    }
+    
+    func exportAddresses() {
+        if selectedExportAddresses.isEmpty {
+            showAlert(with: "Please select addresses to export.")
+            return
+        }
+        
+        let exportData = ExportVersionTwo(addresses: Array(selectedExportAddresses).map({ address in
+            ExportVersionTwoAddress(addressName: address.name, id: address.id, email: address.address, password: address.password, archived: "No")
+        }))
+        
+        switch selectedExportType {
+        case .encoded:
+            do {
+                let json: String = try exportData.toJSON()
+                textFileDocument = TextFileDocument(text: try Base64Service.encodeBase64(json))
+                isExportingTextFile = true
+            } catch {
+                showAlert(with: error.localizedDescription)
+            }
+        case .JSON:
+            do {
+                jsonFileDocument = try JSONFileDocument(object: exportData)
+                isExportingJSONFile = true
+            } catch {
+                showAlert(with: error.localizedDescription)
+            }
+        case .CSV:
+            csvFileDocument = CSVFileDocument(csvText: exportData.toCSV())
+            isExportingCSVFile = true
+        }
+        
+        selectedExportAddresses = []
+    }
+    func handleExport(_ result: Result<URL, any Error>) -> Void {
+        var message = ""
+        switch result {
+        case .success(let url):
+            message = "Exported successfully"
+        case .failure(let error):
+            message = "Export failed"
+        }
+        showAlert(with: message)
     }
     
     
@@ -113,6 +173,24 @@ class SettingsViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.isNavigatingManually = true
             }
+        }
+    }
+}
+
+
+// MARK: - Export Types
+enum ExportTypes: String, CaseIterable, Identifiable {
+    case encoded = "encoded"
+    case JSON = "JSON"
+    case CSV = "CSV"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .encoded: return "Encoded"
+        case .JSON: return "JSON"
+        case .CSV: return "CSV"
         }
     }
 }

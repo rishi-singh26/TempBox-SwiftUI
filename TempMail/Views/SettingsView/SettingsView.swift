@@ -28,7 +28,7 @@ struct SettingsView: View {
             IOSSettings()
 #endif
         }
-        .alert("Error", isPresented: $settingsViewModel.showErrorAlert) {
+        .alert("Alert", isPresented: $settingsViewModel.showErrorAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(settingsViewModel.errorMessage)

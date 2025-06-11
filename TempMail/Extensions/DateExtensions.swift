@@ -63,5 +63,13 @@ extension Date {
         return "\(formattedDate)\(timeStr)"
     }
 
+    func dd_mmm_yyyy() -> String {
+        return self.formatted(
+            .dateTime
+                .day(.twoDigits)
+                .month(.abbreviated)
+                .year()
+        )
+    }
 }
 
