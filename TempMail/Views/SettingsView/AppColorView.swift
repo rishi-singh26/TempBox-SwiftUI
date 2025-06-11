@@ -9,7 +9,13 @@ import SwiftUI
 
 struct AppColorView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        HStack {
+            Image(systemName: "gear")
+            Image(systemName: "wrench")
+            Image(systemName: "hammer")
+        }
+        Text("Under Construction!")
+            .font(.body)
     }
 }
 

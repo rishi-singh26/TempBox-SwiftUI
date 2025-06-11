@@ -77,7 +77,7 @@ struct SettingsView: View {
             case .exportPage:
                 ExportAddressesView()
             case .appIconPage:
-                AppIconView()
+                EmptyView()
             case .appColorPage:
                 AppColorView()
             case .aboutPage:
