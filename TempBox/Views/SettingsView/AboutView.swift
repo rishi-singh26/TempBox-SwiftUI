@@ -84,25 +84,26 @@ struct AboutView: View {
                 }
             }
             
-            MacCustomSection {
-                VStack(alignment: .leading) {
-                    Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
-                    } label: {
-                        CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
-                    }
-                    .buttonStyle(.link)
-                    Divider()
-                    Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
-                    } label: {
-                        CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
-                    }
-                    .buttonStyle(.link)
-                }
-            }
+//            MacCustomSection {
+//                VStack(alignment: .leading) {
+//                    Button {
+//                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
+//                    } label: {
+//                        CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
+//                    }
+//                    .buttonStyle(.link)
+//                    Divider()
+//                    Button {
+//                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
+//                    } label: {
+//                        CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
+//                    }
+//                    .buttonStyle(.link)
+//                }
+//            }
             
-            MacCustomSection(header: "Copyright © 2025 Rishi Singh. All Rights Reserved.") {
+//            MacCustomSection(header: "Copyright © 2025 Rishi Singh. All Rights Reserved.") {
+            MacCustomSection {
                 Button {
                     settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in")
                 } label: {
@@ -165,20 +166,21 @@ struct AboutView: View {
                 }
             }
             
-            Section {
-                Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
-                } label: {
-                    CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
-                }
-                Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
-                } label: {
-                    CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
-                }
-            }
+//            Section {
+//                Button {
+//                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
+//                } label: {
+//                    CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
+//                }
+//                Button {
+//                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
+//                } label: {
+//                    CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
+//                }
+//            }
             
-            Section("Copyright © 2025 Rishi Singh. All Rights Reserved.") {
+//            Section("Copyright © 2025 Rishi Singh. All Rights Reserved.") {
+            Section {
                 Button {
                     settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in")
                 } label: {

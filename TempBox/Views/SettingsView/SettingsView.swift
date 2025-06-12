@@ -23,6 +23,7 @@ struct SettingsView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     
     @Environment(\.openURL) var openURL
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         Group {
@@ -68,7 +69,9 @@ struct SettingsView: View {
                     settingsViewModel.selectedSetting
                 }, set: { newValue in
                     DispatchQueue.main.async {
-                        settingsViewModel.selectedSetting = newValue
+                        withAnimation(.linear(duration: 0.2)) {
+                            settingsViewModel.selectedSetting = newValue
+                        }
                     }
                 })
             ) {
@@ -180,6 +183,16 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(.headline)
+                    }
+                }
+            }
         }
     }
 #endif

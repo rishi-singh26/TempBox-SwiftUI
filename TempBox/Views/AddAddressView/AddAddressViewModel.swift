@@ -61,9 +61,11 @@ class AddAddressViewModel: ObservableObject {
     var subscriptions: Set<AnyCancellable> = []
     
     // MARK: - Add address or Login
-    let authOptions = ["New", "Login"]
-    @Published var selectedAuthMode = "New"
-    @Published var isCreatingNewAddress = true
+    @Published var selectedAuthMode: AuthTypes = .create
+    
+    var submitBtnText: String {
+        selectedAuthMode == .create ? "Create" : "Login"
+    }
     
     init() {
         Task {
@@ -93,7 +95,7 @@ class AddAddressViewModel: ObservableObject {
     }
     
     func getEmail() -> String {
-        return isCreatingNewAddress ? "\(self.address)@\(self.selectedDomain.domain)" : self.address
+        return selectedAuthMode == .create ? "\(self.address)@\(self.selectedDomain.domain)" : self.address
     }
     
     func validateInput() -> Bool {
@@ -105,12 +107,27 @@ class AddAddressViewModel: ObservableObject {
         }
 
         // Additional validation for new address creation
-        if isCreatingNewAddress && selectedDomain.id.isEmpty {
+        if selectedAuthMode == .create && selectedDomain.id.isEmpty {
             self.errorMessage = "Please select a domain"
             self.showErrorAlert = true
             return false
         }
 
         return true
+    }
+}
+
+// MARK: - Export Types
+enum AuthTypes: String, CaseIterable, Identifiable {
+    case create = "create"
+    case login = "login"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .create: return "Create"
+        case .login: return "Login"
+        }
     }
 }

@@ -82,7 +82,14 @@ struct AddressInfoView: View {
             .navigationTitle(address.name ?? address.address.extractUsername())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
+                    ShareLink(item: """
+                              Login using the details below in TempBox application or at https://mail.tm website.
+                              Email: \(address.address)
+                              Password: \(address.password)
+                              """)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {

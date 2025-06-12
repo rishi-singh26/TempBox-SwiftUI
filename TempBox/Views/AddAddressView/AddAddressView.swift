@@ -13,11 +13,26 @@ struct AddAddressView: View {
     @StateObject var controller = AddAddressViewModel()
 
     var body: some View {
+        Group {
 #if os(iOS)
-        IOSAddAddressForm()
+            IOSAddAddressForm()
 #else
-        MacOSAddAddressForm()
+            MacOSAddAddressForm()
 #endif
+        }
+        .onChange(of: controller.selectedAuthMode, { _, newValue in
+            if newValue == .create {
+                withAnimation {
+                    controller.address = ""
+                    controller.shouldUseRandomPassword ? controller.generateRandomPass() : nil
+                }
+            } else {
+                withAnimation {
+                    controller.address = ""
+                    controller.password = ""
+                }
+            }
+        })
     }
     
 #if os(iOS)
@@ -29,7 +44,7 @@ struct AddAddressView: View {
                     TextField("Address name (Optional)", text: $controller.addressName)
                 }
                 
-                if controller.isCreatingNewAddress {
+                if controller.selectedAuthMode == .create {
                     Section {
                         Picker(selection: $controller.selectedDomain) {
                             ForEach(controller.domains, id: \.self) { domain in
@@ -37,32 +52,26 @@ struct AddAddressView: View {
                             }
                         } label: {
                             TextField("Address", text: $controller.address)
-#if os(iOS)
                                 .autocapitalization(.none)
-#endif
                         }
                         Button("Random address") {
                             controller.generateRandomAddress()
                         }
                     }
-                }
-                
-                if !controller.isCreatingNewAddress {
+                } else {
                     Section {
-                        TextField("Address", text: $controller.address)
-#if os(iOS)
+                        TextField("Email", text: $controller.address)
                             .keyboardType(.emailAddress)
-#endif
                     }
                 }
                 
                 Section {
-                    if !controller.shouldUseRandomPassword || !controller.isCreatingNewAddress {
+                    if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
                         SecureField("Password", text: $controller.password)
                             .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
                             .autocorrectionDisabled(true)
                     }
-                    if controller.isCreatingNewAddress {
+                    if controller.selectedAuthMode == .create {
                         Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
                     }
                 }
@@ -78,44 +87,31 @@ struct AddAddressView: View {
             }
             .navigationTitle("Add Address")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task {
-                            await createAddress()
+                            await handleSubmit()
                         }
                     } label: {
-                        Text("Create")
+                        Text(controller.submitBtnText)
                             .font(.headline)
                     }
                 }
-                //                ToolbarItem(placement: .principal) {
-                //                    Picker("Select auth mode", selection: $controller.selectedAuthMode) {
-                //                        ForEach(controller.authOptions, id: \.self) {
-                //                            Text($0)
-                //                        }
-                //                    }
-                //                    .pickerStyle(.segmented)
-                //                    .frame(width: 170)
-                //                    .onChange(of: controller.selectedAuthMode) { newValue in
-                //                        if newValue == "New" {
-                //                            withAnimation {
-                //                                controller.isCreatingNewAddress = true
-                //                                controller.shouldUseRandomPassword ? controller.generateRandomPass() : nil
-                //                            }
-                //                        } else {
-                //                            withAnimation {
-                //                                controller.isCreatingNewAddress = false
-                //                                controller.password = ""
-                //                            }
-                //                        }
-                //                    }
-                //                }
+                ToolbarItem(placement: .principal) {
+                    Picker("Select auth mode", selection: $controller.selectedAuthMode.animation()) {
+                        ForEach(AuthTypes.allCases) { authType in
+                            Text(authType.displayName).tag(authType)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 170)
+                }
                 
             }
             .alert(isPresented: $controller.showErrorAlert) {
@@ -133,6 +129,13 @@ struct AddAddressView: View {
                 Text("Add Address")
                     .font(.title.bold())
                 Spacer()
+                Picker("", selection: $controller.selectedAuthMode.animation()) {
+                    ForEach(AuthTypes.allCases) { authType in
+                        Text(authType.displayName).tag(authType)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 200)
             }
             .padding()
             ScrollView {
@@ -146,9 +149,9 @@ struct AddAddressView: View {
                     }
                 }
                 
-                if controller.isCreatingNewAddress {
+                if controller.selectedAuthMode == .create {
                     MacCustomSection {
-                        if !controller.shouldUseRandomAddress || !controller.isCreatingNewAddress {
+                        if !controller.shouldUseRandomAddress || controller.selectedAuthMode == .login {
                             HStack {
                                 Text("Address")
                                     .frame(width: 100, alignment: .leading)
@@ -157,7 +160,7 @@ struct AddAddressView: View {
                                     .textFieldStyle(.roundedBorder)
                             }
                         }
-                        if controller.isCreatingNewAddress {
+                        if controller.selectedAuthMode == .create {
                             HStack(alignment: .center) {
                                 Text("Use random address")
                                     .frame(width: 200, alignment: .leading)
@@ -177,10 +180,20 @@ struct AddAddressView: View {
                             }
                         }
                     }
+                } else {
+                    MacCustomSection {
+                        HStack {
+                            Text("Email")
+                                .frame(width: 100, alignment: .leading)
+                            Spacer()
+                            TextField("", text: $controller.address)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    }
                 }
                 
                 MacCustomSection {
-                    if !controller.shouldUseRandomPassword || !controller.isCreatingNewAddress {
+                    if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
                         HStack {
                             Text("Password")
                                 .frame(width: 100, alignment: .leading)
@@ -189,7 +202,7 @@ struct AddAddressView: View {
                                 .textFieldStyle(.roundedBorder)
                         }
                     }
-                    if controller.isCreatingNewAddress {
+                    if controller.selectedAuthMode == .create {
                         HStack(alignment: .center) {
                             Text("Use random password")
                                 .frame(width: 200, alignment: .leading)
@@ -221,10 +234,10 @@ struct AddAddressView: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button {
                     Task {
-                        await createAddress()
+                        await handleSubmit()
                     }
                 } label: {
-                    Text("Create")
+                    Text(controller.submitBtnText)
                         .font(.headline)
                 }
                 
@@ -236,20 +249,37 @@ struct AddAddressView: View {
     }
 #endif
     
+    func handleSubmit() async {
+        if controller.selectedAuthMode == .create {
+            await createAddress()
+        } else {
+            await login()
+        }
+    }
+    
     func createAddress() async {
         if !controller.validateInput() { return }
         do {
             let account = try await MailTMService.createAccount(address: controller.getEmail(), password: controller.password)
-            await login(account: account)
+            let tokenData = try await MailTMService.authenticate(address: controller.getEmail(), password: controller.password)
+            
+            await addressesController.addAddress(
+              account: account,
+              token: tokenData.token,
+              password: controller.password,
+              addressName: controller.addressName
+            )
+            dismiss()
         } catch {
             controller.errorMessage = error.localizedDescription
             controller.showErrorAlert = true
         }
     }
     
-    func login(account: Account) async {
+    func login() async {
         do {
             let tokenData = try await MailTMService.authenticate(address: controller.getEmail(), password: controller.password)
+            let account = try await MailTMService.fetchAccount(id: tokenData.id, token: tokenData.token)
             await addressesController.addAddress(
               account: account,
               token: tokenData.token,

@@ -32,6 +32,16 @@ struct MessageInfoView: View {
                 Text("Received At: \(message.createdAtFormatted)")
             }
             .navigationTitle("Message Info")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(.headline)
+                    }
+                }
+            }
         }
     }
 #endif

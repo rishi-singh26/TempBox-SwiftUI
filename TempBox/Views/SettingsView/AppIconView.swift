@@ -84,6 +84,7 @@ struct AppIconView: View {
                 }
             }
         }
+        .navigationTitle("App Icon")
         .listStyle(.plain)
         .onAppear {
             if let alternateAppIcon = UIApplication.shared.alternateIconName, let appIcon = Icon.allCases.first(where: { $0.appIconName == alternateAppIcon }) {
@@ -110,12 +111,12 @@ struct AppIconView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(minHeight: 125, maxHeight: 512)
-                            .cornerRadius(6)
-                            .shadow(radius: 3)
+                            .cornerRadius(38)
+                            .shadow(radius: 2)
                         if icon.appIconName == currentIcon {
                             Image(systemName: "checkmark.seal.fill")
-                                .padding(4)
-                                .tint(.green)
+                                .padding(12)
+                                .foregroundStyle(.green)
                         }
                     }
                 }

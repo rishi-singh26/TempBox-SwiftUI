@@ -78,13 +78,15 @@ struct ExportAddressesView: View {
         VStack(alignment: .leading) {
             MacCustomSection {
                 HStack {
-                    Text("Choose Export Type")
+                    Text("Export Type")
                     Spacer()
                     Picker("", selection: $settingsViewModel.selectedExportType) {
                         ForEach(ExportTypes.allCases) { exportType in
                             Text(exportType.displayName).tag(exportType)
                         }
                     }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 250)
                 }
             }
             .padding(.top)
