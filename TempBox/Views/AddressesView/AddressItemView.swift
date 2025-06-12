@@ -58,7 +58,7 @@ struct AddressItemView: View {
                 .tint(.yellow)
                 Button {
                     Task {
-                        await addressesController.fetchMessages(for: address)
+                        await addressesController.refreshMessages(for: address)
                     }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
@@ -81,6 +81,9 @@ struct AddressItemView: View {
                 }
                 .tint(.red)
                 Button {
+                    Task {
+                        await addressesController.toggleAddressStatus(address)
+                    }
                 } label: {
                     Label("Archive", systemImage: "archivebox")
                 }
@@ -89,7 +92,7 @@ struct AddressItemView: View {
             .contextMenu(menuItems: {
                 Button {
                     Task {
-                        await addressesController.fetchMessages(for: address)
+                        await addressesController.refreshMessages(for: address)
                     }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise.circle")
@@ -108,6 +111,9 @@ struct AddressItemView: View {
                 }
                 Divider()
                 Button {
+                    Task {
+                        await addressesController.toggleAddressStatus(address)
+                    }
                 } label: {
                     Label("Archive", systemImage: "archivebox")
                 }

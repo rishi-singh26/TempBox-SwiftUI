@@ -88,7 +88,7 @@ struct AddressesView: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to delete this address?")
+            Text("Are you sure you want to delete this address? This action is irreversible. Ones deleted, this address and the associated messages can not be restored.")
         }
     }
     

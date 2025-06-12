@@ -13,12 +13,16 @@ enum SettingPage {
     case exportPage
     case appIconPage
     case appColorPage
+    case archive
     case aboutPage
 }
 
 
 struct SettingsView: View {
+    @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    
+    @Environment(\.openURL) var openURL
     
     var body: some View {
         Group {
@@ -27,6 +31,26 @@ struct SettingsView: View {
 #elseif os(iOS)
             IOSSettings()
 #endif
+        }
+        .alert("Alert", isPresented: $settingsViewModel.showArchAddrDeleteConf, actions: {
+            Button("Cancel", role: .cancel) {}
+            Button("Yes", role: .destructive) {
+                Task {
+                    await deleteArchivedAddresses()
+                }
+            }
+        }, message: {
+            Text("Are you sure you want to delete selected address\(settingsViewModel.selectedArchivedAddresses.count < 2 ? "" : "s")? This action is irreversible. Ones deleted, this address and the associated messages can not be restored.")
+        })
+        .alert("Open Link?", isPresented: $settingsViewModel.showLinkOpenConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Open", role: .destructive) {
+                if let url = URL(string: settingsViewModel.linkToOpen) {
+                    openURL(url)
+                }
+            }
+        } message: {
+            Text(settingsViewModel.linkToOpen)
         }
         .alert("Alert", isPresented: $settingsViewModel.showErrorAlert) {
             Button("OK", role: .cancel) {}
@@ -57,7 +81,11 @@ struct SettingsView: View {
                 NavigationLink(value: SettingPage.appColorPage) {
                     Label("Change App Color", systemImage: "paintpalette")
                 }
+                NavigationLink(value: SettingPage.archive) {
+                    Label("Archived Addresses", systemImage: "archivebox")
+                }
                 
+                Text("")
                 NavigationLink(value: SettingPage.aboutPage) {
                     Label("About TempBox", systemImage: "info.circle")
                 }
@@ -80,6 +108,8 @@ struct SettingsView: View {
                 EmptyView()
             case .appColorPage:
                 AppColorView()
+            case .archive:
+                ArchiveView()
             case .aboutPage:
                 AboutView()
             }
@@ -119,7 +149,15 @@ struct SettingsView: View {
                         Label("Export Addresses", systemImage: "square.and.arrow.up")
                     }
                 }
-
+                
+                Section {
+                    NavigationLink {
+                        ArchiveView()
+                    } label: {
+                        Label("Archived Addresses", systemImage: "archivebox")
+                    }
+                }
+                
                 Section {
                     NavigationLink {
                         AppIconView()
@@ -145,6 +183,24 @@ struct SettingsView: View {
         }
     }
 #endif
+    
+    
+    func deleteArchivedAddresses() async {
+        if settingsViewModel.selectedArchivedAddresses.isEmpty {
+            settingsViewModel.showAlert(with: "Select addresses to delete.")
+            return
+        }
+        
+        await withTaskGroup { group in
+            for address in settingsViewModel.selectedArchivedAddresses {
+                group.addTask {
+                    await addressesController.deleteAddressFromServer(address: address)
+                }
+            }
+        }
+        
+        settingsViewModel.selectedArchivedAddresses.removeAll()
+    }
 }
 
 #Preview {

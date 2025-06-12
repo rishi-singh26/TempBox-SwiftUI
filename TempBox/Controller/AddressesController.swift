@@ -19,6 +19,7 @@ class AddressesController: ObservableObject {
         
     // Published properties for UI updates
     @Published var addresses: [Address] = []
+    @Published var archivedAddresses: [Address] = []
     @Published var isLoading: Bool = false
     @Published var messageStore: [String: MessageStore] = [:]
     // For showing error or success message to user
@@ -72,13 +73,24 @@ class AddressesController: ObservableObject {
         isLoading = true
         
         do {
+            // Fetch unarchived and not deleted addresses
             let descriptor = FetchDescriptor<Address>(
                 predicate: #Predicate<Address> { address in
-                    !address.isDeleted
+                    !address.isDeleted && !address.isArchived
                 },
-                sortBy: [SortDescriptor(\Address.updatedAt, order: .reverse)]
+                sortBy: [SortDescriptor(\Address.createdAt, order: .reverse)]
             )
             addresses = try modelContext.fetch(descriptor)
+            
+            // Fetch archived addresses
+            let archivedDescriptor = FetchDescriptor<Address>(
+                predicate: #Predicate<Address> { address in
+                    address.isArchived
+                },
+                sortBy: [SortDescriptor(\Address.createdAt, order: .reverse)]
+            )
+            archivedAddresses = try modelContext.fetch(archivedDescriptor)
+            
             self.clearMessage()
             
             /// Fetch messages for each address
@@ -98,6 +110,13 @@ class AddressesController: ObservableObject {
         return addresses.first { address in
             address.id == addressId
         }
+    }
+    
+    /// Refresh messages for address
+    func refreshMessages(for address: Address) async {
+        let messages = messageStore[address.id]?.messages ?? []
+        updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: messages))
+        await fetchMessages(for: address)
     }
     
     /// Get messages for accointId
@@ -197,6 +216,18 @@ class AddressesController: ObservableObject {
             newAddress.createdAt = accountData.createdAtDate
             newAddress.updatedAt = accountData.updatedAtDate
             await addAddress(newAddress)
+            return (true, "Success")
+        } catch {
+            self.show(message: error.localizedDescription)
+            return (false, error.localizedDescription)
+        }
+    }
+    
+    func loginAndRestoreAddress(address: Address) async -> (Bool, String) {
+        do {
+            let tokenData = try await MailTMService.authenticate(address: address.address, password: address.password)
+            address.token = tokenData.token
+            await toggleAddressStatus(address)
             return (true, "Success")
         } catch {
             self.show(message: error.localizedDescription)

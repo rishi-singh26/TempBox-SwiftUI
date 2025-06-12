@@ -83,7 +83,7 @@ struct ContentView: View {
                 ToolbarItemGroup(placement: .automatic) {
                     Button {
                         Task {
-                            await addressesController.fetchMessages(for: addressesController.selectedAddress!)
+                            await addressesController.refreshMessages(for: addressesController.selectedAddress!)
                         }
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise.circle")
@@ -104,10 +104,13 @@ struct ContentView: View {
                     }
                     .disabled(addressesController.selectedAddress == nil)
                     Button {
+                        Task {
+                            await addressesController.toggleAddressStatus(addressesController.selectedAddress!)
+                        }
                     } label: {
                         Label("Archive", systemImage: "archivebox")
                     }
-                    .disabled(true)
+                    .disabled(addressesController.selectedAddress == nil)
                     Button(role: .destructive) {
                         addressesViewModel.showDeleteAddressAlert = true
                         addressesViewModel.selectedAddForDeletion = addressesController.selectedAddress!

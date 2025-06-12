@@ -131,6 +131,16 @@ class SettingsViewModel: ObservableObject {
     }
     
     
+    // MARK: - Archive page properties
+    @Published var selectedArchivedAddresses: Set<Address> = []
+    @Published var showArchAddrDeleteConf: Bool = false
+    
+    
+    // MARK: - About page properties
+    @Published var showLinkOpenConfirmation: Bool = false
+    @Published var linkToOpen: String = ""
+    
+    
     // MARK: - Error handelling properties
     @Published var errorMessage: String = ""
     @Published var showErrorAlert: Bool = false
