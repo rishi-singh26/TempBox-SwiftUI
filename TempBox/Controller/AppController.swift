@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct AccentColorMode {
     let light: Color
@@ -14,6 +15,7 @@ struct AccentColorMode {
 
 class AppController: ObservableObject {
     static let shared = AppController()
+    static let appId: String = "6575345984"
     
     @Published var accentColor: Color = .accent
     

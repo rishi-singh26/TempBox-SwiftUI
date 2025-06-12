@@ -139,6 +139,10 @@ class SettingsViewModel: ObservableObject {
     // MARK: - About page properties
     @Published var showLinkOpenConfirmation: Bool = false
     @Published var linkToOpen: String = ""
+    func showLinkConfirmation(url: String) {
+        linkToOpen = url
+        showLinkOpenConfirmation.toggle()
+    }
     
     
     // MARK: - Error handelling properties
