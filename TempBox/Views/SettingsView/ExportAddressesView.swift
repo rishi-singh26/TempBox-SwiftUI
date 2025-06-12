@@ -64,7 +64,7 @@ struct ExportAddressesView: View {
                 .disabled(settingsViewModel.selectedExportAddresses.isEmpty)
             }
         })
-        .navigationTitle("Import Addresses")
+        .navigationTitle("Export Addresses")
         .navigationBarTitleDisplayMode(.inline)
         .background(content: {
             ExporterView()
