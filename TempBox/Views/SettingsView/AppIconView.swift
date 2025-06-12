@@ -30,11 +30,7 @@ struct AppIconView: View {
         }
         
         case primary = 0
-        case alt1
-        case alt2
-        case alt3
-        case alt4
-        case alt5
+        case alt1, alt2, alt3, alt4, alt5, alt6, alt7
         
         var appIconName: String {
             return "AppIcon\(rawValue)"
@@ -69,6 +65,12 @@ struct AppIconView: View {
             IconSelector(
                 title: "\("Blue".localized)",
                 icons: [.alt5]),
+            IconSelector(
+                title: "White on Orange".localized,
+                icons: [.alt6]),
+            IconSelector(
+                title: "\("Orange on White".localized)",
+                icons: [.alt7]),
         ]
     }
     
