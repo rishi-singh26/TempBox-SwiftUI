@@ -35,7 +35,7 @@ struct AddressItemView: View {
             HStack {
                 Text(addresName)
                 Spacer()
-                if !address.isDisabled && !address.isDeleted {
+                if !address.isArchived && !address.isDeleted {
                     if isMessagesFetching {
                         ProgressView()
                             .controlSize(.small)

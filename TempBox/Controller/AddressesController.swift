@@ -181,7 +181,7 @@ class AddressesController: ObservableObject {
             address: address.email,
             quota: 0,
             used: 0,
-            isDisabled: address.archived == "Yes" ? true : false,
+            isArchived: address.archived == "Yes" ? true : false,
             createdAt: Date.now,
             updatedAt: Date.now,
             token: "",
@@ -366,7 +366,7 @@ class AddressesController: ObservableObject {
     
     /// Toggles the disabled status of an address
     func toggleAddressStatus(_ address: Address) async {
-        address.isDisabled.toggle()
+        address.isArchived.toggle()
         address.updatedAt = Date.now
         saveChanges()
         await fetchAddresses()

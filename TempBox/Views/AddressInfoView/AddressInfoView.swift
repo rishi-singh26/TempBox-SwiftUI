@@ -31,9 +31,9 @@ struct AddressInfoView: View {
                         Text("Status: ")
                             .font(.headline)
                         Circle()
-                            .fill(address.isDisabled ? .red : .green)
+                            .fill(address.isArchived ? .red : .green)
                             .frame(width: 10, height: 10)
-                        Text(address.isDisabled ? "Disabled" : "Active")
+                        Text(address.isArchived ? "Archived" : "Active")
                     }
                     HStack {
                         Text("Address: ")
@@ -111,9 +111,9 @@ struct AddressInfoView: View {
                         Text("Status: ")
                             .font(.headline)
                         Circle()
-                            .fill(address.isDisabled ? .red : .green)
+                            .fill(address.isArchived ? .red : .green)
                             .frame(width: 10, height: 10)
-                        Text(address.isDisabled ? "Disabled" : "Active")
+                        Text(address.isArchived ? "Disabled" : "Active")
                         Spacer()
                     }
                     Divider()
