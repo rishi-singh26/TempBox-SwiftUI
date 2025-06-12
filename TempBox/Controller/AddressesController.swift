@@ -201,8 +201,8 @@ class AddressesController: ObservableObject {
             quota: 0,
             used: 0,
             isArchived: address.archived == "Yes" ? true : false,
-            createdAt: Date.now,
-            updatedAt: Date.now,
+            createdAt: address.createdAtDate,
+            updatedAt: address.createdAtDate, // when importing an address, updatedAt will be same as createdAt
             token: "",
             password: address.password
         )

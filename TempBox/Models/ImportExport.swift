@@ -82,16 +82,17 @@ struct ExportVersionTwo: Codable, JSONEncodable {
     
     func toCSV() -> String {
         // CSV Header
-        var csv = "Address Name,ID,Email,Password,Archived\n"
+        var csv = "Address Name,Email,Password,Archived,Created At,ID\n"
 
         // CSV Rows
         for address in addresses {
             let row = [
                 address.addressName ?? "",
-                address.id,
                 address.email,
                 address.password,
-                address.archived
+                address.archived,
+                address.createdAt,
+                address.id,
             ]
             .map { "\"\($0.replacingOccurrences(of: "\"", with: "\"\""))\"" } // escape quotes
             .joined(separator: ",")
@@ -108,6 +109,11 @@ struct ExportVersionTwoAddress: Codable, Hashable, Identifiable {
     let email: String
     let password: String
     let archived: String
+    let createdAt: String
+    
+    var createdAtDate: Date {
+        createdAt.validateAndToDate() ?? Date.now
+    }
     
     var ifNameElseAddress: String {
         if let name = addressName, !name.isEmpty {

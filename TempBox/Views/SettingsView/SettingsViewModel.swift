@@ -93,7 +93,14 @@ class SettingsViewModel: ObservableObject {
         }
         
         let exportData = ExportVersionTwo(addresses: Array(selectedExportAddresses).map({ address in
-            ExportVersionTwoAddress(addressName: address.name, id: address.id, email: address.address, password: address.password, archived: "No")
+            ExportVersionTwoAddress(
+                addressName: address.name,
+                id: address.id,
+                email: address.address,
+                password: address.password,
+                archived: "No",
+                createdAt: address.createdAt.ISO8601Format()
+            )
         }))
         
         switch selectedExportType {
