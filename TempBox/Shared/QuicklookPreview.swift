@@ -5,78 +5,72 @@
 //  Created by Rishi Singh on 11/06/25.
 //
 
-//import Foundation
-//
-//// Usage
-////QuickLookPreview.preview(url: exportedFileURL)
-//
-//enum QuickLookPreview {
-//    static func preview(url: URL) {
-//        #if os(iOS) || os(iPadOS)
-//        QuickLookPreview_iOS.preview(url: url)
-//        #elseif os(macOS)
-//        QuickLookPreview_macOS.preview(url: url)
-//        #endif
-//    }
-//}
-//
-//#if os(iOS) || os(iPadOS)
-//import UIKit
-//import QuickLook
-//
-//final class QuickLookPreview_iOS: NSObject, QLPreviewControllerDataSource, QLPreviewControllerDelegate {
-//    static let shared = QuickLookPreview_iOS()
-//    
-//    private var fileURL: URL?
-//
-//    static func preview(url: URL) {
-//        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-//              let rootVC = scene.windows.first?.rootViewController else {
-//            return
-//        }
-//        shared.fileURL = url
-//        let previewController = QLPreviewController()
-//        previewController.dataSource = shared
-//        previewController.delegate = shared
-//        rootVC.present(previewController, animated: true)
-//    }
-//
-//    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
-//        return fileURL == nil ? 0 : 1
-//    }
-//
-//    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-//        return fileURL! as NSURL
-//    }
-//}
-//#endif
-//
-//#if os(macOS)
-//import AppKit
-//import Quartz
-//
-//enum QuickLookPreview_macOS {
-//    static func preview(url: URL) {
-//        let panel = QLPreviewPanel.shared()
-//        panel?.makeKeyAndOrderFront(nil)
-//        panel?.dataSource = PreviewItemSource(url: url)
-//    }
-//
-//    private class PreviewItemSource: NSObject, QLPreviewPanelDataSource {
-//        let url: URL
-//
-//        init(url: URL) {
-//            self.url = url
-//        }
-//
-//        func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
-//            return 1
-//        }
-//
-//        func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> QLPreviewItem! {
-//            return url as NSURL
-//        }
-//    }
-//}
-//#endif
-//
+import SwiftUI
+
+#if os(iOS) || os(iPadOS)
+import UIKit
+import QuickLook
+
+struct QuicklookPreview: UIViewControllerRepresentable {
+    let urls: [URL]
+    
+    func makeUIViewController(context: Context) -> QLPreviewController {
+        let controller = QLPreviewController()
+        controller.dataSource = context.coordinator
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: QLPreviewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(urls: urls)
+    }
+    
+    class Coordinator: NSObject, QLPreviewControllerDataSource {
+        let urls: [URL]
+        
+        init(urls: [URL]) {
+            self.urls = urls
+        }
+        
+        func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+            return urls.count
+        }
+        
+        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+            return urls[index] as QLPreviewItem
+        }
+    }
+}
+#endif
+
+#if os(macOS)
+import AppKit
+import Quartz
+
+struct QuicklookPreview: NSViewRepresentable {
+    let urls: [URL]
+    var currentIndex: Int = 0
+
+    func makeNSView(context: Context) -> QLPreviewView {
+        let frame = NSRect(x: 0, y: 0, width: 400, height: 300)
+        guard let previewView = QLPreviewView(frame: frame, style: .normal) else {
+            // return an empty NSView() if creation fails
+            return QLPreviewView()
+        }
+        previewView.autoresizingMask = [.width, .height]
+
+        if urls.indices.contains(currentIndex) {
+            previewView.previewItem = urls[currentIndex] as QLPreviewItem
+        }
+
+        return previewView
+    }
+
+    func updateNSView(_ nsView: QLPreviewView, context: Context) {
+        if urls.indices.contains(currentIndex) {
+            nsView.previewItem = urls[currentIndex] as QLPreviewItem
+        }
+    }
+}
+#endif

@@ -54,6 +54,10 @@ extension Message {
     var fromAddress: String { "\(from.name != nil ? "\(from.name!) " : "")<\(from.address)>" }
 
     var fromName: String { from.name ?? "" }
+    
+    var safeAttachments: [Attachment] {
+        hasAttachments ? attachments ?? [] : []
+    }
 
     var toAddress: String {
         to.map {
@@ -110,7 +114,7 @@ extension Message {
     }
 }
 
-struct Attachment: Codable, Identifiable {
+struct Attachment: Codable, Identifiable, Equatable, Hashable {
     let id: String
     let filename: String
     let contentType: String
@@ -119,6 +123,70 @@ struct Attachment: Codable, Identifiable {
     let related: Bool
     let size: Int
     let downloadUrl: String
+    
+    var iconForAttachment: String {
+        let contentType = contentType.lowercased()
+        let filename = filename.lowercased()
+        
+        if contentType.hasPrefix("image/") {
+            return "photo"
+        } else if contentType == "application/pdf" || filename.hasSuffix(".pdf") {
+            return "doc.richtext"
+        } else if contentType.hasPrefix("text/") || filename.hasSuffix(".txt") {
+            return "doc.text"
+        } else if contentType.contains("zip") || contentType.contains("archive") {
+            return "archivebox"
+        } else if contentType.contains("video/") {
+            return "video"
+        } else if contentType.contains("audio/") {
+            return "music.note"
+        } else {
+            return "doc"
+        }
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: Attachment, rhs: Attachment) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+struct AttachmentDownload {
+    let fileURL: URL
+    let fileData: Data
+    let filename: String
+    let contentType: String
+    let messageId: String
+    let attachmentId: String
+}
+
+extension AttachmentDownload {
+    var fileExtension: String {
+        return (filename as NSString).pathExtension.lowercased()
+    }
+    
+    var isImage: Bool {
+        return contentType.hasPrefix("image/") || ["jpg", "jpeg", "png", "gif", "bmp", "webp"].contains(fileExtension)
+    }
+    
+    var isPDF: Bool {
+        return contentType == "application/pdf" || fileExtension == "pdf"
+    }
+    
+    var isText: Bool {
+        return contentType.hasPrefix("text/") || ["txt", "md", "json", "xml", "html", "css", "js"].contains(fileExtension)
+    }
+    
+    var isPreviewable: Bool {
+        return isImage || isPDF || isText
+    }
+    
+    func cleanupTemporaryFile() {
+        try? FileManager.default.removeItem(at: fileURL)
+    }
 }
 
 struct EmailAddress: Codable {

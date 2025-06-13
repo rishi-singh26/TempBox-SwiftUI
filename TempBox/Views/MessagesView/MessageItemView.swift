@@ -35,14 +35,23 @@ struct MessageItemView: View {
                         .fontWeight(.bold)
                         .lineSpacing(1)
                     Spacer()
-                    Text(message.createdAtFormatted)
-                        .foregroundColor(.secondary)
+                    HStack {
+                        Text(message.createdAtFormatted)
+                            .foregroundColor(.secondary)
+                        if message.hasAttachments {
+                            Image(systemName: "paperclip")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 15, height: 15)
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
                 Text(message.subject)
                     .lineLimit(1, reservesSpace: true)
                 Text(message.intro ?? "")
                     .foregroundColor(.secondary)
-                    .lineLimit(2, reservesSpace: true)
+                    .lineLimit(2)
             }
         }
         .swipeActions(edge: .leading) {

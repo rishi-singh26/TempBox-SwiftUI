@@ -9,15 +9,10 @@ import SwiftUI
 
 struct MessageDetailView: View {
     @EnvironmentObject private var addressesController: AddressesController
-    
-    @State var showMessageInfoSheet = false
-    
+    @StateObject private var messageDetailController = MessageDetailViewModel()
+
     let message: Message
     let address: Address
-    
-//    private func getHeaderHTML(_ message: Message) -> String {
-//        "<div style='display: flex; \(DeviceType.isIphone ? "margin-left: 10px;" : "") margin-bottom: 10px;'><div style='display: flex; width: 40px; height: 40px; border-radius: 20px; background-color: #007AFF; align-items: center; justify-content: center; color: white; font-weight: bold;'>\(message.fromName.getInitials())</div><div style='margin-left: 10px;'><div style='font-weight: bold;'>\(message.fromName)</div><a href='mailto:\(message.fromAddress)'>\(message.fromAddress)</a></div></div><div style='display: flex; flex-direction: row; justify-content: flex-end; align-items: center; color: #8f8f8f; font-size: 16px; padding: 5px 15px;'>\(message.data.createdAt.formatRelativeString())</div>";
-//    }
         
     var body: some View {
         VStack(alignment: .leading) {
@@ -42,13 +37,26 @@ struct MessageDetailView: View {
                 await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: true)
             }
         })
-        .sheet(isPresented: $showMessageInfoSheet, content: {
+        .sheet(isPresented: $messageDetailController.showMessageInfoSheet, content: {
             MessageInfoView(message: message)
+                .environmentObject(messageDetailController)
+        })
+        .sheet(isPresented: $messageDetailController.showAttachmentsSheet, content: {
+            AttachemntListView(address: address, message: message)
+                .environmentObject(messageDetailController)
         })
         .toolbar(content: {
+            if let selectedMessage = addressesController.selectedCompleteMessage,
+               selectedMessage.id == message.id, selectedMessage.hasAttachments {
+                ToolbarItem {
+                    Button("Message Information", systemImage: "paperclip") {
+                        messageDetailController.showAttachmentsSheet = true
+                    }
+                }
+            }
             ToolbarItem {
                 Button("Message Information", systemImage: "info.circle") {
-                    showMessageInfoSheet = true
+                    messageDetailController.showMessageInfoSheet = true
                 }
             }
         })
