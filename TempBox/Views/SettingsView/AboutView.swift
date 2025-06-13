@@ -32,7 +32,7 @@ struct AboutView: View {
                     VStack(alignment: .leading) {
                         Text("TempBox")
                             .font(.largeTitle.bold())
-                        Text("Version 2.0.0")
+                        Text("Version 2.0.1")
                             .font(.callout)
                         MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                             .font(.callout)
@@ -128,7 +128,7 @@ struct AboutView: View {
                 VStack(alignment: .leading) {
                     Text("TempBox")
                         .font(.largeTitle.bold())
-                    Text("Version 2.0.0")
+                    Text("Version 2.0.1")
                         .font(.callout)
                     MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                         .font(.callout)

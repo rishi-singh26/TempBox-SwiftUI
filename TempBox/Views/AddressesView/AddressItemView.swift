@@ -73,7 +73,7 @@ struct AddressItemView: View {
                 .tint(.orange)
             }
             .swipeActions(edge: .trailing) {
-                Button(role: .destructive) {
+                Button {
                     addressesViewModel.showDeleteAddressAlert = true
                     addressesViewModel.selectedAddForDeletion = address
                 } label: {
