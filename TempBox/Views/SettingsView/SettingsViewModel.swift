@@ -129,9 +129,9 @@ class SettingsViewModel: ObservableObject {
     func handleExport(_ result: Result<URL, any Error>) -> Void {
         var message = ""
         switch result {
-        case .success(let url):
+        case .success:
             message = "Exported successfully"
-        case .failure(let error):
+        case .failure:
             message = "Export failed"
         }
         showAlert(with: message)
