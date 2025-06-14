@@ -208,6 +208,58 @@ class MailTMService {
         return try await performRequest(request, responseType: Message.self)
     }
     
+    static func downloadAttachment(messageId: String, attachment: Attachment, token: String) async throws -> AttachmentDownload {
+        guard let url = URL(string: "\(baseURL)/messages/\(messageId)/attachment/\(attachment.id)") else {
+            throw MailTMError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        do {
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw MailTMError.networkError(URLError(.badServerResponse))
+            }
+            
+            switch httpResponse.statusCode {
+            case 200...299:
+                // Create temporary file URL
+                let tempDirectory = FileManager.default.temporaryDirectory
+                let tempFileURL = tempDirectory.appendingPathComponent(attachment.filename)
+                
+                // Write data to temporary file
+                try data.write(to: tempFileURL)
+                
+                return AttachmentDownload(
+                    fileURL: tempFileURL,
+                    fileData: data,
+                    filename: attachment.filename,
+                    contentType: attachment.contentType,
+                    messageId: messageId,
+                    attachmentId: attachment.id
+                )
+            case 401:
+                throw MailTMError.authenticationRequired
+            case 404:
+                throw MailTMError.notFound
+            case 429:
+                throw MailTMError.rateLimitExceeded
+            default:
+                throw MailTMError.httpError(httpResponse.statusCode, "Failed to download attachment")
+            }
+        } catch {
+            if error is MailTMError {
+                throw error
+            } else {
+                throw MailTMError.networkError(error)
+            }
+        }
+    }
+    
     // MARK: - Utility Methods
     
     static func setupQuickAccount() async throws -> String {
