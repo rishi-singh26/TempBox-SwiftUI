@@ -17,34 +17,42 @@ class MessageDetailViewModel: ObservableObject {
     @Published var selectedAttachment: Attachment? = nil
     
     // MARK: - Attachment view properties
-    @Published var showingAttachmentOptions = false
-    @Published var downloadedAttachments: [String: AttachmentDownload] = [:] // attachmentId: attachmentDownloadedFile
+    @Published var showShareAttachmentSheet = false
     @Published var showSaveAttachmentSheet = false
+    @Published var downloadedAttachments: [String: AttachmentDownload] = [:] // attachmentId: attachmentDownloadedFile
     @Published var isDownloadingTracker: [String: Bool] = [:] // attachmentId: status
     @Published var downloadErrorTracker: [String: String] = [:] // attachmentId: errorMessage
     
     func downloadAttachments(_ message: Message, token: String) async {
         downloadErrorTracker = [:]
-        
         updateDownloadTracker(message: message, value: true)
-        
-        for attachment in message.safeAttachments {
-            do {
-                let downloaded = try await MailTMService.downloadAttachment(
-                    messageId: message.id,
-                    attachment: attachment,
-                    token: token
-                )
+
+        await withTaskGroup(of: Void.self) { group in
+            for attachment in message.safeAttachments {
+                // Set downloading state
                 await MainActor.run {
-                    downloadedAttachments[attachment.id] = downloaded
-                    isDownloadingTracker[attachment.id] = false
-                    downloadErrorTracker.removeValue(forKey: attachment.id)
+                    isDownloadingTracker[attachment.id] = true
                 }
-            } catch {
-                await MainActor.run {
-                    downloadedAttachments.removeValue(forKey: attachment.id)
-                    isDownloadingTracker[attachment.id] = false
-                    downloadErrorTracker[attachment.id] = error.localizedDescription
+
+                group.addTask {
+                    do {
+                        let downloaded = try await MailTMService.downloadAttachment(
+                            messageId: message.id,
+                            attachment: attachment,
+                            token: token
+                        )
+                        await MainActor.run {
+                            self.downloadedAttachments[attachment.id] = downloaded
+                            self.isDownloadingTracker[attachment.id] = false
+                            self.downloadErrorTracker.removeValue(forKey: attachment.id)
+                        }
+                    } catch {
+                        await MainActor.run {
+                            self.downloadedAttachments.removeValue(forKey: attachment.id)
+                            self.isDownloadingTracker[attachment.id] = false
+                            self.downloadErrorTracker[attachment.id] = error.localizedDescription
+                        }
+                    }
                 }
             }
         }

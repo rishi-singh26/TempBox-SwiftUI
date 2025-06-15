@@ -48,7 +48,7 @@ struct AddressesView: View {
 #endif
         .toolbar {
             ToolbarItem(placement: .automatic) {
-                Button("About TempBox", systemImage: "gear") {
+                Button("Settings", systemImage: "gear") {
 #if os(iOS)
                     addressesViewModel.showSettingsSheet = true
 #elseif os(macOS)

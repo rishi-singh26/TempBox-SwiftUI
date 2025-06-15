@@ -6,15 +6,10 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
-import QuickLook
-import PDFKit
 
 struct AttachemntListView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var mdController: MessageDetailViewModel
-    
-    @Environment(\.dismiss) var dismiss
     
     var address: Address
     var message: Message
@@ -46,50 +41,15 @@ struct AttachemntListView: View {
             mdController.clearAttachmentData()
         }
     }
-    
-#if os(iOS)
-    @ViewBuilder
-    func IOSView(message: Message) -> some View {
-        NavigationView {
-            List(message.attachments ?? []) { attachment in
-                NavigationLink {
-                    if let downloadedAtchmnt = mdController.downloadedAttachments[attachment.id] {
-                        PreviewView(attachment: downloadedAtchmnt)
-                    } else {
-                        Text("Select an attachment")
-                    }
-                } label: {
-                    HStack {
-                        Label(attachment.filename, systemImage: attachment.iconForAttachment)
-                        Spacer()
-                        if mdController.isDownloadingTracker[attachment.id] == true {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                        if mdController.downloadErrorTracker[attachment.id] != nil {
-                            Image(systemName: "info.triangle.fill")
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Attachments")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Done")
-                            .font(.headline)
-                    }
-                }
-            }
-        }
-    }
-#endif
-    
+}
+
 #if os(macOS)
-    @ViewBuilder
-    func MacOSView(message: Message) -> some View {
+struct MacOSView: View {
+    @EnvironmentObject private var mdController: MessageDetailViewModel
+    
+    var message: Message
+    
+    var body: some View {
         NavigationSplitView {
             List(message.safeAttachments, selection: Binding(get: {
                 mdController.selectedAttachment
@@ -100,7 +60,7 @@ struct AttachemntListView: View {
             })
             ) { attachment in
                 NavigationLink(value: attachment) {
-                    AttachmentTile(attachment: attachment)
+                    AttachmentTileMacOS(attachment: attachment)
                 }
             }
             .listStyle(.sidebar)
@@ -122,7 +82,6 @@ struct AttachemntListView: View {
         }
         .frame(minWidth: 900, minHeight: 600)
     }
-#endif
     
     private func handleFileSaveResult(_ result: Result<URL, Error>) {
         switch result {
@@ -134,21 +93,22 @@ struct AttachemntListView: View {
     }
 }
 
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
-}
-
-#if os(macOS)
-struct AttachmentTile: View {
+struct AttachmentTileMacOS: View {
     @EnvironmentObject private var mdController: MessageDetailViewModel
     
     var attachment: Attachment
     
     var body: some View {
         HStack {
-            Label(attachment.filename, systemImage: attachment.iconForAttachment)
+            Label {
+                VStack(alignment: .leading) {
+                    Text(attachment.filename)
+                    Text(attachment.sizeString)
+                        .font(.caption)
+                }
+            } icon: {
+                Image(systemName: attachment.iconForAttachment)
+            }
             Spacer()
             if mdController.isDownloadingTracker[attachment.id] == true {
                 ProgressView()
@@ -179,9 +139,70 @@ struct AttachmentTile: View {
 #endif
 
 #if os(iOS)
+struct IOSView: View {
+    @EnvironmentObject private var mdController: MessageDetailViewModel
+    @Environment(\.dismiss) var dismiss
+    
+    var message: Message
+    
+    var body: some View {
+        NavigationView {
+            List(message.attachments ?? []) { attachment in
+                NavigationLink {
+                    if let downloadedAtchmnt = mdController.downloadedAttachments[attachment.id] {
+                        PreviewView(attachment: downloadedAtchmnt)
+                    } else {
+                        Text("Select an attachment")
+                    }
+                } label: {
+                    AttachmentTileIOS(attachment: attachment)
+                }
+            }
+            .navigationTitle("Attachments")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(.headline)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct AttachmentTileIOS: View {
+    @EnvironmentObject private var mdController: MessageDetailViewModel
+    
+    var attachment: Attachment
+    
+    var body: some View {
+        HStack {
+            Label {
+                VStack(alignment: .leading) {
+                    Text(attachment.filename)
+                    Text(attachment.sizeString)
+                        .font(.caption)
+                }
+            } icon: {
+                Image(systemName: attachment.iconForAttachment)
+            }
+            Spacer()
+            if mdController.isDownloadingTracker[attachment.id] == true {
+                ProgressView()
+                    .controlSize(.small)
+            }
+            if mdController.downloadErrorTracker[attachment.id] != nil {
+                Image(systemName: "info.triangle.fill")
+            }
+        }
+    }
+}
+
 struct PreviewView: View {
     @EnvironmentObject private var mdController: MessageDetailViewModel
-    @Environment(\.dismiss) private var dismiss
     
     var attachment: AttachmentDownload
     
@@ -197,24 +218,26 @@ struct PreviewView: View {
                 ) { result in
                     handleFileSaveResult(result)
                 }
+                .shareSheet(
+                    isPresented: $mdController.showShareAttachmentSheet,
+                    items: [attachment.fileURL],
+                    excludedActivityTypes: [
+                        // iOS-specific exclusions (ignored on macOS)
+                        UIActivity.ActivityType.addToReadingList,
+                        UIActivity.ActivityType.assignToContact
+                    ]
+                )
                 .toolbar {
                     ToolbarTitleMenu {
-                        ShareLink(item: attachment.fileURL) {
+                        Button {
+                            mdController.showShareAttachmentSheet = true
+                        } label: {
                             Label("Share", systemImage: "square.and.arrow.up")
                         }
                         Button {
                             mdController.showSaveAttachmentSheet.toggle()
                         } label: {
                             Label("Save", systemImage: "square.and.arrow.down")
-                        }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            attachment.cleanupTemporaryFile()
-                            dismiss()
-                        } label: {
-                            Text("Done")
-                                .font(.headline)
                         }
                     }
                 }
@@ -230,3 +253,9 @@ struct PreviewView: View {
     }
 }
 #endif
+
+#Preview {
+    ContentView()
+        .environmentObject(AddressesController.shared)
+        .environmentObject(AddressesViewModel.shared)
+}

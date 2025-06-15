@@ -13,6 +13,12 @@ class ByteConverterService {
     private var bytes: Double = 0.0
     private var bits: Int = 0
     
+    init(kiloBytes: Double) {
+        let bytes = kiloBytes * 1000.0;
+        self.bytes = bytes
+        self.bits = Int(ceil(bytes * 8.0))
+    }
+    
     init(bytes: Double) {
         self.bytes = bytes
         self.bits = Int(ceil(bytes * 8.0))

@@ -145,6 +145,10 @@ struct Attachment: Codable, Identifiable, Equatable, Hashable {
         }
     }
     
+    var sizeString: String {
+        String(ByteConverterService(kiloBytes: Double(size)).toHumanReadable(unit: .KB))
+    }
+    
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
