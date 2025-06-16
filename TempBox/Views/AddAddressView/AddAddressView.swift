@@ -94,13 +94,18 @@ struct AddAddressView: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task {
-                            await handleSubmit()
+                    if controller.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Button {
+                            Task {
+                                await handleSubmit()
+                            }
+                        } label: {
+                            Text(controller.submitBtnText)
+                                .font(.headline)
                         }
-                    } label: {
-                        Text(controller.submitBtnText)
-                            .font(.headline)
                     }
                 }
                 ToolbarItem(placement: .principal) {
@@ -232,15 +237,19 @@ struct AddAddressView: View {
             }
             
             ToolbarItem(placement: .confirmationAction) {
-                Button {
-                    Task {
-                        await handleSubmit()
+                if controller.isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Button {
+                        Task {
+                            await handleSubmit()
+                        }
+                    } label: {
+                        Text(controller.submitBtnText)
+                            .font(.headline)
                     }
-                } label: {
-                    Text(controller.submitBtnText)
-                        .font(.headline)
                 }
-                
             }
         }
         .alert(isPresented: $controller.showErrorAlert) {
@@ -259,6 +268,12 @@ struct AddAddressView: View {
     
     func createAddress() async {
         if !controller.validateInput() { return }
+        
+        controller.isLoading = true
+        defer {
+            controller.isLoading = false
+        }
+        
         do {
             let account = try await MailTMService.createAccount(address: controller.getEmail(), password: controller.password)
             let tokenData = try await MailTMService.authenticate(address: controller.getEmail(), password: controller.password)
@@ -277,6 +292,11 @@ struct AddAddressView: View {
     }
     
     func login() async {
+        controller.isLoading = true
+        defer {
+            controller.isLoading = false
+        }
+        
         do {
             let tokenData = try await MailTMService.authenticate(address: controller.getEmail(), password: controller.password)
             let account = try await MailTMService.fetchAccount(id: tokenData.id, token: tokenData.token)

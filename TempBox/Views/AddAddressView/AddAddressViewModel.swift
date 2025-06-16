@@ -12,6 +12,7 @@ import SwiftUI
 
 @MainActor
 class AddAddressViewModel: ObservableObject {
+    @Published var isLoading: Bool = false;
     // MARK: - Address variables
     @Published var addressName: String = ""
     @Published var address: String = ""
