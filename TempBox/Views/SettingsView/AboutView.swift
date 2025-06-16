@@ -157,7 +157,7 @@ struct AboutView: View {
                 Button {
                     settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/privacy-policy.html")
                 } label: {
-                    CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Privacy Policy")
+                    CustomLabel(leadingImageName: "lock.shield", trailingImageName: "arrow.up.right", title: "Privacy Policy")
                 }
                 Button {
                     settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/terms-of-service.html")

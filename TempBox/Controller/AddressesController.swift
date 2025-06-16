@@ -94,16 +94,41 @@ class AddressesController: ObservableObject {
             self.clearMessage()
             
             /// Fetch messages for each address
-            for address in self.addresses {
-                self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: messageStore[address.id]?.messages ?? []))
-                await self.fetchMessages(for: address)
-            }
+            await self.fetchMessagesForAllAddresses()
         } catch {
             self.show(message: error.localizedDescription)
             print("Error fetching addresses: \(error.localizedDescription)")
         }
         
         isLoading = false
+    }
+    
+    func fetchMessagesForAllAddresses() async {
+        await withTaskGroup(of: Void.self) { group in
+            for address in self.addresses {
+                guard let token = address.token, !token.isEmpty else { return }
+                
+                await MainActor.run {
+                    self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: messageStore[address.id]?.messages ?? []))
+                }
+                
+                group.addTask {
+                    do {
+                        let messages = try await MailTMService.fetchMessages(token: token)
+                        await self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messages))
+                    } catch {
+                        await self.updateMessageStore(
+                            for: address,
+                            store: MessageStore(
+                                isFetching: false,
+                                error: error.localizedDescription,
+                                messages: self.messageStore[address.id]?.messages ?? []
+                            )
+                        )
+                    }
+                }
+            }
+        }
     }
     
     func getAddress(withID addressId: String) -> Address? {
@@ -122,6 +147,8 @@ class AddressesController: ObservableObject {
     /// Get messages for accointId
     func fetchMessages(for addressId: String) async {
         if let address = getAddress(withID: addressId) {
+            let messages = messageStore[address.id]?.messages ?? []
+            updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: messages))
             await fetchMessages(for: address)
         }
     }
