@@ -15,6 +15,9 @@ struct MessagesView: View {
     var address: Address
     
     var messages: [Message] {
+        // Add this line to make SwiftUI track messageStore changes
+        let _ = addressesController.messageStore
+        
         let safeMessages = addressesController.messageStore[address.id]?.messages ?? []
         if safeMessages.isEmpty {
             return safeMessages
@@ -33,7 +36,7 @@ struct MessagesView: View {
     
     var body: some View {
         VStack {
-            if messages.isEmpty {
+            if (messages).isEmpty {
                 VStack {
                     Spacer()
                     Text("No messages")
@@ -44,7 +47,6 @@ struct MessagesView: View {
                     .listStyle(.plain)
                     .alert("Alert!", isPresented: $controller.showDeleteMessageAlert) {
                         Button("Cancel", role: .cancel) {
-                            
                         }
                         Button("Delete", role: .destructive) {
                             Task {
@@ -85,9 +87,9 @@ struct MessagesView: View {
             })) { message in
                 NavigationLink {
                     MessageDetailView(message: message, address: address)
-                }label: {
+                } label: {
                     MessageItemView(
-                        controller: controller, message: message,
+                        message: message,
                         address: address
                     )
                     .environmentObject(controller)
@@ -103,7 +105,7 @@ struct MessagesView: View {
             })) { message in
                 NavigationLink(value: message) {
                     MessageItemView(
-                        controller: controller, message: message,
+                        message: message,
                         address: address
                     )
                     .environmentObject(controller)

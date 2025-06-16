@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MessageItemView: View {
     @EnvironmentObject private var addressesController: AddressesController
-    @ObservedObject var controller: MessagesViewModel
+    @EnvironmentObject var controller: MessagesViewModel
     
     let message: Message
     let address: Address
