@@ -17,7 +17,7 @@ struct EditAddressView: View {
     
     init(address: Address) {
         self.address = address
-        self.addressName = address.name ?? ""
+        _addressName = State(wrappedValue: address.name ?? "")
     }
 
     var body: some View {
