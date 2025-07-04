@@ -9,9 +9,12 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @Environment(\.openWindow) var openWindow
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    @EnvironmentObject private var messageDetailController: MessageDetailViewModel
+    @EnvironmentObject private var messagesViewModel: MessagesViewModel
     
     /// Ones data from flutter has been migrated successfully to swftdata, set this to true
     @AppStorage("didMigrateData") var didMigrateData: Bool = false
@@ -67,10 +70,23 @@ struct ContentView: View {
         }
 #elseif os(macOS)
         NavigationSplitView {
-            NewAddressBtn()
-            AddressesView()
-            MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
-                .font(.footnote)
+            VStack {
+                NewAddressBtn()
+                AddressesView()
+                MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
+                    .font(.footnote)
+            }
+            .navigationSplitViewColumnWidth(min: 195, ideal: 195, max: 340)
+            .toolbar {
+                ToolbarItem {
+                    Button {
+                        openWindow(id: "settings")
+                    } label: {
+                        Label("Settings", systemImage: "gear")
+                    }
+                    .help("Open settings")
+                }
+            }
         } content: {
             Group {
                 if let safeAddress = addressesController.selectedAddress {
@@ -79,53 +95,18 @@ struct ContentView: View {
                     Text("Address not selected")
                 }
             }
-            .toolbar {
-                ToolbarItemGroup(placement: .automatic) {
-                    Button {
-                        Task {
-                            await addressesController.refreshMessages(for: addressesController.selectedAddress!)
-                        }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise.circle")
-                    }
-                    .disabled(addressesController.selectedAddress == nil)
-                    Button {
-                        addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
-                        addressesViewModel.isAddressInfoSheetOpen = true
-                    } label: {
-                        Label("Address Info", systemImage: "info.circle")
-                    }
-                    .disabled(addressesController.selectedAddress == nil)
-                    Button {
-                        addressesViewModel.selectedAddForEditSheet = addressesController.selectedAddress!
-                        addressesViewModel.isEditAddressSheetOpen = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil.circle")
-                    }
-                    .disabled(addressesController.selectedAddress == nil)
-                    Button {
-                        Task {
-                            await addressesController.toggleAddressStatus(addressesController.selectedAddress!)
-                        }
-                    } label: {
-                        Label("Archive", systemImage: "archivebox")
-                    }
-                    .disabled(addressesController.selectedAddress == nil)
-                    Button(role: .destructive) {
-                        addressesViewModel.showDeleteAddressAlert = true
-                        addressesViewModel.selectedAddForDeletion = addressesController.selectedAddress!
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                    .disabled(addressesController.selectedAddress == nil)
+            .navigationSplitViewColumnWidth(min: 290, ideal: 290, max: 400)
+            .toolbar(content: MacOSMessagesToolbar)
+        } detail: {
+            Group {
+                if let safeMessage = addressesController.selectedMessage, let safeAddress = addressesController.selectedAddress {
+                    MessageDetailView(message: safeMessage, address: safeAddress)
+                } else {
+                    Text("No message selected")
                 }
             }
-        } detail: {
-            if let safeMessage = addressesController.selectedMessage, let safeAddress = addressesController.selectedAddress {
-                MessageDetailView(message: safeMessage, address: safeAddress)
-            } else {
-                Text("No message selected")
-            }
+            .navigationSplitViewColumnWidth(min: 440, ideal: 440)
+            .toolbar(content: MacOSMessageDetailToolbar)
         }
 #endif
     }
@@ -167,6 +148,103 @@ struct ContentView: View {
         completion(errorMap)
     }
 //#endif
+    
+    
+#if os(macOS)
+    @ToolbarContentBuilder
+    func MacOSMessageDetailToolbar() -> some ToolbarContent {
+        ToolbarItemGroup {
+            Button("Message Information", systemImage: "info.circle") {
+                messageDetailController.showMessageInfoSheet = true
+            }
+            .help("Message information")
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
+            Button {
+                Task {
+                    await addressesController.updateMessageSeenStatus(
+                        messageData: addressesController.selectedMessage!,
+                        address: addressesController.selectedAddress!,
+                        seen: !addressesController.selectedMessage!.seen
+                    )
+                }
+            } label: {
+                if let message = addressesController.selectedMessage {
+                    Label(message.seen ? "Mark as unread" : "Mark as read", systemImage: message.seen ? "envelope.badge" : "envelope.open")
+                } else {
+                    Label("Mark as read/unread", systemImage: "envelope.badge")
+                }
+            }
+            .help("Mark as read/unread")
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
+            Button(role: .destructive) {
+                messagesViewModel.showDeleteMessageAlert = true
+                messagesViewModel.selectedMessForDeletion = addressesController.selectedMessage!
+            } label: {
+                Label("Delete message", systemImage: "trash")
+            }
+            .help("Delete message")
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
+            if let selectedMessage = addressesController.selectedCompleteMessage, selectedMessage.hasAttachments {
+                Button("Show attachments", systemImage: "paperclip") {
+                    messageDetailController.showAttachmentsSheet = true
+                }
+                .help("Show attachments")
+            }
+        }
+    }
+    
+    @ToolbarContentBuilder
+    func MacOSMessagesToolbar() -> some ToolbarContent {
+        ToolbarItemGroup(placement: .automatic) {
+            Button {
+                Task {
+                    await addressesController.refreshMessages(for: addressesController.selectedAddress!)
+                }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise.circle")
+            }
+            .help("Refresh messages")
+            .disabled(addressesController.selectedAddress == nil)
+            Menu {
+                Button {
+                    addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
+                    addressesViewModel.isAddressInfoSheetOpen = true
+                } label: {
+                    Label("Address Info", systemImage: "info.circle")
+                }
+                .help("Address Information")
+                .disabled(addressesController.selectedAddress == nil)
+                Button {
+                    addressesViewModel.selectedAddForEditSheet = addressesController.selectedAddress!
+                    addressesViewModel.isEditAddressSheetOpen = true
+                } label: {
+                    Label("Edit Address", systemImage: "pencil.circle")
+                }
+                .help("Edit address name")
+                .disabled(addressesController.selectedAddress == nil)
+                Button {
+                    Task {
+                        await addressesController.toggleAddressStatus(addressesController.selectedAddress!)
+                    }
+                } label: {
+                    Label("Archive Address", systemImage: "archivebox")
+                }
+                .help("Archive address")
+                .disabled(addressesController.selectedAddress == nil)
+                Button(role: .destructive) {
+                    addressesViewModel.showDeleteAddressAlert = true
+                    addressesViewModel.selectedAddForDeletion = addressesController.selectedAddress!
+                } label: {
+                    Label("Delete Address", systemImage: "trash")
+                }
+                .help("Delete address")
+                .disabled(addressesController.selectedAddress == nil)
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+        }
+    }
+#endif
 }
 
 struct NewAddressBtn: View {
@@ -190,6 +268,7 @@ struct NewAddressBtn: View {
                 .cornerRadius(6)
             }
         })
+        .help("Create new address or login to an address")
         .padding(.horizontal)
         .padding(.vertical, 5)
         .buttonStyle(.plain)

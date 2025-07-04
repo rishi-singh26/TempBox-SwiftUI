@@ -6,13 +6,11 @@
 //
 
 import Foundation
-import Combine
 
 @MainActor
 class MailTMService {
     static private let baseURL = "https://api.mail.tm"
     static private let session = URLSession.shared
-    static private var cancellables = Set<AnyCancellable>()
     
     private init() {}
     

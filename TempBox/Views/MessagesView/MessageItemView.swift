@@ -55,40 +55,43 @@ struct MessageItemView: View {
             }
         }
         .swipeActions(edge: .leading) {
-            Button {
-                Task {
-                    await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !message.seen)
-                }
-            } label: {
-                Label(message.seen ? "Unread" : "Read", systemImage: message.seen ? "envelope.badge.fill" : "envelope.open.fill")
-            }
-            .tint(.blue)
+            BuildStatusButton()
         }
         .swipeActions(edge: .trailing) {
-            Button {
-                controller.showDeleteMessageAlert = true
-                controller.selectedMessForDeletion = message
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-            .tint(.red)
+            BuildDeleteButton()
         }
         .contextMenu {
-            Button {
-                Task {
-                    await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !message.seen)
-                }
-            } label: {
-                Label(message.seen ? "Mark as unread" : "Mark as read", systemImage: message.seen ? "envelope.badge" : "envelope.open")
-            }
+            BuildStatusButton(addTint: false)
             Divider()
-            Button(role: .destructive) {
-                controller.showDeleteMessageAlert = true
-                controller.selectedMessForDeletion = message
-            } label: {
-                Label("Delete message", systemImage: "trash")
-            }
+            BuildDeleteButton(addTint: false)
         }
+    }
+    
+    @ViewBuilder
+    func BuildStatusButton(addTint: Bool = true) -> some View {
+        let unreadMessage = addTint ? "Mark as unread" : "Unread"
+        let readMessage = addTint ? "Mark as read" : "Read"
+        Button {
+            Task {
+                await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !message.seen)
+            }
+        } label: {
+            Label(message.seen ? unreadMessage : readMessage, systemImage: message.seen ? "envelope.badge.fill" : "envelope.open.fill")
+        }
+        .help("Toggle message read status")
+        .tint(addTint ? nil : .blue)
+    }
+    
+    @ViewBuilder
+    func BuildDeleteButton(addTint: Bool = true) -> some View {
+        Button {
+            controller.showDeleteMessageAlert = true
+            controller.selectedMessForDeletion = message
+        } label: {
+            Label("Delete", systemImage: "trash")
+        }
+        .help("Permanently delete message")
+        .tint(addTint ? nil : .red)
     }
 }
 

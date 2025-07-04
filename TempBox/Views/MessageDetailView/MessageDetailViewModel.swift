@@ -18,7 +18,11 @@ class MessageDetailViewModel: ObservableObject {
     
     // MARK: - Attachment view properties
     @Published var showShareAttachmentSheet = false
+    
     @Published var showSaveAttachmentSheet = false
+    /// Will be used on macOS only, will be set when user selects save option from the attachments list
+    @Published var selectedAttachmentForExport: AttachmentDownload? = nil
+    
     @Published var downloadedAttachments: [String: AttachmentDownload] = [:] // attachmentId: attachmentDownloadedFile
     @Published var isDownloadingTracker: [String: Bool] = [:] // attachmentId: status
     @Published var downloadErrorTracker: [String: String] = [:] // attachmentId: errorMessage

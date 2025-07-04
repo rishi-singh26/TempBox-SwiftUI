@@ -49,81 +49,84 @@ struct AddressItemView: View {
             }
         }
             .swipeActions(edge: .leading) {
-                Button {
-                    addressesViewModel.selectedAddForInfoSheet = address
-                    addressesViewModel.isAddressInfoSheetOpen = true
-                } label: {
-                    Label("Address Info", systemImage: "info.square")
-                }
-                .tint(.yellow)
-                Button {
-                    Task {
-                        await addressesController.refreshMessages(for: address)
-                    }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise.circle")
-                }
-                .tint(.blue)
-                Button {
-                    addressesViewModel.selectedAddForEditSheet = address
-                    addressesViewModel.isEditAddressSheetOpen = true
-                } label: {
-                    Label("Edit", systemImage: "pencil.circle")
-                }
-                .tint(.orange)
+                BuildAddrInfoButton()
+                BuildRefreshButton()
+                BuildEditButton()
             }
             .swipeActions(edge: .trailing) {
-                Button {
-                    addressesViewModel.showDeleteAddressAlert = true
-                    addressesViewModel.selectedAddForDeletion = address
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-                .tint(.red)
-                Button {
-                    Task {
-                        await addressesController.toggleAddressStatus(address)
-                    }
-                } label: {
-                    Label("Archive", systemImage: "archivebox")
-                }
-                .tint(.indigo)
+                BuildDeleteButton()
+                BuildArchiveButton()
             }
             .contextMenu(menuItems: {
-                Button {
-                    Task {
-                        await addressesController.refreshMessages(for: address)
-                    }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise.circle")
-                }
-                Button {
-                    addressesViewModel.selectedAddForInfoSheet = address
-                    addressesViewModel.isAddressInfoSheetOpen = true
-                } label: {
-                    Label("Address Info", systemImage: "info.circle")
-                }
-                Button {
-                    addressesViewModel.selectedAddForEditSheet = address
-                    addressesViewModel.isEditAddressSheetOpen = true
-                } label: {
-                    Label("Edit", systemImage: "pencil.circle")
-                }
+                BuildRefreshButton(addTint: false)
+                BuildAddrInfoButton(addTint: false)
+                BuildEditButton(addTint: false)
                 Divider()
-                Button {
-                    Task {
-                        await addressesController.toggleAddressStatus(address)
-                    }
-                } label: {
-                    Label("Archive", systemImage: "archivebox")
-                }
-                Button(role: .destructive) {
-                    addressesViewModel.showDeleteAddressAlert = true
-                    addressesViewModel.selectedAddForDeletion = address
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
+                BuildArchiveButton(addTint: false)
+                BuildDeleteButton(addTint: false)
             })
+    }
+    
+    @ViewBuilder
+    func BuildAddrInfoButton(addTint: Bool = true) -> some View {
+        Button {
+            addressesViewModel.selectedAddForInfoSheet = address
+            addressesViewModel.isAddressInfoSheetOpen = true
+        } label: {
+            Label("Address Info", systemImage: "info.square")
+        }
+        .help("Address information")
+        .tint(addTint ? nil : .yellow)
+    }
+    
+    @ViewBuilder
+    func BuildRefreshButton(addTint: Bool = true) -> some View {
+        Button {
+            Task {
+                await addressesController.refreshMessages(for: address)
+            }
+        } label: {
+            Label("Refresh", systemImage: "arrow.clockwise.circle")
+        }
+        .help("Refresh address inbox")
+        .tint(addTint ? nil : .blue)
+    }
+    
+    @ViewBuilder
+    func BuildEditButton(addTint: Bool = true) -> some View {
+        Button {
+            addressesViewModel.selectedAddForEditSheet = address
+            addressesViewModel.isEditAddressSheetOpen = true
+        } label: {
+            Label("Edit", systemImage: "pencil.circle")
+        }
+        .help("Edit address name")
+        .tint(addTint ? nil : .orange)
+    }
+    
+    @ViewBuilder
+    func BuildDeleteButton(addTint: Bool = true) -> some View {
+        Button {
+            addressesViewModel.showDeleteAddressAlert = true
+            addressesViewModel.selectedAddForDeletion = address
+        } label: {
+            Label("Delete", systemImage: "trash")
+        }
+        .help("Permanently delete address")
+        .tint(addTint ? nil : .red)
+    }
+    
+    @ViewBuilder
+    func BuildArchiveButton(addTint: Bool = true) -> some View {
+        Button {
+            Task {
+                await addressesController.toggleAddressStatus(address)
+            }
+        } label: {
+            Label("Archive", systemImage: "archivebox")
+        }
+        .help("Archive address")
+        .tint(addTint ? nil : .indigo)
     }
 }
 

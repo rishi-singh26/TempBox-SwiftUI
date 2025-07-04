@@ -50,32 +50,34 @@ struct MacOSView: View {
     var message: Message
     
     var body: some View {
-        NavigationSplitView {
-            List(message.safeAttachments, selection: Binding(get: {
-                mdController.selectedAttachment
-            }, set: { newVal in
+        let selectionBinding = Binding(
+            get: { mdController.selectedAttachment },
+            set: { newVal in
                 DispatchQueue.main.async {
                     mdController.selectedAttachment = newVal
                 }
-            })
-            ) { attachment in
+            }
+        )
+        NavigationSplitView {
+            List(message.safeAttachments, selection: selectionBinding) { attachment in
                 NavigationLink(value: attachment) {
                     AttachmentTileMacOS(attachment: attachment)
                 }
             }
             .listStyle(.sidebar)
             .navigationTitle("Attachments")
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+            .fileExporter(
+                isPresented: $mdController.showSaveAttachmentSheet,
+                document: MyFileDocument(data: mdController.selectedAttachmentForExport?.fileData ?? Data()),
+                contentType: .data,
+                defaultFilename: mdController.selectedAttachmentForExport?.filename
+            ) { result in
+                handleFileSaveResult(result)
+            }
         } detail: {
             if let selectedAttachment = mdController.selectedAttachment, let downloadedAtchmnt = mdController.downloadedAttachments[selectedAttachment.id] {
                 QuicklookPreview(urls: [downloadedAtchmnt.fileURL])
-                    .fileExporter(
-                        isPresented: $mdController.showSaveAttachmentSheet,
-                        document: MyFileDocument(data: downloadedAtchmnt.fileData),
-                        contentType: .data,
-                        defaultFilename: downloadedAtchmnt.filename
-                    ) { result in
-                        handleFileSaveResult(result)
-                    }
             } else  {
                 Text("Select an attachment")
             }
@@ -84,6 +86,9 @@ struct MacOSView: View {
     }
     
     private func handleFileSaveResult(_ result: Result<URL, Error>) {
+        // Reset select attachment for export value
+        mdController.selectedAttachmentForExport = nil
+        
         switch result {
         case .success(let url):
             print("File saved successfully to: \(url.lastPathComponent)")
@@ -120,12 +125,16 @@ struct AttachmentTileMacOS: View {
                     ShareLink(item: mdController.downloadedAttachments[attachment.id]!.fileURL) {
                         Label("Share", systemImage: "square.and.arrow.up")
                     }
+                    .help("Share attachment")
                     Button {
-                        mdController.showSaveAttachmentSheet.toggle()
+                        if let safeAttachmentData = mdController.downloadedAttachments[attachment.id] {
+                            mdController.selectedAttachmentForExport = safeAttachmentData
+                            mdController.showSaveAttachmentSheet = true
+                        }
                     } label: {
                         Label("Save", systemImage: "square.and.arrow.down")
                     }
-                    .disabled(mdController.selectedAttachment == nil)
+                    .help("Save attachment")
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -234,11 +243,13 @@ struct PreviewView: View {
                         } label: {
                             Label("Share", systemImage: "square.and.arrow.up")
                         }
+                        .help("Share attachment")
                         Button {
                             mdController.showSaveAttachmentSheet.toggle()
                         } label: {
                             Label("Save", systemImage: "square.and.arrow.down")
                         }
+                        .help("Save attachment")
                     }
                 }
     }

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MessageDetailView: View {
     @EnvironmentObject private var addressesController: AddressesController
-    @StateObject private var messageDetailController = MessageDetailViewModel()
+    @EnvironmentObject private var messageDetailController: MessageDetailViewModel
 
     let message: Message
     let address: Address
@@ -45,22 +45,22 @@ struct MessageDetailView: View {
             AttachemntListView(address: address, message: message)
                 .environmentObject(messageDetailController)
         })
+#if os(iOS)
         .toolbar(content: {
-            if let selectedMessage = addressesController.selectedCompleteMessage,
-               selectedMessage.id == message.id, selectedMessage.hasAttachments {
-                ToolbarItem {
-                    Button("Message Information", systemImage: "paperclip") {
+            ToolbarItemGroup {
+                if let selectedMessage = addressesController.selectedCompleteMessage,
+                   selectedMessage.id == message.id, selectedMessage.hasAttachments {
+                    Button("Show attachments", systemImage: "paperclip") {
                         messageDetailController.showAttachmentsSheet = true
                     }
+                    .help("Show attachments list")
                 }
-            }
-            ToolbarItem {
                 Button("Message Information", systemImage: "info.circle") {
                     messageDetailController.showMessageInfoSheet = true
                 }
+                .help("Show message information")
             }
         })
-#if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
 #endif
     }

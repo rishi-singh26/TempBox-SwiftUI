@@ -45,6 +45,7 @@ struct AddressInfoView: View {
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
+                        .help("Copy email address")
                     }
                     HStack {
                         Text("Password: ")
@@ -62,6 +63,7 @@ struct AddressInfoView: View {
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
+                        .help("Copy password")
                     }
                 }
                 
@@ -134,6 +136,7 @@ struct AddressInfoView: View {
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
+                        .help("Copy email address")
                     }
                     Divider()
                     HStack {
@@ -152,6 +155,7 @@ struct AddressInfoView: View {
                         } label: {
                             Image(systemName: "doc.on.doc")
                         }
+                        .help("Copy password")
                     }
                 }
                 

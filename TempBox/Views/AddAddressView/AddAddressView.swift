@@ -57,6 +57,7 @@ struct AddAddressView: View {
                         Button("Random address") {
                             controller.generateRandomAddress()
                         }
+                        .help("Generate random address")
                     }
                 } else {
                     Section {
@@ -249,6 +250,7 @@ struct AddAddressView: View {
                         Text(controller.submitBtnText)
                             .font(.headline)
                     }
+                    .help("Submit form")
                 }
             }
         }

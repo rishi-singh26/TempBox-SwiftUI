@@ -10,7 +10,7 @@ import SwiftUI
 struct MessagesView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
-    @StateObject private var controller = MessagesViewModel()
+    @EnvironmentObject private var controller: MessagesViewModel
     
     var address: Address
     
@@ -60,15 +60,21 @@ struct MessagesView: View {
                     }
             }
         }
+        .refreshable {
+            Task {
+                await addressesController.refreshMessages(for: address)
+            }
+        }
         .searchable(text: $controller.searchText)
         .navigationTitle(address.name ?? address.address.extractUsername())
 #if os(iOS)
         .toolbar(content: {
             ToolbarItem {
-                Button("Message Information", systemImage: "info.circle") {
+                Button("Address Information", systemImage: "info.circle") {
                     addressesViewModel.selectedAddForInfoSheet = address
                     addressesViewModel.isAddressInfoSheetOpen = true
                 }
+                .help("Address information")
             }
         })
 #endif
@@ -76,15 +82,16 @@ struct MessagesView: View {
     
     @ViewBuilder
     func MessagesList(address: Address) -> some View {
+        let selectionBinding = Binding(get: {
+            addressesController.selectedMessage
+        }, set: { newVal in
+            DispatchQueue.main.async {
+                addressesController.selectedMessage = newVal
+            }
+        })
         Group {
 #if os(iOS)
-            List(messages, selection: Binding(get: {
-                addressesController.selectedMessage
-            }, set: { newVal in
-                DispatchQueue.main.async {
-                    addressesController.selectedMessage = newVal
-                }
-            })) { message in
+            List(messages, selection: selectionBinding) { message in
                 NavigationLink {
                     MessageDetailView(message: message, address: address)
                 } label: {
@@ -96,13 +103,7 @@ struct MessagesView: View {
                 }
             }
 #elseif os(macOS)
-            List(messages, selection: Binding(get: {
-                addressesController.selectedMessage
-            }, set: { newVal in
-                DispatchQueue.main.async {
-                    addressesController.selectedMessage = newVal
-                }
-            })) { message in
+            List(messages, selection: selectionBinding) { message in
                 NavigationLink(value: message) {
                     MessageItemView(
                         message: message,

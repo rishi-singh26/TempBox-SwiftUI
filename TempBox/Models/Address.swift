@@ -140,6 +140,7 @@ enum AddressSchemaV2: VersionedSchema {
     class Address: Identifiable, Codable {
         var id: String = ""
         var name: String? = nil
+        /// The email address associated with this address
         var address: String = ""
         var quota: Int = 0
         var used: Int = 0

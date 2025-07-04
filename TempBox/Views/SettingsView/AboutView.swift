@@ -32,7 +32,7 @@ struct AboutView: View {
                     VStack(alignment: .leading) {
                         Text("TempBox")
                             .font(.largeTitle.bold())
-                        Text("Version 2.0.1")
+                        Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")")
                             .font(.callout)
                         MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                             .font(.callout)
@@ -46,9 +46,10 @@ struct AboutView: View {
                     Button {
                         settingsViewModel.showLinkConfirmation(url: "https://letterbird.co/tempbox")
                     } label: {
-                        CustomLabel(leadingImageName: "text.bubble", trailingImageName: "arrow.up.right", title: "Help & Support")
+                        CustomLabel(leadingImageName: "text.bubble", trailingImageName: "arrow.up.right", title: "Help & Feedback")
                     }
                     .buttonStyle(.link)
+                    .help("Open help and feedback form in web browser")
                     Divider()
                     Button {
                         getRating()
@@ -56,6 +57,7 @@ struct AboutView: View {
                         CustomLabel(leadingImageName: "star", title: "Rate Us")
                     }
                     .buttonStyle(.link)
+                    .help("Give star rating to TempBox")
                     Divider()
                     Button {
                         openAppStoreReviewPage()
@@ -63,6 +65,7 @@ struct AboutView: View {
                         CustomLabel(leadingImageName: "quote.bubble", trailingImageName: "arrow.up.right", title: "Write Review on App Store")
                     }
                     .buttonStyle(.link)
+                    .help("Write feedback for TempBox on AppStore")
                 }
             }
             
@@ -74,6 +77,7 @@ struct AboutView: View {
                         CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Privacy Policy")
                     }
                     .buttonStyle(.link)
+                    .help("Open TempBox privacy policy in web browser")
                     Divider()
                     Button {
                         settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/terms-of-service.html")
@@ -81,26 +85,29 @@ struct AboutView: View {
                         CustomLabel(leadingImageName: "list.bullet.rectangle.portrait", trailingImageName: "arrow.up.right", title: "Terms of Service")
                     }
                     .buttonStyle(.link)
+                    .help("Open TempBox terms of service in web browser")
                 }
             }
             
-//            MacCustomSection {
-//                VStack(alignment: .leading) {
-//                    Button {
-//                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
-//                    } label: {
-//                        CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
-//                    }
-//                    .buttonStyle(.link)
-//                    Divider()
-//                    Button {
-//                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
-//                    } label: {
-//                        CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
-//                    }
-//                    .buttonStyle(.link)
-//                }
-//            }
+            MacCustomSection {
+                VStack(alignment: .leading) {
+                    Button {
+                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
+                    } label: {
+                        CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
+                    }
+                    .buttonStyle(.link)
+                    .help("Open TempBox source code in safari")
+                    Divider()
+                    Button {
+                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
+                    } label: {
+                        CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
+                    }
+                    .buttonStyle(.link)
+                    .help("Open TempBox Open-Source license in safari")
+                }
+            }
             
 //            MacCustomSection(header: "Copyright © 2025 Rishi Singh. All Rights Reserved.") {
             MacCustomSection {
@@ -110,6 +117,7 @@ struct AboutView: View {
                     CustomLabel(leadingImageName: "network", trailingImageName: "arrow.up.right", title: "https://tempbox.rishisingh.in")
                 }
                 .buttonStyle(.link)
+                .help("Visit TempBox website in safari")
             }
             .padding(.bottom, 50)
         }
@@ -128,7 +136,7 @@ struct AboutView: View {
                 VStack(alignment: .leading) {
                     Text("TempBox")
                         .font(.largeTitle.bold())
-                    Text("Version 2.0.1")
+                    Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")")
                         .font(.callout)
                     MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                         .font(.callout)
@@ -141,16 +149,19 @@ struct AboutView: View {
                 } label: {
                     CustomLabel(leadingImageName: "text.bubble", trailingImageName: "arrow.up.right", title: "Help & Feedback")
                 }
+                .help("Open help and feedback form in web browser")
                 Button {
                     getRating()
                 } label: {
                     Label("Rate Us", systemImage: "star")
                 }
+                .help("Give star rating to TempBox")
                 Button {
                     openAppStoreReviewPage()
                 } label: {
                     CustomLabel(leadingImageName: "quote.bubble", trailingImageName: "arrow.up.right", title: "Write Review on App Store")
                 }
+                .help("Write feedback for TempBox on AppStore")
             }
             
             Section {
@@ -159,25 +170,29 @@ struct AboutView: View {
                 } label: {
                     CustomLabel(leadingImageName: "lock.shield", trailingImageName: "arrow.up.right", title: "Privacy Policy")
                 }
+                .help("Open TempBox privacy policy in web browser")
                 Button {
                     settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/terms-of-service.html")
                 } label: {
                     CustomLabel(leadingImageName: "list.bullet.rectangle.portrait", trailingImageName: "arrow.up.right", title: "Terms of Service")
                 }
+                .help("Open TempBox terms of service in web browser")
             }
             
-//            Section {
-//                Button {
-//                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
-//                } label: {
-//                    CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
-//                }
-//                Button {
-//                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
-//                } label: {
-//                    CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
-//                }
-//            }
+            Section {
+                Button {
+                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
+                } label: {
+                    CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
+                }
+                .help("Open TempBox source code in safari")
+                Button {
+                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
+                } label: {
+                    CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
+                }
+                .help("Open TempBox Open-Source license in safari")
+            }
             
 //            Section("Copyright © 2025 Rishi Singh. All Rights Reserved.") {
             Section {
@@ -186,6 +201,7 @@ struct AboutView: View {
                 } label: {
                     CustomLabel(leadingImageName: "network", trailingImageName: "arrow.up.right", title: "https://tempbox.rishisingh.in")
                 }
+                .help("Visit TempBox website in safari")
             }
         }
     }

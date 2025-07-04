@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct AddressesView: View {
-    @Environment(\.openWindow) var openWindow
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     
@@ -39,24 +38,22 @@ struct AddressesView: View {
                         }
                         .fontWeight(.bold)
                     }
+                    .help("Create new address or login to an address")
                     Spacer()
                     MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                         .font(.footnote)
                 }
             }
         }
-#endif
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 Button("Settings", systemImage: "gear") {
-#if os(iOS)
                     addressesViewModel.showSettingsSheet = true
-#elseif os(macOS)
-                    openWindow(id: "settings")
-#endif
                 }
+                .help("Open settings")
             }
         }
+#endif
         .navigationTitle("TempBox")
         .searchable(text: $addressesViewModel.searchText, placement: .sidebar)
         .listStyle(.sidebar)
