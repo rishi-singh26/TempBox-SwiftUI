@@ -118,7 +118,7 @@ class AddAddressViewModel: ObservableObject {
     }
 }
 
-// MARK: - Export Types
+// MARK: - Auth Types
 enum AuthTypes: String, CaseIterable, Identifiable {
     case create = "create"
     case login = "login"

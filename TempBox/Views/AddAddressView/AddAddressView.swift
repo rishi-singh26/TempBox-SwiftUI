@@ -298,6 +298,8 @@ struct AddAddressView: View {
         }
         
         do {
+            guard isAddressUnique() else { return }
+            
             let tokenData = try await MailTMService.authenticate(address: controller.getEmail(), password: controller.password)
             let account = try await MailTMService.fetchAccount(id: tokenData.id, token: tokenData.token)
             await addressesController.addAddress(
@@ -311,6 +313,23 @@ struct AddAddressView: View {
             controller.errorMessage = error.localizedDescription
             controller.showErrorAlert = true
         }
+    }
+    
+    private func isAddressUnique() -> Bool {
+        // check if the address is a new address
+        var allAddresses = addressesController.addresses
+        allAddresses.append(contentsOf: addressesController.archivedAddresses)
+        let existingAddresses = allAddresses.filter { add in
+            add.address == controller.getEmail()
+        }
+        guard existingAddresses.isEmpty else {
+            controller.errorMessage = existingAddresses.first?.isArchived == true
+                ? "This address has already been added and is present in the archived addresses section in settings."
+                : "This site has already been added."
+            controller.showErrorAlert = true
+            return false
+        }
+        return true
     }
 }
 
