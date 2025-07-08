@@ -14,18 +14,24 @@ struct MessageItemView: View {
     let message: Message
     let address: Address
     
+    private var message2: Message? {
+        addressesController.messageStore[address.id]?.messages.first { mes in
+            mes.id == message.id
+        }
+    }
+    
     var messageHeader: String {
-        if let name = message.from.name, !name.isEmpty {
+        if let name = message2?.from.name, !name.isEmpty {
             return name
         } else {
-            return message.from.address
+            return message2?.from.address ?? ""
         }
     }
     
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Circle()
-                .fill(.accent.opacity(message.seen ? 0 : 1))
+                .fill(.accent.opacity(message2?.seen == true ? 0 : 1))
                 .frame(width: 12)
                 .padding(0)
             VStack(alignment: .leading) {
@@ -69,14 +75,15 @@ struct MessageItemView: View {
     
     @ViewBuilder
     func BuildStatusButton(addTint: Bool = true) -> some View {
-        let unreadMessage = addTint ? "Mark as unread" : "Unread"
-        let readMessage = addTint ? "Mark as read" : "Read"
+        let unreadMessage = addTint ? "Unread" : "Mark as unread"
+        let readMessage = addTint ? "Read" : "Mark as read"
+        let isSeen = message2?.seen ?? false
         Button {
             Task {
-                await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !message.seen)
+                await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !isSeen)
             }
         } label: {
-            Label(message.seen ? unreadMessage : readMessage, systemImage: message.seen ? "envelope.badge.fill" : "envelope.open.fill")
+            Label(message2?.seen == true ? unreadMessage : readMessage, systemImage: isSeen ? "envelope.badge.fill" : "envelope.open.fill")
         }
         .help("Toggle message read status")
         .tint(addTint ? nil : .blue)

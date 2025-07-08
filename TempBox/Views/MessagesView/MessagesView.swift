@@ -14,19 +14,16 @@ struct MessagesView: View {
     
     var address: Address
     
-    var messages: [Message] {
-        // Add this line to make SwiftUI track messageStore changes
-        let _ = addressesController.messageStore
-        
-        let safeMessages = addressesController.messageStore[address.id]?.messages ?? []
-        if safeMessages.isEmpty {
-            return safeMessages
+    private var filteredMessages: [Message] {
+        let allMessages = addressesController.messageStore[address.id]?.messages ?? []
+        if allMessages.isEmpty {
+            return allMessages
         }
         if controller.searchText.isEmpty {
-            return safeMessages
+            return allMessages
         } else {
             let searchQuery = controller.searchText.lowercased()
-            return safeMessages.filter { message in
+            return allMessages.filter { message in
                 let subMatches = message.subject.lowercased().contains(searchQuery)
                 let fromMatches = message.fromAddress.contains(searchQuery)
                 return subMatches || fromMatches
@@ -36,11 +33,9 @@ struct MessagesView: View {
     
     var body: some View {
         VStack {
-            if (messages).isEmpty {
-                VStack {
-                    Spacer()
+            if (filteredMessages).isEmpty {
+                ScrollView {
                     Text("No messages")
-                    Spacer()
                 }
             } else {
                 MessagesList(address: address)
@@ -81,7 +76,7 @@ struct MessagesView: View {
     }
     
     @ViewBuilder
-    func MessagesList(address: Address) -> some View {
+    private func MessagesList(address: Address) -> some View {
         let selectionBinding = Binding(get: {
             addressesController.selectedMessage
         }, set: { newVal in
@@ -91,7 +86,7 @@ struct MessagesView: View {
         })
         Group {
 #if os(iOS)
-            List(messages, selection: selectionBinding) { message in
+            List(filteredMessages, selection: selectionBinding) { message in
                 NavigationLink {
                     MessageDetailView(message: message, address: address)
                 } label: {
@@ -103,7 +98,7 @@ struct MessagesView: View {
                 }
             }
 #elseif os(macOS)
-            List(messages, selection: selectionBinding) { message in
+            List(filteredMessages, selection: selectionBinding) { message in
                 NavigationLink(value: message) {
                     MessageItemView(
                         message: message,

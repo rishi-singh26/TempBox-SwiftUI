@@ -10,19 +10,23 @@ import SwiftUI
 struct MessageDetailView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
+    @EnvironmentObject var appController: AppController
+    @Environment(\.colorScheme) var colorScheme
 
     let message: Message
     let address: Address
         
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 0) {
             MessageHeaderView(message: message)
             Text(message.subject)
                 .font(.title3.bold())
+                .padding(.vertical, 4)
+                .foregroundStyle(Color(hex: emailColorScheme == .light ? "#000000" : "#ffffff"))
             if let selectedMessage = addressesController.selectedCompleteMessage,
                selectedMessage.id == message.id,
                let html = selectedMessage.html?.first {
-                    WebView(html: html)
+                WebView(html: html, appearance: emailColorScheme)
             }
             else {
                 Spacer()
@@ -31,6 +35,7 @@ struct MessageDetailView: View {
                 EmptyView()
             }
         }
+        .background(Color(hex: emailColorScheme == .dark ? "#1a1a1a" : "#ffffff"))
         .onAppear(perform: {
             Task {
                 await addressesController.fetchCompleteMessage(of: message, address: address)
@@ -55,14 +60,39 @@ struct MessageDetailView: View {
                     }
                     .help("Show attachments list")
                 }
-                Button("Message Information", systemImage: "info.circle") {
-                    messageDetailController.showMessageInfoSheet = true
+                Menu {
+                    Picker("Email appearance", selection: $appController.webViewAppearence) {
+                        Label(WebViewColorScheme.light.displayName, systemImage: "sun.max")
+                            .tag(WebViewColorScheme.light.rawValue)
+                        Label(WebViewColorScheme.dark.displayName, systemImage: "moon.stars")
+                            .tag(WebViewColorScheme.dark.rawValue)
+                        Label(WebViewColorScheme.system.displayName, systemImage: "iphone.gen2")
+                            .tag(WebViewColorScheme.system.rawValue)
+                    }
+                    .pickerStyle(.inline)
+                    Divider()
+                    Button("Message Information", systemImage: "info.circle") {
+                        messageDetailController.showMessageInfoSheet = true
+                    }
+                    .help("Show message information")
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
-                .help("Show message information")
             }
         })
         .navigationBarTitleDisplayMode(.inline)
 #endif
+    }
+    
+    private var emailColorScheme: ColorScheme {
+        switch appController.webViewColorScheme {
+        case .dark:
+            return .dark
+        case .light:
+            return .light
+        case .system:
+            return colorScheme
+        }
     }
 }
 

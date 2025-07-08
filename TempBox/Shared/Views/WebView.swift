@@ -18,6 +18,7 @@ typealias PlatformWebView = WKWebView
 
 struct WebView: PlatformViewRepresentable {
     let html: String
+    let appearance: ColorScheme
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -26,18 +27,46 @@ struct WebView: PlatformViewRepresentable {
     func makeView(context: Context) -> PlatformWebView {
         let config = WKWebViewConfiguration()
         let webView = WKWebView(frame: .zero, configuration: config)
+        
+        // Apply appearance settings
+        applyAppearance(to: webView)
+        
 #if os(iOS)
         webView.isOpaque = false
         webView.backgroundColor = .clear
 #endif
         webView.navigationDelegate = context.coordinator
         context.coordinator.webView = webView
-        webView.loadHTMLString(html, baseURL: nil)
+        webView.loadHTMLString(processedHTML, baseURL: nil)
         return webView
     }
 
     func updateView(_ webView: PlatformWebView, context: Context) {
-        webView.loadHTMLString(html, baseURL: nil)
+        // Apply appearance settings on update
+        applyAppearance(to: webView)
+        webView.loadHTMLString(processedHTML, baseURL: nil)
+    }
+    
+    private func applyAppearance(to webView: WKWebView) {
+        #if os(iOS)
+        switch appearance {
+        case .light:
+            webView.overrideUserInterfaceStyle = .light
+        case .dark:
+            webView.overrideUserInterfaceStyle = .dark
+        @unknown default:
+            webView.overrideUserInterfaceStyle = UITraitCollection.current.userInterfaceStyle
+        }
+        #elseif os(macOS)
+        switch appearance {
+        case .light:
+            webView.appearance = NSAppearance(named: .aqua)
+        case .dark:
+            webView.appearance = NSAppearance(named: .darkAqua)
+        @unknown default:
+            webView.appearance = NSApp.effectiveAppearance
+        }
+        #endif
     }
 
     #if os(iOS)
@@ -123,13 +152,92 @@ struct WebView: PlatformViewRepresentable {
             #endif
         }
     }
+    
+    private var processedHTML: String {
+        if html.contains("style") { // Dont override styles set with the email
+            return html
+        }
+        let colorScheme = appearance == .dark ? "dark" : "light"
+        let backgroundColor = appearance == .dark ? "#1a1a1a" : "#ffffff"
+        let textColor = appearance == .dark ? "#ffffff" : "#000000"
+        
+        // Check if HTML already has a complete structure
+        if html.lowercased().contains("<html") {
+            // If it's a complete HTML document, inject our CSS
+            let cssInjection = """
+                    <style>
+                        html {
+                            color-scheme: \(colorScheme);
+                        }
+                        body {
+                            background-color: \(backgroundColor) !important;
+                            color: \(textColor) !important;
+                        }
+                        * {
+                            color: \(textColor) !important;
+                        }
+                        a {
+                            color: \(appearance == .dark ? "#66b3ff" : "#0066cc") !important;
+                        }
+                    </style>
+                """
+            
+            if let headRange = html.range(of: "</head>", options: .caseInsensitive) {
+                var modifiedHTML = html
+                modifiedHTML.insert(contentsOf: cssInjection, at: headRange.lowerBound)
+                return modifiedHTML
+            } else if let bodyRange = html.range(of: "<body", options: .caseInsensitive) {
+                var modifiedHTML = html
+                modifiedHTML.insert(contentsOf: "<head>\(cssInjection)</head>", at: bodyRange.lowerBound)
+                return modifiedHTML
+            }
+        }
+        
+        // If it's HTML fragment or no head/body tags, wrap it completely
+        return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        html {
+                            color-scheme: \(colorScheme);
+                        }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            background-color: \(backgroundColor);
+                            color: \(textColor);
+                            margin: 0;
+                            padding: 16px;
+                        }
+                        a {
+                            color: \(appearance == .dark ? "#66b3ff" : "#0066cc");
+                        }
+                    </style>
+                </head>
+                <body>
+                    \(html)
+                </body>
+                </html>
+            """
+    }
 }
 
 #Preview {
-    WebView(html: """
-        <html><body>
-        <h1>Email Preview</h1>
-        <p>Click <a href='https://www.apple.com'>here</a> to visit Apple.</p>
-        </body></html>
-    """)
+    VStack {
+        WebView(html: """
+            <html><body>
+            <h1>Email Preview (Light)</h1>
+            <p>Click <a href='https://www.apple.com'>here</a> to visit Apple.</p>
+            </body></html>
+        """, appearance: .light)
+        
+        WebView(html: """
+            <html><body style="background-color: #1a1a1a; color: white;">
+            <h1>Email Preview (Dark)</h1>
+            <p>Click <a href='https://www.apple.com'>here</a> to visit Apple.</p>
+            </body></html>
+        """, appearance: .dark)
+    }
 }

@@ -13,11 +13,30 @@ struct AccentColorMode {
     let dark: Color
 }
 
+enum WebViewColorScheme: String, CaseIterable {
+    case light = "light"
+    case dark = "dark"
+    case system = "system"
+    
+    var displayName: String {
+        switch self {
+        case .light: return "Light"
+        case .dark: return "Dark"
+        case .system: return "System"
+        }
+    }
+}
+
 class AppController: ObservableObject {
     static let shared = AppController()
     static let appId: String = "6575345984"
     
     @Published var accentColor: Color = .accent
+    
+    @AppStorage("webViewAppearence") var webViewAppearence: String = WebViewColorScheme.system.rawValue
+    var webViewColorScheme: WebViewColorScheme {
+        WebViewColorScheme(rawValue: webViewAppearence) ?? .system
+    }
     
     @Published var accentColorOptions: [AccentColorMode] = [
         AccentColorMode(light: Color(hex: "BA1F33"), dark: Color(hex: "BA1F33")), // Red Accent Color

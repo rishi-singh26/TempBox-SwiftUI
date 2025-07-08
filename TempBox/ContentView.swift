@@ -15,6 +15,7 @@ struct ContentView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
     @EnvironmentObject private var messagesViewModel: MessagesViewModel
+    @EnvironmentObject var appController: AppController
     
     /// Ones data from flutter has been migrated successfully to swftdata, set this to true
     @AppStorage("didMigrateData") var didMigrateData: Bool = false
@@ -154,11 +155,6 @@ struct ContentView: View {
     @ToolbarContentBuilder
     func MacOSMessageDetailToolbar() -> some ToolbarContent {
         ToolbarItemGroup {
-            Button("Message Information", systemImage: "info.circle") {
-                messageDetailController.showMessageInfoSheet = true
-            }
-            .help("Message information")
-            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
             Button {
                 Task {
                     await addressesController.updateMessageSeenStatus(
@@ -183,6 +179,25 @@ struct ContentView: View {
                 Label("Delete message", systemImage: "trash")
             }
             .help("Delete message")
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
+            Menu {
+                Picker("Email appearance", selection: $appController.webViewAppearence) {
+                    Label(WebViewColorScheme.light.displayName, systemImage: "sun.max")
+                        .tag(WebViewColorScheme.light.rawValue)
+                    Label(WebViewColorScheme.dark.displayName, systemImage: "moon.stars")
+                        .tag(WebViewColorScheme.dark.rawValue)
+                    Label(WebViewColorScheme.system.displayName, systemImage: "iphone.gen2")
+                        .tag(WebViewColorScheme.system.rawValue)
+                }
+                .pickerStyle(.inline)
+                Divider()
+                Button("Message Information", systemImage: "info.circle") {
+                    messageDetailController.showMessageInfoSheet = true
+                }
+                .help("Show message information")
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
             .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
             if let selectedMessage = addressesController.selectedCompleteMessage, selectedMessage.hasAttachments {
                 Button("Show attachments", systemImage: "paperclip") {
