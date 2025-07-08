@@ -276,11 +276,13 @@ class AddressesController: ObservableObject {
         guard let token = address.token, !token.isEmpty else { return }
         do {
             try await MailTMService.deleteMessage(id: message.id, token: token)
-            
-            guard let index = messageStore[address.id]?.messages.firstIndex(where: { mes in
-                mes.id == message.id
-            }) else { return }
-            self.deleteMessageFromStore(for: address, at: index)
+            DispatchQueue.main.async {
+                guard let index = self.messageStore[address.id]?.messages.firstIndex(where: { mes in
+                    mes.id == message.id
+                }) else { return }
+                
+                self.deleteMessageFromStore(for: address, at: index)
+            }
         } catch {
             self.show(message: error.localizedDescription)
         }
@@ -450,12 +452,12 @@ class AddressesController: ObservableObject {
     }
     
     func deleteMessageFromStore(for address: Address, at index: Int) {
-        // Find address index
-        guard let addressIndex: Array<Address>.Index = addresses.firstIndex(where: { addr in
-            addr.id == address.id
-        }) else { return }
+        guard let safeAddress = getAddress(withID: address.id),
+              var store = messageStore[safeAddress.id],
+              store.messages.indices.contains(index) else { return }
         // Remove the message from the address at the addressIndex in addresses array
-        messageStore[addresses[addressIndex].id]?.messages.remove(at: index)
+        store.messages.remove(at: index)
+        messageStore[safeAddress.id] = store // This triggers @Published update
         objectWillChange.send()
     }
     
