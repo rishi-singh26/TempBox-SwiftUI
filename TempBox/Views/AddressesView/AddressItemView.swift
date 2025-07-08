@@ -76,7 +76,7 @@ struct AddressItemView: View {
             Label("Address Info", systemImage: "info.square")
         }
         .help("Address information")
-        .tint(addTint ? nil : .yellow)
+        .tint(addTint ? .yellow : nil)
     }
     
     @ViewBuilder
@@ -89,7 +89,7 @@ struct AddressItemView: View {
             Label("Refresh", systemImage: "arrow.clockwise.circle")
         }
         .help("Refresh address inbox")
-        .tint(addTint ? nil : .blue)
+        .tint(addTint ? .blue : nil)
     }
     
     @ViewBuilder
@@ -101,7 +101,7 @@ struct AddressItemView: View {
             Label("Edit", systemImage: "pencil.circle")
         }
         .help("Edit address name")
-        .tint(addTint ? nil : .orange)
+        .tint(addTint ? .orange : nil)
     }
     
     @ViewBuilder
@@ -113,7 +113,7 @@ struct AddressItemView: View {
             Label("Delete", systemImage: "trash")
         }
         .help("Permanently delete address")
-        .tint(addTint ? nil : .red)
+        .tint(addTint ? .red : nil)
     }
     
     @ViewBuilder
@@ -126,7 +126,7 @@ struct AddressItemView: View {
             Label("Archive", systemImage: "archivebox")
         }
         .help("Archive address")
-        .tint(addTint ? nil : .indigo)
+        .tint(addTint ? .indigo : nil)
     }
 }
 

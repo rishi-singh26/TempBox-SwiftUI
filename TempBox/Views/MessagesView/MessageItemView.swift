@@ -86,7 +86,7 @@ struct MessageItemView: View {
             Label(message2?.seen == true ? unreadMessage : readMessage, systemImage: isSeen ? "envelope.badge.fill" : "envelope.open.fill")
         }
         .help("Toggle message read status")
-        .tint(addTint ? nil : .blue)
+        .tint(addTint ? .blue : nil)
     }
     
     @ViewBuilder
@@ -98,7 +98,7 @@ struct MessageItemView: View {
             Label("Delete", systemImage: "trash")
         }
         .help("Permanently delete message")
-        .tint(addTint ? nil : .red)
+        .tint(addTint ? .red : nil)
     }
 }
 
