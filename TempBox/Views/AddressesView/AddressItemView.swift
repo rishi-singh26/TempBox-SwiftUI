@@ -48,23 +48,23 @@ struct AddressItemView: View {
                 }
             }
         }
-            .swipeActions(edge: .leading) {
-                BuildAddrInfoButton()
-                BuildRefreshButton()
-                BuildEditButton()
-            }
-            .swipeActions(edge: .trailing) {
-                BuildDeleteButton()
-                BuildArchiveButton()
-            }
-            .contextMenu(menuItems: {
-                BuildRefreshButton(addTint: false)
-                BuildAddrInfoButton(addTint: false)
-                BuildEditButton(addTint: false)
-                Divider()
-                BuildArchiveButton(addTint: false)
-                BuildDeleteButton(addTint: false)
-            })
+        .swipeActions(edge: .leading) {
+            BuildAddrInfoButton()
+            BuildRefreshButton()
+            BuildEditButton()
+        }
+        .swipeActions(edge: .trailing) {
+            BuildDeleteButton()
+            BuildArchiveButton()
+        }
+        .contextMenu(menuItems: {
+            BuildRefreshButton(addTint: false)
+            BuildAddrInfoButton(addTint: false)
+            BuildEditButton(addTint: false)
+            Divider()
+            BuildArchiveButton(addTint: false)
+            BuildDeleteButton(addTint: false)
+        })
     }
     
     @ViewBuilder

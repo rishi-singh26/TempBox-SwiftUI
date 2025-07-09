@@ -11,12 +11,25 @@ struct ExportAddressesView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var addressesController: AddressesController
     
+    @State private var showExportAlert: Bool = false
+    
     var body: some View {
+        Group {
 #if os(iOS)
-        IOSView()
+            IOSView()
 #elseif os(macOS)
-        MacOSView()
+            MacOSView()
 #endif
+        }
+        .onAppear(perform: {
+            showExportAlert = true
+        })
+        .alert("Alert!", isPresented: $showExportAlert) {
+            Button("I Understand") {}
+        } message: {
+            Text("The exported addresses can be used to login and read your emails. Please store them securly.")
+        }
+
     }
     
 #if os(iOS)
