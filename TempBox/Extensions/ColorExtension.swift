@@ -66,5 +66,59 @@ extension Color {
         let colorLevel: Double = lum > 0.7 ? 0.0 : 1.0
         self.init(red: colorLevel, green: colorLevel, blue: colorLevel, opacity: 1)
     }
+    
+    /// Convert Color to hex string including alpha (#RRGGBBAA).
+    /// - Parameter includeAlpha: Whether to include the alpha channel in the hex string.
+    /// - Returns: Hex string representation or nil if conversion fails.
+    /// Tries multiple color spaces on macOS for better compatibility.
+    func toHex(includeAlpha: Bool = true) -> String? {
+#if canImport(UIKit)
+        // iOS, tvOS, watchOS
+        let uiColor = UIColor(self)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        
+        guard uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
+            return nil
+        }
+#elseif canImport(AppKit)
+        // macOS
+        let nsColor = NSColor(self)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        
+        // Try deviceRGB first
+        if let rgbColor = nsColor.usingColorSpace(.deviceRGB) {
+            rgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        }
+        // Fallback to generic RGB
+        else {
+            nsColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        }
+#else
+        return nil
+#endif
+        
+        if includeAlpha {
+            return String(
+                format: "#%02X%02X%02X%02X",
+                Int(red * 255),
+                Int(green * 255),
+                Int(blue * 255),
+                Int(alpha * 255)
+            )
+        } else {
+            return String(
+                format: "#%02X%02X%02X",
+                Int(red * 255),
+                Int(green * 255),
+                Int(blue * 255)
+            )
+        }
+    }
 }
 

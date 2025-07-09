@@ -81,9 +81,9 @@ struct SettingsView: View {
                 NavigationLink(value: SettingPage.exportPage) {
                     Label("Export Addresses", systemImage: "square.and.arrow.up")
                 }
-                NavigationLink(value: SettingPage.appColorPage) {
-                    Label("Change App Color", systemImage: "paintpalette")
-                }
+//                NavigationLink(value: SettingPage.appColorPage) {
+//                    Label("Change App Color", systemImage: "paintpalette")
+//                }
                 NavigationLink(value: SettingPage.archive) {
                     Label("Archived Addresses", systemImage: "archivebox")
                 }
@@ -167,11 +167,11 @@ struct SettingsView: View {
                     } label: {
                         Label("Change App Icon", systemImage: "command")
                     }
-                    NavigationLink {
-                        AppColorView()
-                    } label: {
-                        Label("Change App Color", systemImage: "paintpalette")
-                    }
+//                    NavigationLink {
+//                        AppColorView()
+//                    } label: {
+//                        Label("Change App Color", systemImage: "paintpalette")
+//                    }
                 }
 
                 Section {

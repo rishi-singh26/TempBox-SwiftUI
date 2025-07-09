@@ -228,7 +228,6 @@ struct ContentView: View {
                     Label("Address Info", systemImage: "info.circle")
                 }
                 .help("Address Information")
-                .disabled(addressesController.selectedAddress == nil)
                 Button {
                     addressesViewModel.selectedAddForEditSheet = addressesController.selectedAddress!
                     addressesViewModel.isEditAddressSheetOpen = true
@@ -236,7 +235,6 @@ struct ContentView: View {
                     Label("Edit Address", systemImage: "pencil.circle")
                 }
                 .help("Edit address name")
-                .disabled(addressesController.selectedAddress == nil)
                 Button {
                     Task {
                         await addressesController.toggleAddressStatus(addressesController.selectedAddress!)
@@ -245,7 +243,6 @@ struct ContentView: View {
                     Label("Archive Address", systemImage: "archivebox")
                 }
                 .help("Archive address")
-                .disabled(addressesController.selectedAddress == nil)
                 Button(role: .destructive) {
                     addressesViewModel.showDeleteAddressAlert = true
                     addressesViewModel.selectedAddForDeletion = addressesController.selectedAddress!
@@ -253,10 +250,10 @@ struct ContentView: View {
                     Label("Delete Address", systemImage: "trash")
                 }
                 .help("Delete address")
-                .disabled(addressesController.selectedAddress == nil)
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
+            .disabled(addressesController.selectedAddress == nil)
         }
     }
 #endif
