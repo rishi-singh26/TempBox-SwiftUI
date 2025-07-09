@@ -44,84 +44,74 @@ struct AppIconView: View {
     struct IconSelector: Identifiable {
         var id = UUID()
         let title: String
-        let icons: [Icon]
+        let icon: Icon
         
         static let items = [
             IconSelector(
                 title: "White on Red".localized,
-                icons: [.primary]),
+                icon: .primary),
             IconSelector(
                 title: "\("Red on White".localized)",
-                icons: [.alt1]),
+                icon: .alt1),
             IconSelector(
                 title: "\("Blue on White".localized)",
-                icons: [.alt2]),
+                icon: .alt2),
             IconSelector(
                 title: "\("White on Red - Classic".localized)",
-                icons: [.alt3]),
+                icon: .alt3),
             IconSelector(
                 title: "\("Green".localized)",
-                icons: [.alt4]),
+                icon: .alt4),
             IconSelector(
                 title: "\("Blue".localized)",
-                icons: [.alt5]),
+                icon: .alt5),
             IconSelector(
                 title: "White on Orange".localized,
-                icons: [.alt6]),
+                icon: .alt6),
             IconSelector(
                 title: "\("Orange on White".localized)",
-                icons: [.alt7]),
+                icon: .alt7),
         ]
     }
     
     var body: some View {
         List {
             ForEach(IconSelector.items) { item in
-                Section {
-                    makeIconGridView(icons: item.icons)
-                } header: {
-                    Text(item.title)
-                }
-            }
-        }
-        .navigationTitle("App Icon")
-        .navigationBarTitleDisplayMode(.inline)
-        .listStyle(.plain)
-        .onAppear {
-            if let alternateAppIcon = UIApplication.shared.alternateIconName, let appIcon = Icon.allCases.first(where: { $0.appIconName == alternateAppIcon }) {
-                currentIcon = appIcon.appIconName
-            } else {
-                currentIcon = Icon.primary.appIconName
-            }
-        }
-    }
-    
-    private func makeIconGridView(icons: [Icon]) -> some View {
-        LazyVGrid(columns: columns, spacing: 6) {
-            ForEach(icons) { icon in
-                Button {
-                    currentIcon = icon.appIconName
-                    if icon.rawValue == Icon.primary.rawValue {
+                Button{
+                    currentIcon = item.icon.appIconName
+                    if item.icon.rawValue == Icon.primary.rawValue {
                         setAppIcon(nil)
                     } else {
-                        setAppIcon(icon.appIconName)
+                        setAppIcon(item.icon.appIconName)
                     }
                 } label: {
-                    ZStack(alignment: .bottomTrailing) {
-                        Image(icon.previewImageName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(minHeight: 125, maxHeight: 512)
-                            .cornerRadius(38)
-                            .shadow(radius: 2)
-                        if icon.appIconName == currentIcon {
+                    HStack(alignment: .center) {
+                        Label {
+                            Text(item.title)
+                        } icon: {
+                            Image(item.icon.previewImageName)
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                                .cornerRadius(8)
+                                .padding(.horizontal)
+                        }
+                        Spacer()
+                        if item.icon.appIconName == currentIcon {
                             Image(systemName: "checkmark.seal.fill")
-                                .padding(12)
                                 .foregroundStyle(.green)
                         }
                     }
                 }
                 .buttonStyle(.plain)
+            }
+        }
+        .navigationTitle("App Icon")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if let alternateAppIcon = UIApplication.shared.alternateIconName, let appIcon = Icon.allCases.first(where: { $0.appIconName == alternateAppIcon }) {
+                currentIcon = appIcon.appIconName
+            } else {
+                currentIcon = Icon.primary.appIconName
             }
         }
     }
