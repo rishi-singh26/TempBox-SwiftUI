@@ -12,7 +12,8 @@ struct EditAddressView: View {
     @EnvironmentObject private var addressesController: AddressesController
     
     @State private var addressName: String = ""
-    
+    @FocusState private var isTextFieldFocused: Bool
+
     var address: Address
     
     init(address: Address) {
@@ -21,22 +22,30 @@ struct EditAddressView: View {
     }
 
     var body: some View {
+        Group {
 #if os(iOS)
-        IOSEditAddress()
+            IOSEditAddress()
 #elseif os(macOS)
-        MacOSEditAddress()
+            MacOSEditAddress()
 #endif
+        }
+        .onAppear {
+            isTextFieldFocused = true
+        }
     }
     
+#if os(iOS)
     @ViewBuilder
     func IOSEditAddress() -> some View {
         NavigationView {
             Form {
                 Section(footer: Text("Address name appears on the addresses list screen.")) {
                     TextField("Address name", text: $addressName)
+                        .focused($isTextFieldFocused)
                 }
             }
             .navigationTitle("Edit Address Name")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -59,7 +68,9 @@ struct EditAddressView: View {
             }
         }
     }
+#endif
     
+#if os(macOS)
     @ViewBuilder
     func MacOSEditAddress() -> some View {
         VStack {
@@ -78,6 +89,7 @@ struct EditAddressView: View {
                             Spacer()
                             TextField("", text: $addressName)
                                 .textFieldStyle(.roundedBorder)
+                                .focused($isTextFieldFocused)
                         }
                     }
                 }
@@ -104,6 +116,7 @@ struct EditAddressView: View {
             }
         }
     }
+#endif
 }
 
 #Preview {
