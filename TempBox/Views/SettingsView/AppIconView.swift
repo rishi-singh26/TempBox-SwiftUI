@@ -53,18 +53,18 @@ struct AppIconView: View {
             IconSelector(
                 title: "\("Red on White".localized)",
                 icon: .alt1),
-            IconSelector(
-                title: "\("Blue on White".localized)",
-                icon: .alt2),
+//            IconSelector(
+//                title: "\("Blue on White".localized)",
+//                icon: .alt2),
             IconSelector(
                 title: "\("White on Red - Classic".localized)",
                 icon: .alt3),
             IconSelector(
                 title: "\("Green".localized)",
                 icon: .alt4),
-            IconSelector(
-                title: "\("Blue".localized)",
-                icon: .alt5),
+//            IconSelector(
+//                title: "\("Blue".localized)",
+//                icon: .alt5),
             IconSelector(
                 title: "White on Orange".localized,
                 icon: .alt6),
