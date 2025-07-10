@@ -164,7 +164,8 @@ struct ContentView: View {
                     )
                 }
             } label: {
-                if let message = addressesController.selectedMessage {
+                // Get seen status from messages store
+                if let message = addressesController.getMessageFromStore(addressesController.selectedAddress?.id ?? "", addressesController.selectedMessage?.id ?? "") {
                     Label(message.seen ? "Mark as unread" : "Mark as read", systemImage: message.seen ? "envelope.badge" : "envelope.open")
                 } else {
                     Label("Mark as read/unread", systemImage: "envelope.badge")

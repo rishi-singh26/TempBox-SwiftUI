@@ -14,24 +14,22 @@ struct MessageItemView: View {
     let message: Message
     let address: Address
     
-    private var message2: Message? {
-        addressesController.messageStore[address.id]?.messages.first { mes in
-            mes.id == message.id
-        }
+    private var messageFromStore: Message? {
+        addressesController.getMessageFromStore(address.id, message.id)
     }
     
     var messageHeader: String {
-        if let name = message2?.from.name, !name.isEmpty {
+        if let name = messageFromStore?.from.name, !name.isEmpty {
             return name
         } else {
-            return message2?.from.address ?? ""
+            return messageFromStore?.from.address ?? ""
         }
     }
     
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Circle()
-                .fill(.accent.opacity(message2?.seen == true ? 0 : 1))
+                .fill(.accent.opacity(messageFromStore?.seen == true ? 0 : 1))
                 .frame(width: 12)
                 .padding(0)
             VStack(alignment: .leading) {
@@ -77,13 +75,13 @@ struct MessageItemView: View {
     func BuildStatusButton(addTint: Bool = true) -> some View {
         let unreadMessage = addTint ? "Unread" : "Mark as unread"
         let readMessage = addTint ? "Read" : "Mark as read"
-        let isSeen = message2?.seen ?? false
+        let isSeen = messageFromStore?.seen ?? false
         Button {
             Task {
                 await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !isSeen)
             }
         } label: {
-            Label(message2?.seen == true ? unreadMessage : readMessage, systemImage: isSeen ? "envelope.badge.fill" : "envelope.open.fill")
+            Label(messageFromStore?.seen == true ? unreadMessage : readMessage, systemImage: isSeen ? "envelope.badge.fill" : "envelope.open.fill")
         }
         .help("Toggle message read status")
         .tint(addTint ? .blue : nil)
