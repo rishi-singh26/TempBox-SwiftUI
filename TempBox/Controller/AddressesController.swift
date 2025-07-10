@@ -345,6 +345,12 @@ class AddressesController: ObservableObject {
         }
     }
     
+    func getMessageFromStore(_ addressId: String, _ messageId: String) -> Message? {
+        return messageStore[addressId]?.messages.first { mes in
+            mes.id == messageId
+        }
+    }
+    
     /// Add a new address from MTAccount
     func addAddress(account: Account, token: String, password: String, addressName: String) async {
         let newAddress = Address(

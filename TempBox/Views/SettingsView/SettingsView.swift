@@ -95,6 +95,7 @@ struct SettingsView: View {
             }
             .listStyle(.sidebar)
             .navigationTitle("Settings")
+            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 280)
             .onChange(of: settingsViewModel.selectedSetting, { oldValue, newValue in
                 settingsViewModel.handleNavigationChange(oldValue, newValue)
             })

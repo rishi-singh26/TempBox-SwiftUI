@@ -15,6 +15,10 @@ struct MessageDetailView: View {
 
     let message: Message
     let address: Address
+    
+    private var messageFromStore: Message? {
+        addressesController.getMessageFromStore(address.id, message.id)
+    }
         
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -36,12 +40,7 @@ struct MessageDetailView: View {
             }
         }
         .background(Color(hex: emailColorScheme == .dark ? "#1a1a1a" : "#ffffff"))
-        .onAppear(perform: {
-            Task {
-                await addressesController.fetchCompleteMessage(of: message, address: address)
-                await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: true)
-            }
-        })
+        .onAppear(perform: updateMessageSeenStatus)
         .sheet(isPresented: $messageDetailController.showMessageInfoSheet, content: {
             MessageInfoView(message: message)
                 .environmentObject(messageDetailController)
@@ -81,7 +80,22 @@ struct MessageDetailView: View {
             }
         })
         .navigationBarTitleDisplayMode(.inline)
+#elseif os(macOS)
+        .onChange(of: addressesController.selectedMessage, { _, _ in
+            updateMessageSeenStatus()
+        })
 #endif
+    }
+    
+    private func updateMessageSeenStatus() {
+        Task {
+#if os(iOS)
+            await addressesController.fetchCompleteMessage(of: message, address: address)
+#endif
+            if let messageFromStore = messageFromStore, !messageFromStore.seen, let safeAddress = addressesController.selectedAddress {
+                await addressesController.updateMessageSeenStatus(messageData: messageFromStore, address: safeAddress, seen: true)
+            }
+        }
     }
     
     private var emailColorScheme: ColorScheme {
@@ -102,7 +116,6 @@ struct EmptyView: View {
             Spacer()
             ProgressView()
                 .frame(width: 25, height: 25)
-                .tint(.red)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

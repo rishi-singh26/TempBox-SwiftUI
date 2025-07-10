@@ -34,8 +34,12 @@ struct MessagesView: View {
     var body: some View {
         VStack {
             if (filteredMessages).isEmpty {
-                ScrollView {
-                    Text("No messages")
+                List {
+                    HStack {
+                        Spacer()
+                        Text("No messages")
+                        Spacer()
+                    }
                 }
             } else {
                 MessagesList(address: address)
@@ -90,21 +94,15 @@ struct MessagesView: View {
                 NavigationLink {
                     MessageDetailView(message: message, address: address)
                 } label: {
-                    MessageItemView(
-                        message: message,
-                        address: address
-                    )
-                    .environmentObject(controller)
+                    MessageItemView(message: message, address: address)
+                        .environmentObject(controller)
                 }
             }
 #elseif os(macOS)
             List(filteredMessages, selection: selectionBinding) { message in
                 NavigationLink(value: message) {
-                    MessageItemView(
-                        message: message,
-                        address: address
-                    )
-                    .environmentObject(controller)
+                    MessageItemView(message: message, address: address)
+                        .environmentObject(controller)
                 }
             }
 #endif
