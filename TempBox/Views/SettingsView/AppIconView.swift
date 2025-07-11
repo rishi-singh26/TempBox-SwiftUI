@@ -53,18 +53,18 @@ struct AppIconView: View {
             IconSelector(
                 title: "\("Red on White".localized)",
                 icon: .alt1),
-//            IconSelector(
-//                title: "\("Blue on White".localized)",
-//                icon: .alt2),
+            IconSelector(
+                title: "\("Inclusion".localized)",
+                icon: .alt2),
             IconSelector(
                 title: "\("White on Red - Classic".localized)",
                 icon: .alt3),
             IconSelector(
-                title: "\("Green".localized)",
+                title: "\("Dark Green".localized)",
                 icon: .alt4),
-//            IconSelector(
-//                title: "\("Blue".localized)",
-//                icon: .alt5),
+            IconSelector(
+                title: "\("Light".localized)",
+                icon: .alt5),
             IconSelector(
                 title: "White on Orange".localized,
                 icon: .alt6),
@@ -88,12 +88,14 @@ struct AppIconView: View {
                     HStack(alignment: .center) {
                         Label {
                             Text(item.title)
+                                .padding(.leading, 4)
                         } icon: {
                             Image(item.icon.previewImageName)
                                 .resizable()
                                 .frame(width: 50, height: 50)
                                 .cornerRadius(8)
                                 .padding(.horizontal)
+                                .shadow(radius: 2)
                         }
                         Spacer()
                         if item.icon.appIconName == currentIcon {

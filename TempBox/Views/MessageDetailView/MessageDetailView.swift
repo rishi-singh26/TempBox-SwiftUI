@@ -92,8 +92,8 @@ struct MessageDetailView: View {
 #if os(iOS)
             await addressesController.fetchCompleteMessage(of: message, address: address)
 #endif
-            if let messageFromStore = messageFromStore, !messageFromStore.seen, let safeAddress = addressesController.selectedAddress {
-                await addressesController.updateMessageSeenStatus(messageData: messageFromStore, address: safeAddress, seen: true)
+            if let messageFromStore = messageFromStore, !messageFromStore.seen {
+                await addressesController.updateMessageSeenStatus(messageData: messageFromStore, address: address, seen: true)
             }
         }
     }
