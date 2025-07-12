@@ -33,7 +33,7 @@ struct TempBoxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 .environmentObject(addressesController)
                 .environmentObject(addressViewModel)
                 .environmentObject(settingsViewModel)
@@ -57,23 +57,26 @@ struct TempBoxApp: App {
 #endif
         
 #if os(macOS)
-        //
-        //        Window("About TempBox", id: "about") {
-        //            Text("About Temobox")
-        //        }
-        //        .defaultSize(width: 300, height: 720)
-        //        .windowResizability(.contentSize)
-        //        .windowStyle(.hiddenTitleBar)
-        
         Window("Settings", id: "settings") {
             SettingsView()
                 .environmentObject(addressesController)
                 .environmentObject(addressViewModel)
                 .environmentObject(settingsViewModel)
+                .environmentObject(appController)
         }
         .defaultSize(width: 700, height: 400)
         .windowResizability(.contentSize)
         .windowStyle(.titleBar)
 #endif
+    }
+}
+
+struct RootView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject private var appController: AppController
+    
+    var body: some View {
+        ContentView()
+            .accentColor(appController.accentColor(colorScheme: colorScheme))
     }
 }

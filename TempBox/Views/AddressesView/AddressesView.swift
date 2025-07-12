@@ -11,6 +11,9 @@ import SwiftData
 struct AddressesView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
+    @EnvironmentObject private var appController: AppController
+    
+    @Environment(\.colorScheme) var colorScheme
     
     var filteredAddresses: [Address] {
         if addressesViewModel.searchText.isEmpty {
@@ -26,6 +29,7 @@ struct AddressesView: View {
     }
     
     var body: some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
         AddressesList()
 #if os(iOS)
         .toolbar {
@@ -64,12 +68,15 @@ struct AddressesView: View {
         }
         .sheet(isPresented: $addressesViewModel.isNewAddressSheetOpen) {
             AddAddressView()
+                .accentColor(accentColor)
         }
         .sheet(isPresented: $addressesViewModel.isAddressInfoSheetOpen) {
             AddressInfoView(address: addressesViewModel.selectedAddForInfoSheet!)
+                .accentColor(accentColor)
         }
         .sheet(isPresented: $addressesViewModel.isEditAddressSheetOpen) {
             EditAddressView(address: addressesViewModel.selectedAddForEditSheet!)
+                .accentColor(accentColor)
         }
         .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
             SettingsView()

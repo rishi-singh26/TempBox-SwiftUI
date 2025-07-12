@@ -44,10 +44,12 @@ struct MessageDetailView: View {
         .sheet(isPresented: $messageDetailController.showMessageInfoSheet, content: {
             MessageInfoView(message: message)
                 .environmentObject(messageDetailController)
+                .accentColor(appController.accentColor(colorScheme: colorScheme))
         })
         .sheet(isPresented: $messageDetailController.showAttachmentsSheet, content: {
             AttachemntListView(address: address, message: message)
                 .environmentObject(messageDetailController)
+                .accentColor(appController.accentColor(colorScheme: colorScheme))
         })
 #if os(iOS)
         .toolbar(content: {

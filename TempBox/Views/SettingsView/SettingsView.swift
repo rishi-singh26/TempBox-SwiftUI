@@ -21,9 +21,11 @@ enum SettingPage {
 struct SettingsView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    @EnvironmentObject private var appController: AppController
     
     @Environment(\.openURL) var openURL
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         Group {
@@ -33,6 +35,7 @@ struct SettingsView: View {
             IOSSettings()
 #endif
         }
+        .accentColor(appController.accentColor(colorScheme: colorScheme))
         .alert("Alert", isPresented: $settingsViewModel.showArchAddrDeleteConf, actions: {
             Button("Cancel", role: .cancel) {}
             Button("Yes", role: .destructive) {
@@ -168,11 +171,11 @@ struct SettingsView: View {
                     } label: {
                         Label("Change App Icon", systemImage: "command")
                     }
-//                    NavigationLink {
-//                        AppColorView()
-//                    } label: {
-//                        Label("Change App Color", systemImage: "paintpalette")
-//                    }
+                    NavigationLink {
+                        AppColorView()
+                    } label: {
+                        Label("Change App Color", systemImage: "paintpalette")
+                    }
                 }
 
                 Section {
