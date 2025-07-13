@@ -112,7 +112,7 @@ struct AppIconView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .disabled(!alternateIconsSupported)
+                .disabled(!alternateIconsSupported || !appController.hasTipped)
             }
         }
         .navigationTitle("App Icon")
@@ -124,9 +124,18 @@ struct AppIconView: View {
                 currentIcon = Icon.primary.appIconName
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Reset") {
+                    setAppIcon(Icon.primary.appIconName)
+                    currentIcon = Icon.primary.appIconName
+                }
+            }
+        }
     }
     
     private func handleIconSelection(selected: IconSelector) {
+        guard appController.hasTipped else { return }
         currentIcon = selected.icon.appIconName
         if selected.icon.rawValue == Icon.primary.rawValue {
             setAppIcon(nil)

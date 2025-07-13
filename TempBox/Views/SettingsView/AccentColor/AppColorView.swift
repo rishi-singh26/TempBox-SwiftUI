@@ -13,8 +13,6 @@ struct AppColorView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject private var appController: AppController
     
-    @State private var isAppColorsExpanded = true
-    @State private var isSystemColorsExpanded = true
     @State private var showAddColorSheet = false
     
     var sortedCustomColors: [AccentColorData] {
@@ -23,7 +21,7 @@ struct AppColorView: View {
         
     var body: some View {
         List {
-            ColorsListSection(title: "App Colors", colors: AppController.defaultAccentColors, isExpanded: $isAppColorsExpanded)
+            ColorsListSection(title: "App Colors", colors: AppController.defaultAccentColors)
             Section(header: AddColorSectionHeader("Custom Colors", openAddColorSheet)) {
                 ForEach(sortedCustomColors) { accentColor in
                     ColorTile(accentColor: accentColor, hasActions: true)
@@ -31,7 +29,7 @@ struct AppColorView: View {
             }
             .headerProminence(.increased)
         }
-        .listStyle(.sidebar)
+        .listStyle(.insetGrouped)
         .navigationTitle("Accent Color")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddColorSheet) {
@@ -41,11 +39,15 @@ struct AppColorView: View {
     }
     
     @ViewBuilder
-    private func ColorsListSection(title: String, colors: [AccentColorData], isExpanded: Binding<Bool>, hasActions: Bool = false) -> some View {
-        Section(title, isExpanded: isExpanded) {
+    private func ColorsListSection(title: String, colors: [AccentColorData], hasActions: Bool = false) -> some View {
+        Section {
             ForEach(colors) { accentColor in
                 ColorTile(accentColor: accentColor, hasActions: hasActions)
             }
+        } header: {
+            Text(title)
+        } footer: {
+            Text("Different dark mode and light mode accent color")
         }
         .headerProminence(.increased)
     }
@@ -54,10 +56,13 @@ struct AppColorView: View {
     private func ColorTile(accentColor: AccentColorData, hasActions: Bool) -> some View {
         // Tile
         let tile = Button {
+            guard appController.hasTipped else { return }
             appController.selectedAccentColorData = accentColor
         } label: {
             ColorTileLabel(accentColor: accentColor)
-        }.buttonStyle(.plain)
+        }
+            .buttonStyle(.plain)
+            .disabled(!appController.hasTipped)
         
         // Delete Button
         let deleteButton = Button {

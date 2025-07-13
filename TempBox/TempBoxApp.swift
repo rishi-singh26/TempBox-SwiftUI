@@ -14,9 +14,10 @@ struct TempBoxApp: App {
     @StateObject private var addressesController = AddressesController()
     @StateObject private var addressViewModel = AddressesViewModel()
     @StateObject private var settingsViewModel = SettingsViewModel()
-    @StateObject private var appController = AppController()
+    @StateObject private var appController = AppController.shared
     @StateObject private var messageDetailController = MessageDetailViewModel()
     @StateObject private var messagesViewModel = MessagesViewModel()
+    @StateObject private var iapManager = IAPManager()
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -40,6 +41,7 @@ struct TempBoxApp: App {
                 .environmentObject(appController)
                 .environmentObject(messageDetailController)
                 .environmentObject(messagesViewModel)
+                .environmentObject(iapManager)
         }
         .modelContainer(sharedModelContainer)
 #if os(macOS)

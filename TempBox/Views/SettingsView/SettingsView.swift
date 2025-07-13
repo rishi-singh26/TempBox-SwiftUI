@@ -24,7 +24,6 @@ struct SettingsView: View {
     @EnvironmentObject private var appController: AppController
     
     @Environment(\.openURL) var openURL
-    @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -142,67 +141,61 @@ struct SettingsView: View {
 #if os(iOS)
     @ViewBuilder
     func IOSSettings() -> some View {
-        NavigationView {
-            List {
-                Section {
-                    NavigationLink {
-                        ImportAddressesView()
-                    } label: {
-                        Label("Import Addresses", systemImage: "square.and.arrow.down")
-                    }
-                    NavigationLink {
-                        ExportAddressesView()
-                    } label: {
-                        Label("Export Addresses", systemImage: "square.and.arrow.up")
-                    }
+        List {
+            Section {
+                NavigationLink {
+                    ImportAddressesView()
+                } label: {
+                    Label("Import Addresses", systemImage: "square.and.arrow.down")
                 }
-                
-                Section {
-                    NavigationLink {
-                        ArchiveView()
-                    } label: {
-                        Label("Archived Addresses", systemImage: "archivebox")
-                    }
-                }
-                
-                Section {
-                    NavigationLink {
-                        AppIconView()
-                    } label: {
-                        Label("Change App Icon", systemImage: "command")
-                    }
-                    NavigationLink {
-                        AppColorView()
-                    } label: {
-                        Label("Change App Color", systemImage: "paintpalette")
-                    }
-                }
-
-                Section {
-                    NavigationLink {
-                        AboutView()
-                    } label: {
-                        Label("About TempBox", systemImage: "info.circle")
-                    }
+                NavigationLink {
+                    ExportAddressesView()
+                } label: {
+                    Label("Export Addresses", systemImage: "square.and.arrow.up")
                 }
             }
-            .navigationTitle("Settings")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Done")
-                            .font(.headline)
-                    }
+            
+            Section {
+                NavigationLink {
+                    ArchiveView()
+                } label: {
+                    Label("Archived Addresses", systemImage: "archivebox")
+                }
+            }
+            
+            Section {
+                if !appController.hasTipped {
+                    TipJarCardView()
+                        .padding(.bottom)
+                }
+                NavigationLink {
+                    AppIconView()
+                } label: {
+                    Label("App Icon", systemImage: "command")
+                }
+                NavigationLink {
+                    AppColorView()
+                } label: {
+                    Label("Accent Color", systemImage: "paintpalette")
+                }
+            } footer: {
+                Text(appController.hasTipped ? "Thanks for the tip!" : "Tip any amount to unlock!")
+            }
+            
+            Section {
+                NavigationLink {
+                    AboutView()
+                } label: {
+                    Label("About TempBox", systemImage: "info.circle")
                 }
             }
         }
+        .navigationTitle("Settings")
     }
 #endif
     
     
-    func deleteArchivedAddresses() async {
+    private func deleteArchivedAddresses() async {
         if settingsViewModel.selectedArchivedAddresses.isEmpty {
             settingsViewModel.showAlert(with: "Select addresses to delete.")
             return
