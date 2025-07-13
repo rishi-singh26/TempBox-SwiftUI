@@ -11,6 +11,9 @@ import StoreKit
 class AppController: ObservableObject {
     static let shared = AppController()
     
+    /// Used for navigation on iPhone only
+    @Published var path = NavigationPath()
+    
     @AppStorage("hasTippedSmall") private(set) var hasTippedSmall: Bool = false
     @AppStorage("hasTippedMedium") private(set) var hasTippedMedium: Bool = false
     @AppStorage("hasTippedLarge") private(set) var hasTippedLarge: Bool = false
@@ -91,7 +94,7 @@ class AppController: ObservableObject {
 extension AppController {
     static let appId = "6575345984"
     static let appAccentColorHex = "#BA1F33"
-    static let appAccentColorDarkHex = "#CF253C"
+    static let appAccentColorDarkHex = "#BB2136"
     
     static private let customAccentColorsKey = "customAccentColors"
     static private let accentColorDataKey = "accentColorData"

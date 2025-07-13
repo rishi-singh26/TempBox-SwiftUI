@@ -5,6 +5,7 @@
 //  Created by Rishi Singh on 12/07/25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct AddColorView: View {
@@ -46,3 +47,4 @@ struct AddColorView: View {
         print(newColor.dark.toHex() ?? "")
     }
 }
+#endif

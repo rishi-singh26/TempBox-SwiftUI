@@ -11,42 +11,44 @@ struct AddressItemView: View {
     let address: Address
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
+    @EnvironmentObject private var appController: AppController
     
-    var isMessagesFetching: Bool {
+    private var isMessagesFetching: Bool {
         addressesController.messageStore[address.id]?.isFetching ?? false
     }
     
-    var isMessagesFetchingFailed: Bool {
+    private var isMessagesFetchingFailed: Bool {
         addressesController.messageStore[address.id]?.error != nil
     }
     
-    var unreadMessagesCount: Int {
+    private var unreadMessagesCount: Int {
         addressesController.messageStore[address.id]?.unreadMessagesCount ?? 0
     }
     
-    var addresName: String {
-        address.name == nil || (address.name?.isEmpty ?? false) ? address.address : address.name!
+    private var addresName: String {
+        address.name == nil || address.name?.isEmpty == true ? address.address.extractUsername() : address.name!
     }
     
     var body: some View {
-        HStack {
-            Image(systemName: "tray")
-                .foregroundColor(.accentColor)
-            HStack {
-                Text(addresName)
-                Spacer()
-                if !address.isArchived && !address.isDeleted {
-                    if isMessagesFetching {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else if isMessagesFetchingFailed {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                    } else if unreadMessagesCount != 0 {
-                        Text("\(unreadMessagesCount)")
-                            .foregroundColor(.secondary)
+        Group {
+#if os(iOS)
+            if DeviceType.isIphone {
+                Button {
+                    addressesController.selectedAddress = address
+                    if DeviceType.isIphone {
+                        appController.path.append(address)
+                    } else {
+                        appController.path = NavigationPath()
                     }
+                } label: {
+                    AddressTileBuilder()
                 }
+            } else {
+                AddressTileBuilder()
             }
+#elseif os(macOS)
+            AddressTileBuilder()
+#endif
         }
         .swipeActions(edge: .leading) {
             BuildAddrInfoButton()
@@ -68,7 +70,35 @@ struct AddressItemView: View {
     }
     
     @ViewBuilder
-    func BuildAddrInfoButton(addTint: Bool = true) -> some View {
+    private func AddressTileBuilder() -> some View {
+        HStack {
+            HStack {
+                Image(systemName: "tray")
+                    .foregroundColor(.accentColor)
+                HStack {
+                    Text(addresName)
+                    Spacer()
+                    if !address.isArchived && !address.isDeleted {
+                        if isMessagesFetching {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else if isMessagesFetchingFailed {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                        } else if unreadMessagesCount != 0 {
+                            Text("\(unreadMessagesCount)")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
+        }
+    }
+    
+    @ViewBuilder
+    private func BuildAddrInfoButton(addTint: Bool = true) -> some View {
         Button {
             addressesViewModel.selectedAddForInfoSheet = address
             addressesViewModel.isAddressInfoSheetOpen = true
@@ -80,7 +110,7 @@ struct AddressItemView: View {
     }
     
     @ViewBuilder
-    func BuildRefreshButton(addTint: Bool = true) -> some View {
+    private func BuildRefreshButton(addTint: Bool = true) -> some View {
         Button {
             Task {
                 await addressesController.refreshMessages(for: address)
@@ -93,7 +123,7 @@ struct AddressItemView: View {
     }
     
     @ViewBuilder
-    func BuildEditButton(addTint: Bool = true) -> some View {
+    private func BuildEditButton(addTint: Bool = true) -> some View {
         Button {
             addressesViewModel.selectedAddForEditSheet = address
             addressesViewModel.isEditAddressSheetOpen = true
@@ -105,7 +135,7 @@ struct AddressItemView: View {
     }
     
     @ViewBuilder
-    func BuildDeleteButton(addTint: Bool = true) -> some View {
+    private func BuildDeleteButton(addTint: Bool = true) -> some View {
         Button {
             addressesViewModel.showDeleteAddressAlert = true
             addressesViewModel.selectedAddForDeletion = address
@@ -117,7 +147,7 @@ struct AddressItemView: View {
     }
     
     @ViewBuilder
-    func BuildArchiveButton(addTint: Bool = true) -> some View {
+    private func BuildArchiveButton(addTint: Bool = true) -> some View {
         Button {
             Task {
                 await addressesController.toggleAddressStatus(address)

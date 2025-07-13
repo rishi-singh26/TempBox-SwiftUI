@@ -18,66 +18,63 @@ struct ContentView: View {
     @EnvironmentObject var appController: AppController
     
     /// Ones data from flutter has been migrated successfully to swftdata, set this to true
-    @AppStorage("didMigrateData") var didMigrateData: Bool = false
+    @AppStorage("didMigrateData") private var didMigrateData: Bool = false
     
     var body: some View {
 #if os(iOS)
         Group {
-            if DeviceType.current == .iPad {
-                NavigationView {
-                    AddressesView()
-                }
+            if DeviceType.isIphone {
+                IPhoneNavigtionBuilder()
             } else {
-                NavigationStack {
-                    AddressesView()
-                }
+                IPadNavigationBuilder()
             }
         }
-        /// This on appear will read the applicatio support directory for `TempBoxExportMAJOR.txt` file.
-        /// If found, it will read the contents for that file, verify that the contents are in base64, decode base64 to json, then json to ExportVersionOne
-        /// After that it will save that data to swift data
-        /// This is needed to migrate from the flutter version fo the application to the SwiftUI version
-        /// This code will be removed one year after first relese of the SwiftUI version which is planned on 9th may, 2025. So in May 2026, this code will be removed
-        .onAppear {
-            if (didMigrateData) { return }
-            let fileName = "TempBoxExportMAJOR.txt"
-            
-            do {
-                let fileManager = FileManager.default
-                let appSupportURL = try fileManager.url(
-                    for: .applicationSupportDirectory,
-                    in: .userDomainMask,
-                    appropriateFor: nil,
-                    create: true
-                )
-                
-                let fileURL = appSupportURL.appendingPathComponent(fileName)
-                
-                if fileManager.fileExists(atPath: fileURL.path) {
-                    let data = try Data(contentsOf: fileURL)
-                    if let content = String(data: data, encoding: .utf8) {
-                        print(content)
-                        let (v1Data, _, message) = ImportExportService.decodeDataForImport(from: content)
-                        print(v1Data ?? "Version one data not available", message)
-                        Task {
-                            await importAddresses(v1Data: v1Data) { _ in
-                            }
-                        }
-                    } else {
-                        didMigrateData = true
-                        print("Unable to decode file contents.")
-                    }
-                } else {
-                    didMigrateData = true
-                    print("File does not exist.")
-                }
-                
-            } catch {
-                didMigrateData = true
-                print("Error: \(error.localizedDescription)")
-            }
-        }
+        .onAppear(perform: handleDataImport)
 #elseif os(macOS)
+        MacNavigationBuilder()
+#endif
+    }
+    
+#if os(iOS)
+    private func handleAddressNavigation(address: Address) -> some View {
+        MessagesView()
+    }
+    
+    private func handleMessageNavigation(message: Message) -> some View {
+        MessageDetailView()
+    }
+#endif
+}
+
+// MARK: - Navigation View Builders
+extension ContentView {
+#if os(iOS)
+    @ViewBuilder
+    private func IPhoneNavigtionBuilder() -> some View {
+        NavigationStack(path: $appController.path) {
+            AddressesView()
+                .navigationDestination(for: Address.self, destination: handleAddressNavigation)
+                .navigationDestination(for: Message.self, destination: handleMessageNavigation)
+        }
+    }
+    
+    @ViewBuilder
+    private func IPadNavigationBuilder() -> some View {
+        NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+            AddressesView()
+        } detail: {
+            NavigationStack(path: $appController.path) {
+                Group {
+                    MessagesView()
+                }
+                .navigationDestination(for: Message.self, destination: handleMessageNavigation)
+            }
+        }
+    }
+    
+#elseif os(macOS)
+    @ViewBuilder
+    private func MacNavigationBuilder() -> some View {
         NavigationSplitView {
             VStack {
                 NewAddressBtn()
@@ -97,69 +94,21 @@ struct ContentView: View {
                 }
             }
         } content: {
-            Group {
-                if let safeAddress = addressesController.selectedAddress {
-                    MessagesView(address: safeAddress)
-                } else {
-                    Text("Address not selected")
-                }
-            }
-            .navigationSplitViewColumnWidth(min: 290, ideal: 290, max: 400)
-            .toolbar(content: MacOSMessagesToolbar)
+            MessagesView()
+                .navigationSplitViewColumnWidth(min: 290, ideal: 290, max: 400)
+                .toolbar(content: MacOSMessagesToolbar)
         } detail: {
-            Group {
-                if let safeMessage = addressesController.selectedMessage, let safeAddress = addressesController.selectedAddress {
-                    MessageDetailView(message: safeMessage, address: safeAddress)
-                } else {
-                    Text("No message selected")
-                }
-            }
-            .navigationSplitViewColumnWidth(min: 440, ideal: 440)
-            .toolbar(content: MacOSMessageDetailToolbar)
+            MessageDetailView()
+                .navigationSplitViewColumnWidth(min: 440, ideal: 440)
+                .toolbar(content: MacOSMessageDetailToolbar)
         }
+    }
 #endif
-    }
-    
-//#if os(iOS)
-    /// This method will save the address to swiftdata
-    func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) async {
-        let addresses = (v1Data?.addresses ?? []).filter { address in
-            let idMatches = addressesController.addresses.first(where: { existingAddress in
-                existingAddress.id == address.id
-            })
-            return idMatches == nil
-        }
-        if addresses.isEmpty {
-            didMigrateData = true
-            completion([:])
-            return
-        }
-        
-        var errorMap: [String: String] = [:]
-        
-        await withTaskGroup(of: (String, String?)?.self) { group in
-            for address in addresses {
-                group.addTask {
-                    let (status, message) = await addressesController.loginAndSaveAddress(address: address)
-                    return status ? nil : (address.id, message)
-                }
-            }
-            
-            for await result in group {
-                if let (id, message) = result {
-                    errorMap[id] = message
-                }
-            }
-        }
-        
-        settingsViewModel.selectedV1Addresses.removeAll()
-        didMigrateData = true
-        completion(errorMap)
-    }
-//#endif
-    
-    
+}
+
+// MARK: - MacOS Toolbar builders
 #if os(macOS)
+extension ContentView {
     @ToolbarContentBuilder
     func MacOSMessageDetailToolbar() -> some ToolbarContent {
         ToolbarItemGroup {
@@ -265,7 +214,6 @@ struct ContentView: View {
             .disabled(addressesController.selectedAddress == nil)
         }
     }
-#endif
 }
 
 struct NewAddressBtn: View {
@@ -296,6 +244,94 @@ struct NewAddressBtn: View {
         .keyboardShortcut(.init("n", modifiers: [.command, .shift]))
     }
 }
+#endif
+
+// MARK: - Import data from old app version
+#if os(iOS)
+extension ContentView {
+    /// This on appear will read the applicatio support directory for `TempBoxExportMAJOR.txt` file.
+    /// If found, it will read the contents for that file, verify that the contents are in base64, decode base64 to json, then json to ExportVersionOne
+    /// After that it will save that data to swift data
+    /// This is needed to migrate from the flutter version fo the application to the SwiftUI version
+    /// This code will be removed one year after first relese of the SwiftUI version which is planned on 9th may, 2025. So in May 2026, this code will be removed
+    private func handleDataImport() {
+        guard !didMigrateData else { return }
+        
+        let fileName = "TempBoxExportMAJOR.txt"
+        
+        do {
+            let fileManager = FileManager.default
+            let appSupportURL = try fileManager.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            
+            let fileURL = appSupportURL.appendingPathComponent(fileName)
+            
+            if fileManager.fileExists(atPath: fileURL.path) {
+                let data = try Data(contentsOf: fileURL)
+                if let content = String(data: data, encoding: .utf8) {
+                    print(content)
+                    let (v1Data, _, message) = ImportExportService.decodeDataForImport(from: content)
+                    print(v1Data ?? "Version one data not available", message)
+                    Task {
+                        await importAddresses(v1Data: v1Data) { _ in
+                        }
+                    }
+                } else {
+                    didMigrateData = true
+                    print("Unable to decode file contents.")
+                }
+            } else {
+                didMigrateData = true
+                print("File does not exist.")
+            }
+            
+        } catch {
+            didMigrateData = true
+            print("Error: \(error.localizedDescription)")
+        }
+    }
+    
+    /// This method will save the address to swiftdata
+    private func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) async {
+        let addresses = (v1Data?.addresses ?? []).filter { address in
+            let idMatches = addressesController.addresses.first(where: { existingAddress in
+                existingAddress.id == address.id
+            })
+            return idMatches == nil
+        }
+        if addresses.isEmpty {
+            didMigrateData = true
+            completion([:])
+            return
+        }
+        
+        var errorMap: [String: String] = [:]
+        
+        await withTaskGroup(of: (String, String?)?.self) { group in
+            for address in addresses {
+                group.addTask {
+                    let (status, message) = await addressesController.loginAndSaveAddress(address: address)
+                    return status ? nil : (address.id, message)
+                }
+            }
+            
+            for await result in group {
+                if let (id, message) = result {
+                    errorMap[id] = message
+                }
+            }
+        }
+        
+        settingsViewModel.selectedV1Addresses.removeAll()
+        didMigrateData = true
+        completion(errorMap)
+    }
+}
+#endif
 
 #Preview {
     ContentView()

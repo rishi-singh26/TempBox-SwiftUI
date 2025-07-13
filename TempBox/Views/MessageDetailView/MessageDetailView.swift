@@ -12,15 +12,21 @@ struct MessageDetailView: View {
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
     @EnvironmentObject var appController: AppController
     @Environment(\.colorScheme) var colorScheme
-
-    let message: Message
-    let address: Address
-    
-    private var messageFromStore: Message? {
-        addressesController.getMessageFromStore(address.id, message.id)
-    }
         
     var body: some View {
+        if let safeAddress = addressesController.selectedAddress, let safeMessage = addressesController.selectedMessage {
+            MessageViewBuilder(message: safeMessage, address: safeAddress)
+        } else {
+            if addressesController.selectedAddress == nil {
+                Text("Please select a address")
+            } else {
+                Text("Please select a message")
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func MessageViewBuilder(message: Message, address: Address) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             MessageHeaderView(message: message)
             Text(message.subject)
@@ -40,7 +46,6 @@ struct MessageDetailView: View {
             }
         }
         .background(Color(hex: emailColorScheme == .dark ? "#1a1a1a" : "#ffffff"))
-        .onAppear(perform: updateMessageSeenStatus)
         .sheet(isPresented: $messageDetailController.showMessageInfoSheet, content: {
             MessageInfoView(message: message)
                 .environmentObject(messageDetailController)
@@ -52,6 +57,7 @@ struct MessageDetailView: View {
                 .accentColor(appController.accentColor(colorScheme: colorScheme))
         })
 #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar(content: {
             ToolbarItemGroup {
                 if let selectedMessage = addressesController.selectedCompleteMessage,
@@ -81,23 +87,7 @@ struct MessageDetailView: View {
                 }
             }
         })
-        .navigationBarTitleDisplayMode(.inline)
-#elseif os(macOS)
-        .onChange(of: addressesController.selectedMessage, { _, _ in
-            updateMessageSeenStatus()
-        })
 #endif
-    }
-    
-    private func updateMessageSeenStatus() {
-        Task {
-#if os(iOS)
-            await addressesController.fetchCompleteMessage(of: message, address: address)
-#endif
-            if let messageFromStore = messageFromStore, !messageFromStore.seen {
-                await addressesController.updateMessageSeenStatus(messageData: messageFromStore, address: address, seen: true)
-            }
-        }
     }
     
     private var emailColorScheme: ColorScheme {

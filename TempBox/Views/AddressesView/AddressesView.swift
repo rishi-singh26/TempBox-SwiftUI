@@ -51,10 +51,18 @@ struct AddressesView: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                NavigationLink {
-                    SettingsView()
-                } label: {
-                    Label("Settings", systemImage: "gear")
+                if DeviceType.isIphone {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Label("Settings", systemImage: "gear")
+                    }
+                } else {
+                    Button {
+                        addressesViewModel.showSettingsSheet = true
+                    } label: {
+                        Label("Settings", systemImage: "gear")
+                    }
                 }
             }
         }
@@ -79,6 +87,10 @@ struct AddressesView: View {
             EditAddressView(address: addressesViewModel.selectedAddForEditSheet!)
                 .accentColor(accentColor)
         }
+        .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
+            SettingsView()
+                .accentColor(accentColor)
+        }
         .alert("Alert!", isPresented: $addressesViewModel.showDeleteAddressAlert) {
             Button("Cancel", role: .cancel) {
             }
@@ -96,45 +108,35 @@ struct AddressesView: View {
     
     @ViewBuilder
     func AddressesList() -> some View {
-        Group {
+        let selectionBinding = Binding(get: {
+            addressesController.selectedAddress
+        }, set: { newVal in
+            DispatchQueue.main.async {
+                withAnimation {
+                    addressesController.selectedAddress = newVal
+                }
+            }
+        })
 #if os(iOS)
-            List(
-                selection: Binding(get: {
-                    addressesController.selectedAddress
-                }, set: { newVal in
-                    DispatchQueue.main.async {
-                        addressesController.selectedAddress = newVal
-                    }
-                })
-            ) {
-                ForEach(filteredAddresses) { address in
-                    NavigationLink {
-                        MessagesView(address: address)
-                    } label: {
-                        AddressItemView(address: address)
-                    }
+        if DeviceType.isIphone {
+            List(filteredAddresses) { address in
+                AddressItemView(address: address)
+            }
+            .listStyle(.sidebar)
+        } else {
+            List(filteredAddresses, selection: selectionBinding) { address in
+                NavigationLink(value: address) {
+                    AddressItemView(address: address)
                 }
             }
-#elseif os(macOS)
-            List(
-                selection: Binding(get: {
-                    addressesController.selectedAddress
-                }, set: { newVal in
-                    DispatchQueue.main.async {
-                        withAnimation {
-                            addressesController.selectedAddress = newVal
-                        }
-                    }
-                })
-            ) {
-                ForEach(filteredAddresses) { address in
-                    NavigationLink(value: address) {
-                        AddressItemView(address: address)
-                    }
-                }
-            }
-#endif
         }
+#elseif os(macOS)
+        List(filteredAddresses, selection: selectionBinding) { address in
+            NavigationLink(value: address) {
+                AddressItemView(address: address)
+            }
+        }
+#endif
     }
 }
 

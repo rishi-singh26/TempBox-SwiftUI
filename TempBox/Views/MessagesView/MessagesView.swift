@@ -12,9 +12,9 @@ struct MessagesView: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @EnvironmentObject private var controller: MessagesViewModel
     
-    var address: Address
-    
     private var filteredMessages: [Message] {
+        guard let address = addressesController.selectedAddress else { return [] }
+        
         let allMessages = addressesController.messageStore[address.id]?.messages ?? []
         if allMessages.isEmpty {
             return allMessages
@@ -32,15 +32,21 @@ struct MessagesView: View {
     }
     
     var body: some View {
-        VStack {
-            if (filteredMessages).isEmpty {
+        if let safeAddress = addressesController.selectedAddress {
+            MessagesViewBuilder(address: safeAddress)
+        } else {
+            Text("Please select an address")
+        }
+    }
+    
+    @ViewBuilder
+    private func MessagesViewBuilder(address: Address) -> some View {
+        Group {
+            if filteredMessages.isEmpty {
                 List {
-                    HStack {
-                        Spacer()
-                        Text("No messages")
-                        Spacer()
-                    }
+                    Text("No messages")
                 }
+                .listStyle(.plain)
             } else {
                 MessagesList(address: address)
                     .listStyle(.plain)
@@ -90,13 +96,8 @@ struct MessagesView: View {
         })
         Group {
 #if os(iOS)
-            List(filteredMessages, selection: selectionBinding) { message in
-                NavigationLink {
-                    MessageDetailView(message: message, address: address)
-                } label: {
-                    MessageItemView(message: message, address: address)
-                        .environmentObject(controller)
-                }
+            List(filteredMessages) { message in
+                MessageItemView(message: message, address: address)
             }
 #elseif os(macOS)
             List(filteredMessages, selection: selectionBinding) { message in

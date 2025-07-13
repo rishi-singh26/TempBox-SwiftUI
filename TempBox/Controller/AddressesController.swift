@@ -37,7 +37,12 @@ class AddressesController: ObservableObject {
             if let safeMessage = newValue, let safeAddress = selectedAddress {
                 selectedCompleteMessage = nil
                 Task {
+                    // Get complete message HTML
                     await fetchCompleteMessage(of: safeMessage, address: safeAddress)
+                    // Mark message as read
+                    if let messageFromStore = getMessageFromStore(safeAddress.id, safeMessage.id), !messageFromStore.seen {
+                        await updateMessageSeenStatus(messageData: messageFromStore, address: safeAddress, seen: true)
+                    }
                 }
             }
         }

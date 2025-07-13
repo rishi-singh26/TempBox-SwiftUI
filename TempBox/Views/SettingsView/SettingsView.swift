@@ -22,8 +22,10 @@ struct SettingsView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var appController: AppController
+    @EnvironmentObject private var iapManager: IAPManager
     
     @Environment(\.openURL) var openURL
+    @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -31,7 +33,20 @@ struct SettingsView: View {
 #if os(macOS)
             MacOSSettings()
 #elseif os(iOS)
-            IOSSettings()
+            if DeviceType.isIphone {
+                IOSSettings()
+            } else {
+                NavigationView {
+                    IOSSettings()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") {
+                                    dismiss()
+                                }
+                            }
+                        }
+                }
+            }
 #endif
         }
         .accentColor(appController.accentColor(colorScheme: colorScheme))
@@ -64,7 +79,7 @@ struct SettingsView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSSettings() -> some View {
+    private func MacOSSettings() -> some View {
         NavigationSplitView {
             List(
                 selection: Binding(get: {
@@ -101,9 +116,7 @@ struct SettingsView: View {
             .onChange(of: settingsViewModel.selectedSetting, { oldValue, newValue in
                 settingsViewModel.handleNavigationChange(oldValue, newValue)
             })
-            .toolbar {
-                navigationToolbar
-            }
+            .toolbar(content: MacOSToolbarBuilder)
         } detail: {
             switch settingsViewModel.selectedSetting {
             case .importPage:
@@ -113,7 +126,7 @@ struct SettingsView: View {
             case .appIconPage:
                 EmptyView()
             case .appColorPage:
-                AppColorView()
+                EmptyView()
             case .archive:
                 ArchiveView()
             case .aboutPage:
@@ -123,7 +136,8 @@ struct SettingsView: View {
         .frame(minWidth: 700, minHeight: 400)
     }
     
-    var navigationToolbar: some ToolbarContent {
+    @ToolbarContentBuilder
+    private func MacOSToolbarBuilder() -> some ToolbarContent {
         ToolbarItemGroup(placement: .navigation) {
             Button("Back", systemImage: "chevron.left") {
                 settingsViewModel.goBack()
@@ -140,7 +154,7 @@ struct SettingsView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IOSSettings() -> some View {
+    private func IOSSettings() -> some View {
         List {
             Section {
                 NavigationLink {
@@ -164,7 +178,7 @@ struct SettingsView: View {
             }
             
             Section {
-                if !appController.hasTipped {
+                if !iapManager.availableProducts.isEmpty && !appController.hasTipped {
                     TipJarCardView()
                         .padding(.bottom)
                 }
@@ -188,8 +202,11 @@ struct SettingsView: View {
                 } label: {
                     Label("About TempBox", systemImage: "info.circle")
                 }
+            } footer: {
+                Text("TempBox is lovingly developed in India. 🇮🇳")
             }
         }
+        .listStyle(.insetGrouped)
         .navigationTitle("Settings")
     }
 #endif
