@@ -65,7 +65,7 @@ struct MessagesView: View {
             }
         }
         .searchable(text: $controller.searchText)
-        .navigationTitle(address.name ?? address.address.extractUsername())
+        .navigationTitle(address.name != nil && address.name?.isEmpty == false ? address.name! : address.address.extractUsername())
 #if os(iOS)
         .toolbar(content: {
             ToolbarItem {
