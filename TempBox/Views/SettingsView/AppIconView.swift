@@ -13,6 +13,13 @@ struct AppIconView: View {
     @EnvironmentObject var appController: AppController
     
     @State private var currentIcon = UIApplication.shared.alternateIconName ?? Icon.primary.appIconName
+    @State private var alternateIconsSupported: Bool = true
+    
+    init() {
+        if !UIApplication.shared.supportsAlternateIcons {
+            _alternateIconsSupported = State(wrappedValue: false)
+        }
+    }
     
     private let columns = [GridItem(.adaptive(minimum: 125, maximum: 1024))]
     
@@ -76,14 +83,14 @@ struct AppIconView: View {
     
     var body: some View {
         List {
+            if !alternateIconsSupported {
+                Section {
+                    Text("Custom Icons are not supported on your device!")
+                }
+            }
             ForEach(IconSelector.items) { item in
                 Button{
-                    currentIcon = item.icon.appIconName
-                    if item.icon.rawValue == Icon.primary.rawValue {
-                        setAppIcon(nil)
-                    } else {
-                        setAppIcon(item.icon.appIconName)
-                    }
+                    handleIconSelection(selected: item)
                 } label: {
                     HStack(alignment: .center) {
                         Label {
@@ -105,6 +112,7 @@ struct AppIconView: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .disabled(!alternateIconsSupported)
             }
         }
         .navigationTitle("App Icon")
@@ -118,7 +126,16 @@ struct AppIconView: View {
         }
     }
     
-    func setAppIcon(_ name: String?) {
+    private func handleIconSelection(selected: IconSelector) {
+        currentIcon = selected.icon.appIconName
+        if selected.icon.rawValue == Icon.primary.rawValue {
+            setAppIcon(nil)
+        } else {
+            setAppIcon(selected.icon.appIconName)
+        }
+    }
+    
+    private func setAppIcon(_ name: String?) {
         guard UIApplication.shared.supportsAlternateIcons else {
             print("Alternate icons are not supported")
             return
