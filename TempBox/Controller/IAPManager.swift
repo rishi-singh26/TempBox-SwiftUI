@@ -25,7 +25,7 @@ class IAPManager: ObservableObject {
         "com.rishi.TempMail.largeTip2"
     ]
     
-    init() {
+    func initialize() {
         Task {
             await loadProducts()
             await refreshPurchaseStatus()

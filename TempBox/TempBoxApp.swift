@@ -76,9 +76,11 @@ struct TempBoxApp: App {
 struct RootView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject private var appController: AppController
+    @EnvironmentObject private var iapManager: IAPManager
     
     var body: some View {
         ContentView()
             .accentColor(appController.accentColor(colorScheme: colorScheme))
+            .onAppear(perform: iapManager.initialize)
     }
 }

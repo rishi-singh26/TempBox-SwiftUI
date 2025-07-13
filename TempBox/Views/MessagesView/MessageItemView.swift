@@ -8,8 +8,11 @@
 import SwiftUI
 
 struct MessageItemView: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject var controller: MessagesViewModel
+    @EnvironmentObject private var appController: AppController
     
     let message: Message
     let address: Address
@@ -18,7 +21,7 @@ struct MessageItemView: View {
         addressesController.getMessageFromStore(address.id, message.id)
     }
     
-    var messageHeader: String {
+    private var messageHeader: String {
         if let name = messageFromStore?.from.name, !name.isEmpty {
             return name
         } else {
@@ -27,9 +30,36 @@ struct MessageItemView: View {
     }
     
     var body: some View {
+        Group {
+#if os(iOS)
+            Button {
+                addressesController.selectedMessage = message
+                appController.path.append(message)
+            } label: {
+                MessageTileBuilder()
+            }
+#elseif os(macOS)
+            MessageTileBuilder()
+#endif
+        }
+        .swipeActions(edge: .leading) {
+            BuildStatusButton()
+        }
+        .swipeActions(edge: .trailing) {
+            BuildDeleteButton()
+        }
+        .contextMenu {
+            BuildStatusButton(addTint: false)
+            Divider()
+            BuildDeleteButton(addTint: false)
+        }
+    }
+    
+    @ViewBuilder
+    private func MessageTileBuilder() -> some View {
         HStack(alignment: .firstTextBaseline) {
             Circle()
-                .fill(.accent.opacity(messageFromStore?.seen == true ? 0 : 1))
+                .fill(appController.accentColor(colorScheme: colorScheme).opacity(messageFromStore?.seen == true ? 0 : 1))
                 .frame(width: 12)
                 .padding(0)
             VStack(alignment: .leading) {
@@ -58,21 +88,10 @@ struct MessageItemView: View {
                     .lineLimit(2)
             }
         }
-        .swipeActions(edge: .leading) {
-            BuildStatusButton()
-        }
-        .swipeActions(edge: .trailing) {
-            BuildDeleteButton()
-        }
-        .contextMenu {
-            BuildStatusButton(addTint: false)
-            Divider()
-            BuildDeleteButton(addTint: false)
-        }
     }
     
     @ViewBuilder
-    func BuildStatusButton(addTint: Bool = true) -> some View {
+    private func BuildStatusButton(addTint: Bool = true) -> some View {
         let unreadMessage = addTint ? "Unread" : "Mark as unread"
         let readMessage = addTint ? "Read" : "Mark as read"
         let isSeen = messageFromStore?.seen ?? false
@@ -88,7 +107,7 @@ struct MessageItemView: View {
     }
     
     @ViewBuilder
-    func BuildDeleteButton(addTint: Bool = true) -> some View {
+    private func BuildDeleteButton(addTint: Bool = true) -> some View {
         Button {
             controller.showDeleteMessageAlert = true
             controller.selectedMessForDeletion = message

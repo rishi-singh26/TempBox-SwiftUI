@@ -5,6 +5,7 @@
 //  Created by Rishi Singh on 13/07/25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct TipJarCardView: View {
@@ -96,3 +97,4 @@ struct TipJarCardView: View {
         }
     }
 }
+#endif
