@@ -22,52 +22,60 @@ struct ContentView: View {
     
     var body: some View {
 #if os(iOS)
-        NavigationView {
-            AddressesView()
-            /// This on appear will read the applicatio support directory for `TempBoxExportMAJOR.txt` file.
-            /// If found, it will read the contents for that file, verify that the contents are in base64, decode base64 to json, then json to ExportVersionOne
-            /// After that it will save that data to swift data
-            /// This is needed to migrate from the flutter version fo the application to the SwiftUI version
-            /// This code will be removed one year after first relese of the SwiftUI version which is planned on 9th may, 2025. So in May 2026, this code will be removed
-                .onAppear {
-                    if (didMigrateData) { return }
-                    let fileName = "TempBoxExportMAJOR.txt"
-                    
-                    do {
-                        let fileManager = FileManager.default
-                        let appSupportURL = try fileManager.url(
-                            for: .applicationSupportDirectory,
-                            in: .userDomainMask,
-                            appropriateFor: nil,
-                            create: true
-                        )
-                        
-                        let fileURL = appSupportURL.appendingPathComponent(fileName)
-                        
-                        if fileManager.fileExists(atPath: fileURL.path) {
-                            let data = try Data(contentsOf: fileURL)
-                            if let content = String(data: data, encoding: .utf8) {
-                                print(content)
-                                let (v1Data, _, message) = ImportExportService.decodeDataForImport(from: content)
-                                print(v1Data ?? "Version one data not available", message)
-                                Task {
-                                    await importAddresses(v1Data: v1Data) { _ in
-                                    }
-                                }
-                            } else {
-                                didMigrateData = true
-                                print("Unable to decode file contents.")
-                            }
-                        } else {
-                            didMigrateData = true
-                            print("File does not exist.")
-                        }
-                        
-                    } catch {
-                        didMigrateData = true
-                        print("Error: \(error.localizedDescription)")
-                    }
+        Group {
+            if DeviceType.current == .iPad {
+                NavigationView {
+                    AddressesView()
                 }
+            } else {
+                NavigationStack {
+                    AddressesView()
+                }
+            }
+        }
+        /// This on appear will read the applicatio support directory for `TempBoxExportMAJOR.txt` file.
+        /// If found, it will read the contents for that file, verify that the contents are in base64, decode base64 to json, then json to ExportVersionOne
+        /// After that it will save that data to swift data
+        /// This is needed to migrate from the flutter version fo the application to the SwiftUI version
+        /// This code will be removed one year after first relese of the SwiftUI version which is planned on 9th may, 2025. So in May 2026, this code will be removed
+        .onAppear {
+            if (didMigrateData) { return }
+            let fileName = "TempBoxExportMAJOR.txt"
+            
+            do {
+                let fileManager = FileManager.default
+                let appSupportURL = try fileManager.url(
+                    for: .applicationSupportDirectory,
+                    in: .userDomainMask,
+                    appropriateFor: nil,
+                    create: true
+                )
+                
+                let fileURL = appSupportURL.appendingPathComponent(fileName)
+                
+                if fileManager.fileExists(atPath: fileURL.path) {
+                    let data = try Data(contentsOf: fileURL)
+                    if let content = String(data: data, encoding: .utf8) {
+                        print(content)
+                        let (v1Data, _, message) = ImportExportService.decodeDataForImport(from: content)
+                        print(v1Data ?? "Version one data not available", message)
+                        Task {
+                            await importAddresses(v1Data: v1Data) { _ in
+                            }
+                        }
+                    } else {
+                        didMigrateData = true
+                        print("Unable to decode file contents.")
+                    }
+                } else {
+                    didMigrateData = true
+                    print("File does not exist.")
+                }
+                
+            } catch {
+                didMigrateData = true
+                print("Error: \(error.localizedDescription)")
+            }
         }
 #elseif os(macOS)
         NavigationSplitView {
