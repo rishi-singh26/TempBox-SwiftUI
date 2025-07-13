@@ -24,8 +24,6 @@ class AddressesViewModel: ObservableObject {
     
     @Published var isEditAddressSheetOpen = false
     var selectedAddForEditSheet: Address?
-    
-    @Published var showSettingsSheet = false
         
     func openNewAddressSheet() {
         isNewAddressSheetOpen = true

@@ -50,11 +50,12 @@ struct AddressesView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .automatic) {
-                Button("Settings", systemImage: "gear") {
-                    addressesViewModel.showSettingsSheet = true
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                NavigationLink {
+                    SettingsView()
+                } label: {
+                    Label("Settings", systemImage: "gear")
                 }
-                .help("Open settings")
             }
         }
 #endif
@@ -77,9 +78,6 @@ struct AddressesView: View {
         .sheet(isPresented: $addressesViewModel.isEditAddressSheetOpen) {
             EditAddressView(address: addressesViewModel.selectedAddForEditSheet!)
                 .accentColor(accentColor)
-        }
-        .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
-            SettingsView()
         }
         .alert("Alert!", isPresented: $addressesViewModel.showDeleteAddressAlert) {
             Button("Cancel", role: .cancel) {
