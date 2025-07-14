@@ -26,7 +26,7 @@ class AppController: ObservableObject {
     }
     @Published var customColors: [AccentColorData] = [] {
         didSet {
-            saveCustomColors()
+            saveCustomColorsToFile()
         }
     }
     
@@ -37,7 +37,7 @@ class AppController: ObservableObject {
             selectedAccentColorData = AppController.defaultAccentColors.first!
         }
         
-        self.customColors = Self.loadCustomColors()
+        self.customColors = Self.loadCustomColorsFromFile()
     }
     
     func addCustomColor(_ color: AccentColorData) {
@@ -94,19 +94,32 @@ extension AppController {
         return try? JSONDecoder().decode(AccentColorData.self, from: savedData)
     }
     
-    
     // Custom colors
-    private func saveCustomColors() {
-        if let encoded = try? JSONEncoder().encode(customColors) {
-            UserDefaults.standard.set(encoded, forKey: AppController.customAccentColorsKey)
+    private static func getFileURL() -> URL {
+        URL.documentsDirectory.appending(path: "CustomAccentColors.json")
+    }
+    
+    private func saveCustomColorsToFile() {
+        let encoder = JSONEncoder()
+        do {
+            let data = try encoder.encode(customColors)
+            let url = AppController.getFileURL()
+            try data.write(to: url)
+        } catch {
+            print("Error saving custom colors to file: \(error)")
         }
     }
-
-    private static func loadCustomColors() -> [AccentColorData] {
-        guard let data = UserDefaults.standard.data(forKey: AppController.customAccentColorsKey) else {
+    
+    private static func loadCustomColorsFromFile() -> [AccentColorData] {
+        let url = getFileURL()
+        let decoder = JSONDecoder()
+        do {
+            let data = try Data(contentsOf: url)
+            return try decoder.decode([AccentColorData].self, from: data)
+        } catch {
+            print("Error loading custom colors from file: \(error)")
             return []
         }
-        return (try? JSONDecoder().decode([AccentColorData].self, from: data)) ?? []
     }
 }
 
