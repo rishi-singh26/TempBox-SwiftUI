@@ -25,10 +25,6 @@ struct AddressItemView: View {
         addressesController.messageStore[address.id]?.unreadMessagesCount ?? 0
     }
     
-    private var addresName: String {
-        address.name == nil || address.name?.isEmpty == true ? address.address.extractUsername() : address.name!
-    }
-    
     var body: some View {
         Group {
 #if os(iOS)
@@ -76,7 +72,7 @@ struct AddressItemView: View {
                 Image(systemName: "tray")
                     .foregroundColor(.accentColor)
                 HStack {
-                    Text(addresName)
+                    Text(address.ifNameElseAddress.extractUsername())
                     Spacer()
                     if !address.isArchived && !address.isDeleted {
                         if isMessagesFetching {

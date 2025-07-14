@@ -41,6 +41,7 @@ struct EditAddressView: View {
             Form {
                 Section(footer: Text("Address name appears on the addresses list screen.")) {
                     TextField("Address name", text: $addressName)
+                        .textInputAutocapitalization(.words)
                         .focused($isTextFieldFocused)
                 }
             }

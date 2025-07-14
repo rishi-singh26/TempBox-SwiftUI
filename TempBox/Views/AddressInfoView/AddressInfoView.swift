@@ -12,6 +12,12 @@ struct AddressInfoView: View {
     let address: Address
     
     @State private var isPasswordBlurred = true
+    @State private var addressName = ""
+    
+    init(address: Address) {
+        self.address = address
+        _addressName = State(wrappedValue: address.ifNameElseAddress.extractUsername())
+    }
     
     var body: some View {
 #if os(iOS)
@@ -24,6 +30,13 @@ struct AddressInfoView: View {
     #if os(iOS)
     @ViewBuilder
     func IOSAddressInfo() -> some View {
+        let addressNameBinding = Binding {
+            addressName
+        } set: { newName in
+            addressName = newName
+            address.name = newName
+        }
+
         NavigationView {
             List {
                 Section(footer: MarkdownLinkText(markdownText: "If you wish to use this address on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
@@ -81,7 +94,7 @@ struct AddressInfoView: View {
                     }
                 }
             }
-            .navigationTitle(address.name ?? address.address.extractUsername())
+            .navigationTitle(addressNameBinding)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

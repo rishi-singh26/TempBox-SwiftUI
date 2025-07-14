@@ -21,13 +21,19 @@ struct AddColorView: View {
         NavigationView {
             Form {
                 TextField("Color name", text: $newColorName)
+                    .textInputAutocapitalization(.words)
                 ColorPicker("Select light color", selection: $lightColor, supportsOpacity: false)
                 ColorPicker("Select dark color", selection: $darkColor, supportsOpacity: false)
             }
             .navigationTitle("Add Custom Color")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         onColorSelect(AccentColorData(id: UUID().uuidString, name: newColorName, light: lightColor, dark: darkColor))
                         dismiss()
