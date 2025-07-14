@@ -18,6 +18,13 @@ class IAPManager: ObservableObject {
     @Published var loadProductsError: String? = nil
     @Published var purchaseError: String? = nil
     
+    @AppStorage("hasTippedSmall") private(set) var hasTippedSmall: Bool = false
+    @AppStorage("hasTippedMedium") private(set) var hasTippedMedium: Bool = false
+    @AppStorage("hasTippedLarge") private(set) var hasTippedLarge: Bool = false
+    var hasTipped: Bool {
+        hasTippedSmall || hasTippedMedium || hasTippedLarge
+    }
+    
     /// Replace with your actual product identifiers
     private let productIDs: [String] = [
         "com.rishi.TempMail.smallTip",
@@ -68,7 +75,7 @@ class IAPManager: ObservableObject {
             }
         }
 
-        AppController.shared.updateUnlockedFeatures(for: unlockedIDs)
+        updateUnlockedFeatures(for: unlockedIDs)
     }
 
     func purchase(product: Product) async {
@@ -83,10 +90,10 @@ class IAPManager: ObservableObject {
                 switch verification {
                 case .verified(let transaction):
                     await transaction.finish()
-                    AppController.shared.updateTipStatus(for: transaction.productID, status: true)
+                    updateTipStatus(for: transaction.productID, status: true)
                 case .unverified(_, let error):
                     purchaseError = "Purchase failed: Could not verify transaction. \(error.localizedDescription)"
-                    AppController.shared.updateTipStatus(for: product.id, status: false)
+                    updateTipStatus(for: product.id, status: false)
                 }
             case .userCancelled, .pending:
                 break
@@ -102,12 +109,29 @@ class IAPManager: ObservableObject {
         for await result in Transaction.updates {
             if case .verified(let transaction) = result, productIDs.contains(transaction.productID) {
                 await transaction.finish()
-                AppController.shared.updateTipStatus(for: transaction.productID, status: true)
+                updateTipStatus(for: transaction.productID, status: true)
             }
         }
     }
 
     func product(for id: String) -> Product? {
         availableProducts.first(where: { $0.id == id })
+    }
+    
+    // Tipped features
+    func updateTipStatus(for productId: String, status: Bool) {
+        if productId.lowercased().contains("small") {
+            hasTippedSmall = status
+        } else if productId.lowercased().contains("medium") {
+            hasTippedMedium = status
+        } else if productId.lowercased().contains("large") {
+            hasTippedLarge = status
+        } else {
+            // Nothing
+        }
+    }
+    
+    func updateUnlockedFeatures(for productIds: [String]) {
+        productIds.forEach { updateTipStatus(for: $0, status: true) }
     }
 }

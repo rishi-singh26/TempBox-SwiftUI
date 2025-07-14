@@ -13,13 +13,6 @@ class AppController: ObservableObject {
     
     /// Used for navigation on iPhone only
     @Published var path = NavigationPath()
-    
-    @AppStorage("hasTippedSmall") private(set) var hasTippedSmall: Bool = false
-    @AppStorage("hasTippedMedium") private(set) var hasTippedMedium: Bool = false
-    @AppStorage("hasTippedLarge") private(set) var hasTippedLarge: Bool = false
-    var hasTipped: Bool {
-        hasTippedSmall || hasTippedMedium || hasTippedLarge
-    }
         
     @AppStorage("webViewAppearence") var webViewAppearence: String = WebViewColorScheme.system.rawValue
     var webViewColorScheme: WebViewColorScheme {
@@ -65,28 +58,6 @@ class AppController: ObservableObject {
         @unknown default:
             return Color(hex: AppController.appAccentColorHex)
         }
-    }
-    
-    // Tipped features
-    func updateTipStatus(for productId: String, status: Bool) {
-        if productId.lowercased().contains("small") {
-            hasTippedSmall = status
-        } else if productId.lowercased().contains("medium") {
-            hasTippedMedium = status
-        } else if productId.lowercased().contains("large") {
-            hasTippedLarge = status
-        } else {
-            // Nothing
-        }
-        
-        // Reset accent color and app icon of tip not present or removed
-        if !hasTipped {
-            selectedAccentColorData = AppController.defaultAccentColors.first!
-        }
-    }
-    
-    func updateUnlockedFeatures(for productIds: [String]) {
-        productIds.forEach { updateTipStatus(for: $0, status: true) }
     }
 }
 

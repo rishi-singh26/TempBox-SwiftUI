@@ -12,6 +12,7 @@ import SwiftUI
 struct AppColorView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject private var appController: AppController
+    @EnvironmentObject private var iapManager: IAPManager
     
     @State private var showAddColorSheet = false
     
@@ -56,13 +57,13 @@ struct AppColorView: View {
     private func ColorTile(accentColor: AccentColorData, hasActions: Bool) -> some View {
         // Tile
         let tile = Button {
-            guard appController.hasTipped else { return }
+            guard iapManager.hasTipped else { return }
             appController.selectedAccentColorData = accentColor
         } label: {
             ColorTileLabel(accentColor: accentColor)
         }
             .buttonStyle(.plain)
-            .disabled(!appController.hasTipped)
+            .disabled(!iapManager.hasTipped)
         
         // Delete Button
         let deleteButton = Button {

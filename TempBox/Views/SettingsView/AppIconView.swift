@@ -10,7 +10,7 @@ import SwiftUI
 
 @MainActor
 struct AppIconView: View {
-    @EnvironmentObject var appController: AppController
+    @EnvironmentObject var iapManager: IAPManager
     
     @State private var currentIcon = UIApplication.shared.alternateIconName ?? Icon.primary.appIconName
     @State private var alternateIconsSupported: Bool = true
@@ -112,7 +112,7 @@ struct AppIconView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .disabled(!alternateIconsSupported || !appController.hasTipped)
+                .disabled(!alternateIconsSupported || !iapManager.hasTipped)
             }
         }
         .navigationTitle("App Icon")
@@ -135,7 +135,7 @@ struct AppIconView: View {
     }
     
     private func handleIconSelection(selected: IconSelector) {
-        guard appController.hasTipped else { return }
+        guard iapManager.hasTipped else { return }
         currentIcon = selected.icon.appIconName
         if selected.icon.rawValue == Icon.primary.rawValue {
             setAppIcon(nil)

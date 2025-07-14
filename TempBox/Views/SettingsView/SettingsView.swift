@@ -178,7 +178,7 @@ struct SettingsView: View {
             }
             
             Section {
-                if !iapManager.availableProducts.isEmpty && !appController.hasTipped {
+                if !iapManager.availableProducts.isEmpty && !iapManager.hasTipped {
                     TipJarCardView()
                         .padding(.bottom)
                 }
@@ -193,7 +193,7 @@ struct SettingsView: View {
                     Label("Accent Color", systemImage: "paintpalette")
                 }
             } footer: {
-                Text(appController.hasTipped ? "Thanks for the tip!" : "Tip any amount to unlock!")
+                Text(iapManager.hasTipped ? "Thanks for the tip!" : "Tip any amount to unlock!")
             }
             
             Section {
@@ -202,8 +202,6 @@ struct SettingsView: View {
                 } label: {
                     Label("About TempBox", systemImage: "info.circle")
                 }
-            } footer: {
-                Text("TempBox is lovingly developed in India. 🇮🇳")
             }
         }
         .listStyle(.insetGrouped)

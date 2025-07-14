@@ -111,13 +111,19 @@ struct AboutView: View {
             
 //            MacCustomSection(header: "Copyright © 2025 Rishi Singh. All Rights Reserved.") {
             MacCustomSection {
-                Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in")
-                } label: {
-                    CustomLabel(leadingImageName: "network", trailingImageName: "arrow.up.right", title: "https://tempbox.rishisingh.in")
+                VStack {
+                    Button {
+                        settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in")
+                    } label: {
+                        CustomLabel(leadingImageName: "network", trailingImageName: "arrow.up.right", title: "https://tempbox.rishisingh.in")
+                    }
+                    .buttonStyle(.link)
+                    
+                    Divider()
+                    
+                        .help("Visit TempBox website in safari")
+                    Text("TempBox is lovingly developed in India. 🇮🇳")
                 }
-                .buttonStyle(.link)
-                .help("Visit TempBox website in safari")
             }
             .padding(.bottom, 50)
         }
@@ -202,6 +208,9 @@ struct AboutView: View {
                     CustomLabel(leadingImageName: "network", trailingImageName: "arrow.up.right", title: "https://tempbox.rishisingh.in")
                 }
                 .help("Visit TempBox website in safari")
+
+                Text("TempBox is lovingly developed in India. 🇮🇳")
+                    .font(.caption)
             }
         }
     }
