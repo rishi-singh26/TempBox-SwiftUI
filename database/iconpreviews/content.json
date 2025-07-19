@@ -17,6 +17,11 @@
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxIos-Any.png"
     },
     {
+      "id": 20,
+      "name": "TempBox Dark",
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxBlack.png"
+    },
+    {
       "id": 4,
       "name": "Email",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangeT.png"
