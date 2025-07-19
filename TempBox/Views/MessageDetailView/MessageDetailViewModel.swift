@@ -27,8 +27,16 @@ class MessageDetailViewModel: ObservableObject {
     @Published var isDownloadingTracker: [String: Bool] = [:] // attachmentId: status
     @Published var downloadErrorTracker: [String: String] = [:] // attachmentId: errorMessage
     
-    @Published var messageSourceData: Data = Data()
-    @Published var saveMessageAsEmail: Bool = false
+    // Share email to .eml and .pdf properties
+    @Published var messageEMLData: Data = Data()
+    @Published var messagePDFData: Data = Data()
+    @Published var messageEMLURL: URL? = nil
+    @Published var messagePDFURL: URL? = nil
+    @Published var shareFileError: String? = nil
+    @Published var showShareEmailSheet: Bool = false
+    @Published var showEMLExporter: Bool = false
+    @Published var showPDFExporter: Bool = false
+    @Published var isLoadingMessageData: Bool = true
     
     func downloadAttachments(_ message: Message, token: String) async {
         downloadErrorTracker = [:]
@@ -80,5 +88,14 @@ class MessageDetailViewModel: ObservableObject {
         downloadErrorTracker = [:]
         selectedAttachment = nil
         showSaveAttachmentSheet = false
+    }
+    
+    func resetMessageData() {
+        messageEMLData = Data()
+        messagePDFData = Data()
+        messageEMLURL = nil
+        messagePDFURL = nil
+        shareFileError = nil
+        isLoadingMessageData = false
     }
 }

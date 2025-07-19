@@ -11,6 +11,8 @@ struct MessageDetailView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
     @EnvironmentObject var appController: AppController
+    @EnvironmentObject private var webViewController: WebViewController
+    
     @Environment(\.colorScheme) var colorScheme
         
     var body: some View {
@@ -36,7 +38,7 @@ struct MessageDetailView: View {
             if let selectedMessage = addressesController.selectedCompleteMessage,
                selectedMessage.id == message.id,
                let html = selectedMessage.html?.first {
-                WebView(html: html, appearance: emailColorScheme)
+                WebView(html: html, appearance: emailColorScheme, controller: webViewController)
             }
             else {
                 Spacer()
@@ -56,14 +58,9 @@ struct MessageDetailView: View {
                 .environmentObject(messageDetailController)
                 .accentColor(appController.accentColor(colorScheme: colorScheme))
         })
-        .fileExporter(
-            isPresented: $messageDetailController.saveMessageAsEmail,
-            document: MyFileDocument(data: messageDetailController.messageSourceData),
-            contentType: .data,
-            defaultFilename: (addressesController.selectedMessage?.subject ?? "").isEmpty ? "message.eml" : "\((addressesController.selectedMessage?.subject)!).eml"
-        ) { result in
-//            handleFileSaveResult(result)
-        }
+        .sheet(isPresented: $messageDetailController.showShareEmailSheet, content: {
+            ShareMessageView()
+        })
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(content: {
@@ -91,16 +88,10 @@ struct MessageDetailView: View {
                     }
                     .help("Show message information")
                     Divider()
-                    Button("Save as .eml file", systemImage: "square.and.arrow.down") {
-                        Task {
-                            let messageData: Data? = await addressesController.downloadMessageResource(message: message, address: address)
-                            if let safeData = messageData {
-                                messageDetailController.messageSourceData = safeData
-                                messageDetailController.saveMessageAsEmail = true
-                            }
-                        }
+                    Button("Share", systemImage: "square.and.arrow.up") {
+                        messageDetailController.showShareEmailSheet = true
                     }
-                    .help("Save email as a .eml file")
+                    .help("Share email")
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }

@@ -16,6 +16,7 @@ struct ContentView: View {
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
     @EnvironmentObject private var messagesViewModel: MessagesViewModel
     @EnvironmentObject var appController: AppController
+    @EnvironmentObject private var webViewController: WebViewController
     
     /// Ones data from flutter has been migrated successfully to swftdata, set this to true
     @AppStorage("didMigrateData") private var didMigrateData: Bool = false
@@ -154,19 +155,10 @@ extension ContentView {
                 }
                 .help("Show message information")
                 Divider()
-                Button("Save as .eml file", systemImage: "square.and.arrow.down") {
-                    Task {
-                        if let address = addressesController.selectedAddress, let message = addressesController.selectedMessage {
-                            let messageData: Data? = await addressesController.downloadMessageResource(message: message, address: address)
-                            if let safeData = messageData {
-                                messageDetailController.messageSourceData = safeData
-                                messageDetailController.saveMessageAsEmail = true
-                            }
-                        }
-                    }
+                Button("Share", systemImage: "square.and.arrow.up") {
+                    messageDetailController.showShareEmailSheet = true
                 }
-                .help("Save email as a .eml file")
-                .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
+                .help("Share email")
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
