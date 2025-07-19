@@ -2,8 +2,80 @@
   "iconCount": 10,
   "icons": [
     {
-      "name": "",
-      "path:" ""
+      "name": "Default",
+      "path": "/TempBoxIos-Any-Red.png"
+    },
+    {
+      "name": "Inclusion",
+      "path": "/AnyInClusion.png"
+    },
+    {
+      "name": "TempBox Classic",
+      "path": "/TempBoxIos-Any.png"
+    },
+    {
+      "name": "Email",
+      "path": "/OrangeT.png"
+    },
+    {
+      "name": "Email",
+      "path": "/WhiteOrangeT.png"
+    },
+    {
+      "name": "Email Blue",
+      "path": "/BlueT.png"
+    },
+    {
+      "name": "Email Blue",
+      "path": "/WhiteBlueT.png"
+    },
+    {
+      "name": "Box",
+      "path": "/OrangeBox.png"
+    },
+    {
+      "name": "Box",
+      "path": "/WhiteOrangeBox.png"
+    },
+    {
+      "name": "Box Blue",
+      "path": "/BlueBox.png"
+    },
+    {
+      "name": "Box Blue",
+      "path": "/WhiteBlueBox.png"
+    },
+    {
+      "name": "Pocket",
+      "path": "/OrangePocket.png"
+    },
+    {
+      "name": "Pocket",
+      "path": "/WhiteOrangePocket.png"
+    },
+    {
+      "name": "Pocket Blue",
+      "path": "/BluePocket.png"
+    },
+    {
+      "name": "Pocket Blue",
+      "path": "/WhiteBluePocket.png"
+    },
+    {
+      "name": "Envelope",
+      "path": "/OrangeEnvelope.png"
+    },
+    {
+      "name": "Envelope",
+      "path": "/WhiteOrangeEnvelope.png"
+    },
+    {
+      "name": "Envelope Blue",
+      "path": "/BlueEnvelope.png"
+    },
+    {
+      "name": "Envelope Blue",
+      "path": "/WhiteBlueEnvelope.png"
     }
   ]
 }
