@@ -3,79 +3,79 @@
   "icons": [
     {
       "name": "Default",
-      "path": "/TempBoxIos-Any-Red.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxIos-Any-Red.png"
     },
     {
       "name": "Inclusion",
-      "path": "/AnyInClusion.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/AnyInClusion.png"
     },
     {
       "name": "TempBox Classic",
-      "path": "/TempBoxIos-Any.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxIos-Any.png"
     },
     {
       "name": "Email",
-      "path": "/OrangeT.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangeT.png"
     },
     {
       "name": "Email",
-      "path": "/WhiteOrangeT.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangeT.png"
     },
     {
       "name": "Email Blue",
-      "path": "/BlueT.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BlueT.png"
     },
     {
       "name": "Email Blue",
-      "path": "/WhiteBlueT.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBlueT.png"
     },
     {
       "name": "Box",
-      "path": "/OrangeBox.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangeBox.png"
     },
     {
       "name": "Box",
-      "path": "/WhiteOrangeBox.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangeBox.png"
     },
     {
       "name": "Box Blue",
-      "path": "/BlueBox.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BlueBox.png"
     },
     {
       "name": "Box Blue",
-      "path": "/WhiteBlueBox.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBlueBox.png"
     },
     {
       "name": "Pocket",
-      "path": "/OrangePocket.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangePocket.png"
     },
     {
       "name": "Pocket",
-      "path": "/WhiteOrangePocket.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangePocket.png"
     },
     {
       "name": "Pocket Blue",
-      "path": "/BluePocket.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BluePocket.png"
     },
     {
       "name": "Pocket Blue",
-      "path": "/WhiteBluePocket.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBluePocket.png"
     },
     {
       "name": "Envelope",
-      "path": "/OrangeEnvelope.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangeEnvelope.png"
     },
     {
       "name": "Envelope",
-      "path": "/WhiteOrangeEnvelope.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangeEnvelope.png"
     },
     {
       "name": "Envelope Blue",
-      "path": "/BlueEnvelope.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BlueEnvelope.png"
     },
     {
       "name": "Envelope Blue",
-      "path": "/WhiteBlueEnvelope.png"
+      "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBlueEnvelope.png"
     }
   ]
 }
