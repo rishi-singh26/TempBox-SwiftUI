@@ -51,7 +51,7 @@ class MailTMService {
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw MailTMError.networkError(URLError(.badServerResponse))
             }
-                        
+            
             switch httpResponse.statusCode {
             case 200...299:
                 do {
@@ -71,7 +71,7 @@ class MailTMService {
             case 500...599:
                 throw MailTMError.serverError
             default:
-                let errorMessage = String(data: data, encoding: .utf8)
+                let errorMessage = String(data: data, encoding: .utf8) ?? "No error message"
                 throw MailTMError.httpError(httpResponse.statusCode, errorMessage)
             }
         } catch {
@@ -89,7 +89,7 @@ class MailTMService {
         guard let request = createRequest(endpoint: "/domains?page=\(page)", token: nil) else {
             throw MailTMError.invalidURL
         }
-
+        
         return try await performRequest(request, responseType: [Domain].self).0
     }
     
@@ -204,6 +204,44 @@ class MailTMService {
         }
         
         return try await performRequest(request, responseType: Message.self)
+    }
+    
+    static func fetchMessageSource(id: String, token: String) async throws -> Data {
+        do {
+            guard let request = createRequest(endpoint: "/messages/\(id)/download", token: token) else {
+                throw MailTMError.invalidURL
+            }
+            
+            let (data, response): (Data, URLResponse) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw MailTMError.notFound
+            }
+            
+            switch httpResponse.statusCode {
+            case 200...299:
+                return data
+            case 400:
+                throw MailTMError.invalidRequest
+            case 401:
+                throw MailTMError.authenticationRequired
+            case 404:
+                throw MailTMError.notFound
+            case 429:
+                throw MailTMError.rateLimitExceeded
+            case 500...599:
+                throw MailTMError.serverError
+            default:
+                let errorMessage = String(data: data, encoding: .utf8) ?? "No error message"
+                throw MailTMError.httpError(httpResponse.statusCode, errorMessage)
+            }
+        } catch {
+            if error is MailTMError {
+                throw error
+            } else {
+                throw MailTMError.networkError(error)
+            }
+        }
     }
     
     static func downloadAttachment(messageId: String, attachment: Attachment, token: String) async throws -> AttachmentDownload {

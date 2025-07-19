@@ -27,6 +27,9 @@ class MessageDetailViewModel: ObservableObject {
     @Published var isDownloadingTracker: [String: Bool] = [:] // attachmentId: status
     @Published var downloadErrorTracker: [String: String] = [:] // attachmentId: errorMessage
     
+    @Published var messageSourceData: Data = Data()
+    @Published var saveMessageAsEmail: Bool = false
+    
     func downloadAttachments(_ message: Message, token: String) async {
         downloadErrorTracker = [:]
         updateDownloadTracker(message: message, value: true)

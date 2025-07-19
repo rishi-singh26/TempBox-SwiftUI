@@ -322,31 +322,15 @@ class AddressesController: ObservableObject {
         }
     }
     
-    func downloadMessageSource(message: Message, address: Address) async {
-        guard let token = address.token, !token.isEmpty else { return }
+    func downloadMessageResource(message: Message, address: Address) async -> Data? {
+        guard let token = address.token, !token.isEmpty else { return nil }
         
         do {
-            let (_, data) = try await MailTMService.fetchMessageSource(id: message.id, token: token)
-            
-            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-            
-            let fileName: String
-            if message.subject.isEmpty {
-                fileName = "message.eml"
-            } else {
-                fileName = "\(message.subject).eml"
-            }
-            
-            let file = paths[0].appendingPathComponent(fileName)
-            
-            do {
-                try data.write(to: file)
-            } catch {
-                print("Error occurred \(error.localizedDescription)")
-                // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
-            }
+            let data: Data = try await MailTMService.fetchMessageSource(id: message.id, token: token)
+            return data
         } catch {
             self.show(message: error.localizedDescription)
+            return nil
         }
     }
     

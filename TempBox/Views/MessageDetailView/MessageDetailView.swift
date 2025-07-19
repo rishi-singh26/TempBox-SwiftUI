@@ -56,6 +56,14 @@ struct MessageDetailView: View {
                 .environmentObject(messageDetailController)
                 .accentColor(appController.accentColor(colorScheme: colorScheme))
         })
+        .fileExporter(
+            isPresented: $messageDetailController.saveMessageAsEmail,
+            document: MyFileDocument(data: messageDetailController.messageSourceData),
+            contentType: .data,
+            defaultFilename: (addressesController.selectedMessage?.subject ?? "").isEmpty ? "message.eml" : "\((addressesController.selectedMessage?.subject)!).eml"
+        ) { result in
+//            handleFileSaveResult(result)
+        }
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(content: {
@@ -82,6 +90,17 @@ struct MessageDetailView: View {
                         messageDetailController.showMessageInfoSheet = true
                     }
                     .help("Show message information")
+                    Divider()
+                    Button("Save as .eml file", systemImage: "square.and.arrow.down") {
+                        Task {
+                            let messageData: Data? = await addressesController.downloadMessageResource(message: message, address: address)
+                            if let safeData = messageData {
+                                messageDetailController.messageSourceData = safeData
+                                messageDetailController.saveMessageAsEmail = true
+                            }
+                        }
+                    }
+                    .help("Save email as a .eml file")
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }

@@ -153,6 +153,20 @@ extension ContentView {
                     messageDetailController.showMessageInfoSheet = true
                 }
                 .help("Show message information")
+                Divider()
+                Button("Save as .eml file", systemImage: "square.and.arrow.down") {
+                    Task {
+                        if let address = addressesController.selectedAddress, let message = addressesController.selectedMessage {
+                            let messageData: Data? = await addressesController.downloadMessageResource(message: message, address: address)
+                            if let safeData = messageData {
+                                messageDetailController.messageSourceData = safeData
+                                messageDetailController.saveMessageAsEmail = true
+                            }
+                        }
+                    }
+                }
+                .help("Save email as a .eml file")
+                .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
