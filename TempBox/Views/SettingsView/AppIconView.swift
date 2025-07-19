@@ -10,9 +10,12 @@ import SwiftUI
 
 @MainActor
 struct AppIconView: View {
-    @EnvironmentObject var iapManager: IAPManager
+    static private let defaultIconName = "AppIcon"
     
-    @State private var currentIcon = UIApplication.shared.alternateIconName ?? Icon.primary.appIconName
+    @EnvironmentObject var iapManager: IAPManager
+    @EnvironmentObject var remoteDataManager: RemoteDataManager
+    
+    @State private var currentIcon = UIApplication.shared.alternateIconName ?? Self.defaultIconName
     @State private var alternateIconsSupported: Bool = true
     
     init() {
@@ -23,64 +26,6 @@ struct AppIconView: View {
     
     private let columns = [GridItem(.adaptive(minimum: 125, maximum: 1024))]
     
-    enum Icon: Int, CaseIterable, Identifiable {
-        var id: String {
-            "\(rawValue)"
-        }
-        
-        init(string: String) {
-            if string == "AppIcon" {
-                self = .primary
-            } else {
-                self = .init(rawValue: Int(String(string.replacing("AppIcon", with: "")))!)!
-            }
-        }
-        
-        case primary = 0
-        case alt1, alt2, alt3, alt4, alt5, alt6, alt7
-        
-        var appIconName: String {
-            return "AppIcon\(rawValue)"
-        }
-        
-        var previewImageName: String {
-            return "AppIcon\(rawValue)-image"
-        }
-    }
-    
-    struct IconSelector: Identifiable {
-        var id = UUID()
-        let title: String
-        let icon: Icon
-        
-        static let items = [
-            IconSelector(
-                title: "White on Red".localized,
-                icon: .primary),
-            IconSelector(
-                title: "\("Red on White".localized)",
-                icon: .alt1),
-            IconSelector(
-                title: "\("Inclusion".localized)",
-                icon: .alt2),
-            IconSelector(
-                title: "\("White on Red - Classic".localized)",
-                icon: .alt3),
-            IconSelector(
-                title: "\("Dark Green".localized)",
-                icon: .alt4),
-            IconSelector(
-                title: "\("Light".localized)",
-                icon: .alt5),
-            IconSelector(
-                title: "White on Orange".localized,
-                icon: .alt6),
-            IconSelector(
-                title: "\("Orange on White".localized)",
-                icon: .alt7),
-        ]
-    }
-    
     var body: some View {
         List {
             if !alternateIconsSupported {
@@ -88,28 +33,11 @@ struct AppIconView: View {
                     Text("Custom Icons are not supported on your device!")
                 }
             }
-            ForEach(IconSelector.items) { item in
+            ForEach(remoteDataManager.iconPreviews) { preview in
                 Button{
-                    handleIconSelection(selected: item)
+                    handleIconSelection(selected: preview)
                 } label: {
-                    HStack(alignment: .center) {
-                        Label {
-                            Text(item.title)
-                                .padding(.leading, 4)
-                        } icon: {
-                            Image(item.icon.previewImageName)
-                                .resizable()
-                                .frame(width: 50, height: 50)
-                                .cornerRadius(8)
-                                .padding(.horizontal)
-                                .shadow(radius: 2)
-                        }
-                        Spacer()
-                        if item.icon.appIconName == currentIcon {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundStyle(.green)
-                        }
-                    }
+                    IconTileBuilder(preview: preview)
                 }
                 .buttonStyle(.plain)
                 .disabled(!alternateIconsSupported || !iapManager.hasTipped)
@@ -118,29 +46,29 @@ struct AppIconView: View {
         .navigationTitle("App Icon")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            if let alternateAppIcon = UIApplication.shared.alternateIconName, let appIcon = Icon.allCases.first(where: { $0.appIconName == alternateAppIcon }) {
-                currentIcon = appIcon.appIconName
+            if let alternateAppIcon = UIApplication.shared.alternateIconName, let appIcon = remoteDataManager.iconPreviews.first(where: { $0.name == alternateAppIcon }) {
+                currentIcon = appIcon.name
             } else {
-                currentIcon = Icon.primary.appIconName
+                currentIcon = Self.defaultIconName
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Reset") {
-                    setAppIcon(Icon.primary.appIconName)
-                    currentIcon = Icon.primary.appIconName
+                    setAppIcon(nil)
+                    currentIcon = Self.defaultIconName
                 }
             }
         }
     }
     
-    private func handleIconSelection(selected: IconSelector) {
+    private func handleIconSelection(selected: IconPreview) {
         guard iapManager.hasTipped else { return }
-        currentIcon = selected.icon.appIconName
-        if selected.icon.rawValue == Icon.primary.rawValue {
+        currentIcon = selected.name
+        if selected.name == Self.defaultIconName {
             setAppIcon(nil)
         } else {
-            setAppIcon(selected.icon.appIconName)
+            setAppIcon(selected.name)
         }
     }
     
@@ -157,6 +85,51 @@ struct AppIconView: View {
                 print("Icon changed successfully!")
             }
         }
+    }
+    
+    @ViewBuilder
+    private func IconTileBuilder(preview: IconPreview) -> some View {
+        HStack(alignment: .center) {
+            HStack {
+                if let url = preview.imageURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                                .controlSize(.small)
+                                .frame(width: 80, height: 80)
+                                .padding(.vertical, 6)
+                                .shadow(radius: 2)
+                        case .success(let image):
+                            ImagePreviewBuilder(image: image)
+                        case .failure:
+                            ImagePreviewBuilder(image: Image(systemName: "photo"))
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                } else {
+                    ImagePreviewBuilder(image: Image(systemName: "photo"))
+                }
+                Text(preview.name == Self.defaultIconName ? "Default" : preview.title)
+                    .padding(.leading, 4)
+            }
+            Spacer()
+            if preview.name == currentIcon {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(.green)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func ImagePreviewBuilder(image: Image) -> some View {
+        image
+            .resizable()
+            .frame(width: 80, height: 80)
+            .cornerRadius(11)
+            .padding(.vertical, 6)
+            .shadow(radius: 3)
     }
 }
 

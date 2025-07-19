@@ -19,6 +19,7 @@ struct TempBoxApp: App {
     @StateObject private var messagesViewModel = MessagesViewModel()
     @StateObject private var iapManager = IAPManager()
     @StateObject private var webViewController = WebViewController()
+    @StateObject private var remoteDataManager = RemoteDataManager()
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -44,6 +45,7 @@ struct TempBoxApp: App {
                 .environmentObject(messagesViewModel)
                 .environmentObject(iapManager)
                 .environmentObject(webViewController)
+                .environmentObject(remoteDataManager)
         }
         .modelContainer(sharedModelContainer)
 #if os(macOS)
@@ -79,10 +81,12 @@ struct RootView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject private var appController: AppController
     @EnvironmentObject private var iapManager: IAPManager
+    @EnvironmentObject private var remoteDataManager: RemoteDataManager
     
     var body: some View {
         ContentView()
             .accentColor(appController.accentColor(colorScheme: colorScheme))
             .onAppear(perform: iapManager.initialize)
+            .onAppear(perform: remoteDataManager.getRemoteData)
     }
 }
