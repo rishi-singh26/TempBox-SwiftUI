@@ -4,101 +4,121 @@
     {
       "id": 1,
       "name": "AppIcon",
+      "title": "Default",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxIos-Any-Red.png"
     },
     {
       "id": 2,
       "name": "Inclusion",
+      "title": "Inclusion",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/AnyInClusion.png"
     },
     {
       "id": 3,
-      "name": "TempBox Classic",
+      "name": "TempBoxClassic",
+      "title": "TempBox Classic",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxIos-Any.png"
     },
     {
       "id": 20,
-      "name": "TempBox Dark",
+      "name": "TempBoxDark",
+      "title": "TempBox Dark",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxBlack.png"
     },
     {
       "id": 4,
-      "name": "Email",
+      "name": "EmailOrange",
+      "title": "Email",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangeT.png"
     },
     {
       "id": 5,
-      "name": "Email",
+      "name": "EmailWhiteOrange",
+      "title": "Email",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangeT.png"
     },
     {
       "id": 6,
-      "name": "Email Blue",
+      "name": "EmailBlue",
+      "title": "Blue Email",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BlueT.png"
     },
     {
       "id": 7,
-      "name": "Email Blue",
+      "name": "EmailWhiteBlue",
+      "title": "Blue Email",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBlueT.png"
     },
     {
       "id": 8,
-      "name": "Box",
+      "name": "OrangeBox",
+      "title": "Box",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangeBox.png"
     },
     {
       "id": 9,
-      "name": "Box",
+      "name": "WhiteOrangeBox",
+      "title": "Box",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangeBox.png"
     },
     {
       "id": 10,
-      "name": "Box Blue",
+      "name": "BoxBlue",
+      "title": "Blue Box",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BlueBox.png"
     },
     {
       "id": 11,
-      "name": "Box Blue",
+      "name": "WhiteBoxBlue",
+      "title": "Blue Box",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBlueBox.png"
     },
     {
       "id": 12,
-      "name": "Pocket",
+      "name": "OrangePocket",
+      "title": "Pocket",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangePocket.png"
     },
     {
       "id": 13,
-      "name": "Pocket",
+      "name": "WhiteOrangePocket",
+      "title": "Pocket",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangePocket.png"
     },
     {
       "id": 14,
-      "name": "Pocket Blue",
+      "name": "BluePocket",
+      "title": "Blue Pocket",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BluePocket.png"
     },
     {
       "id": 15,
-      "name": "Pocket Blue",
+      "name": "WhiteBluePocket",
+      "title": "Blue Pocket",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBluePocket.png"
     },
     {
       "id": 16,
-      "name": "Envelope",
+      "name": "OrangeEnvelope",
+      "title": "Envelope",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/OrangeEnvelope.png"
     },
     {
       "id": 17,
-      "name": "Envelope",
+      "name": "WhiteOrangeEnvelope",
+      "title": "Envelope",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteOrangeEnvelope.png"
     },
     {
       "id": 18,
-      "name": "Envelope Blue",
+      "name": "BlueEnvelope",
+      "title": "Blue Envelope",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/BlueEnvelope.png"
     },
     {
       "id": 19,
-      "name": "Envelope Blue",
+      "name": "WhiteBlueEnvelope",
+      "title": "Blue Envelope",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/WhiteBlueEnvelope.png"
     }
   ]
