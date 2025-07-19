@@ -3,7 +3,7 @@
   "icons": [
     {
       "id": 1,
-      "name": "Default",
+      "name": "AppIcon",
       "path": "https://raw.githubusercontent.com/rishi-singh26/TempBox-SwiftUI/refs/heads/database/database/iconpreviews/TempBoxIos-Any-Red.png"
     },
     {
