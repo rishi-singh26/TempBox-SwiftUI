@@ -22,7 +22,12 @@ struct AppColorView: View {
         
     var body: some View {
         List {
-            ColorsListSection(title: "App Colors", colors: AppController.defaultAccentColors)
+            if !iapManager.hasTipped {
+                Section {
+                    Text("Accent color customization is available as a thank-you for supporting TempBox with a tip. Your support helps keep the app free for everyone.")
+                }
+            }
+            ColorsListSection(colors: AppController.defaultAccentColors)
             Section(header: AddColorSectionHeader("Custom Colors", openAddColorSheet)) {
                 ForEach(sortedCustomColors) { accentColor in
                     ColorTile(accentColor: accentColor, hasActions: true)
@@ -40,15 +45,13 @@ struct AppColorView: View {
     }
     
     @ViewBuilder
-    private func ColorsListSection(title: String, colors: [AccentColorData], hasActions: Bool = false) -> some View {
+    private func ColorsListSection(colors: [AccentColorData], hasActions: Bool = false) -> some View {
         Section {
             ForEach(colors) { accentColor in
                 ColorTile(accentColor: accentColor, hasActions: hasActions)
             }
-        } header: {
-            Text(title)
         } footer: {
-            Text("Different dark mode and light mode accent color")
+            Text("Different colors for dark and light appearance")
         }
         .headerProminence(.increased)
     }

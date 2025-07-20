@@ -33,6 +33,11 @@ struct AppIconView: View {
                     Text("Custom Icons are not supported on your device!")
                 }
             }
+            if alternateIconsSupported && !iapManager.hasTipped {
+                Section {
+                    Text("App Icon customization is available as a thank-you for supporting TempBox with a tip. Your support helps keep the app free for everyone.")
+                }
+            }
             ForEach(remoteDataManager.iconPreviews) { preview in
                 Button{
                     handleIconSelection(selected: preview)

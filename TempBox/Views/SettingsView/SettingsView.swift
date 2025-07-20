@@ -39,7 +39,7 @@ struct SettingsView: View {
                 NavigationView {
                     IOSSettings()
                         .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
+                            ToolbarItem(placement: .confirmationAction) {
                                 Button("Done") {
                                     dismiss()
                                 }
@@ -155,6 +155,7 @@ struct SettingsView: View {
 #if os(iOS)
     @ViewBuilder
     private func IOSSettings() -> some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme);
         List {
             Section {
                 NavigationLink {
@@ -178,10 +179,6 @@ struct SettingsView: View {
             }
             
             Section {
-                if !iapManager.availableProducts.isEmpty && !iapManager.hasTipped {
-                    TipJarCardView()
-                        .padding(.bottom)
-                }
                 NavigationLink {
                     AppIconView()
                 } label: {
@@ -192,8 +189,20 @@ struct SettingsView: View {
                 } label: {
                     Label("Accent Color", systemImage: "paintpalette")
                 }
-            } footer: {
-                Text(iapManager.hasTipped ? "Thanks for the tip!" : "Tip any amount to unlock!")
+                NavigationLink {
+                    TipJarView()
+                } label: {
+                    Label {
+                        Text("Tip Jar")
+                    } icon: {
+                        Text(Locale.current.currencySymbol ?? "$")
+                            .padding(7)
+                            .background(accentColor.opacity(0.2))
+                            .foregroundColor(accentColor)
+                            .clipShape(Circle())
+                            .frame(height: 20)
+                    }
+                }
             }
             
             Section {

@@ -21,9 +21,7 @@ class IAPManager: ObservableObject {
     @AppStorage("hasTippedSmall") private(set) var hasTippedSmall: Bool = false
     @AppStorage("hasTippedMedium") private(set) var hasTippedMedium: Bool = false
     @AppStorage("hasTippedLarge") private(set) var hasTippedLarge: Bool = false
-    var hasTipped: Bool {
-        hasTippedSmall || hasTippedMedium || hasTippedLarge
-    }
+    @Published var hasTipped: Bool = false
     
     /// Replace with your actual product identifiers
     private let productIDs: [String] = [
@@ -41,8 +39,14 @@ class IAPManager: ObservableObject {
     }
 
     func loadProducts() async {
-        isLoading = true
-        defer { isLoading = false }
+        withAnimation {
+            isLoading = true
+        }
+        defer {
+            withAnimation {
+                isLoading = false
+            }
+        }
 
         do {
             let products = try await Product.products(for: productIDs)
@@ -59,8 +63,14 @@ class IAPManager: ObservableObject {
     }
 
     func refreshPurchaseStatus() async {
-        isLoading = true
-        defer { isLoading = false }
+        withAnimation {
+            isLoading = true
+        }
+        defer {
+            withAnimation {
+                isLoading = false
+            }
+        }
         
         let randomDelay = Double.random(in: 0...2) // seconds
         try? await Task.sleep(nanoseconds: UInt64(randomDelay * 1_000_000_000))
@@ -79,8 +89,14 @@ class IAPManager: ObservableObject {
     }
 
     func purchase(product: Product) async {
-        isLoading = true
-        defer { isLoading = false }
+        withAnimation {
+            isLoading = true
+        }
+        defer {
+            withAnimation {
+                isLoading = false
+            }
+        }
 
         do {
             let result = try await product.purchase()
@@ -129,9 +145,16 @@ class IAPManager: ObservableObject {
         } else {
             // Nothing
         }
+        updateTippedState()
     }
     
     func updateUnlockedFeatures(for productIds: [String]) {
         productIds.forEach { updateTipStatus(for: $0, status: true) }
+    }
+    
+    func updateTippedState() {
+        withAnimation {
+            hasTipped = hasTippedSmall || hasTippedMedium || hasTippedLarge
+        }
     }
 }

@@ -60,6 +60,7 @@ struct MessageDetailView: View {
         })
         .sheet(isPresented: $messageDetailController.showShareEmailSheet, content: {
             ShareMessageView()
+                .accentColor(appController.accentColor(colorScheme: colorScheme))
         })
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

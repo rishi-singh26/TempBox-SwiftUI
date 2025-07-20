@@ -14,6 +14,7 @@ struct AddColorView: View {
     @State private var newColorName: String = ""
     @State private var lightColor: Color = .white
     @State private var darkColor: Color = .black
+    @State private var useSameColor: Bool = false
     
     var onColorSelect: (AccentColorData) -> Void
     
@@ -22,8 +23,16 @@ struct AddColorView: View {
             Form {
                 TextField("Color name", text: $newColorName)
                     .textInputAutocapitalization(.words)
-                ColorPicker("Select light color", selection: $lightColor, supportsOpacity: false)
-                ColorPicker("Select dark color", selection: $darkColor, supportsOpacity: false)
+                ColorPicker("Select \(useSameColor ?  "" : "light ")color", selection: $lightColor, supportsOpacity: false)
+                if !useSameColor {
+                    ColorPicker("Select dark color", selection: $darkColor, supportsOpacity: false)
+                }
+                
+                Section {
+                    Toggle("Use same color", isOn: $useSameColor.animation())
+                } footer: {
+                    Text("Use same color in light and dark appearance")
+                }
             }
             .navigationTitle("Add Custom Color")
             .navigationBarTitleDisplayMode(.inline)
@@ -35,12 +44,25 @@ struct AddColorView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        onColorSelect(AccentColorData(id: UUID().uuidString, name: newColorName, light: lightColor, dark: darkColor))
+                        onColorSelect(AccentColorData(
+                            id: UUID().uuidString,
+                            name: newColorName,
+                            light: lightColor,
+                            dark: useSameColor ? lightColor : darkColor
+                        ))
                         dismiss()
                     }
-                    .disabled(newColorName.isEmpty || lightColor == .white || darkColor == .black)
+                    .disabled(isInValidInput)
                 }
             }
+        }
+    }
+    
+    var isInValidInput: Bool {
+        if useSameColor {
+            return newColorName.isEmpty || lightColor == .white
+        } else {
+            return newColorName.isEmpty || lightColor == .white || darkColor == .black
         }
     }
 }
