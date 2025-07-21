@@ -8,6 +8,16 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+enum SettingPage {
+    case importPage
+    case exportPage
+    case appIconPage
+    case appColorPage
+    case tipJarPage
+    case archive
+    case aboutPage
+}
+
 class SettingsViewModel: ObservableObject {
     static var shared = SettingsViewModel()
     

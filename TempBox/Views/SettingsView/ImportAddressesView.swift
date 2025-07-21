@@ -143,6 +143,7 @@ struct ImportAddressesView: View {
                 .padding(.bottom)
             }
         }
+        .navigationTitle("Import Addresses")
         .fileImporter(
             isPresented: $settingsViewModel.isPickingFile,
             allowedContentTypes: [.plainText, .json],

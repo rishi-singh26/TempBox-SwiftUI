@@ -22,8 +22,8 @@ struct AboutView: View {
 #if os(macOS)
     @ViewBuilder
     func MacOSAboutViewBuilder() -> some View {
-        ScrollView {
-            MacCustomSection(header: "") {
+        List {
+            MacCustomSection {
                 HStack {
                     Image("PresentableIcon")
                         .resizable()
@@ -40,6 +40,7 @@ struct AboutView: View {
                     Spacer()
                 }
             }
+            .listRowSeparator(.hidden)
             
             MacCustomSection {
                 VStack(alignment: .leading) {
@@ -68,6 +69,7 @@ struct AboutView: View {
                     .help("Write feedback for TempBox on AppStore")
                 }
             }
+            .listRowSeparator(.hidden)
             
             MacCustomSection {
                 VStack(alignment: .leading) {
@@ -88,6 +90,7 @@ struct AboutView: View {
                     .help("Open TempBox terms of service in web browser")
                 }
             }
+            .listRowSeparator(.hidden)
             
             MacCustomSection {
                 VStack(alignment: .leading) {
@@ -108,6 +111,7 @@ struct AboutView: View {
                     .help("Open TempBox Open-Source license in safari")
                 }
             }
+            .listRowSeparator(.hidden)
             
 //            MacCustomSection(header: "Copyright © 2025 Rishi Singh. All Rights Reserved.") {
             MacCustomSection {
@@ -125,6 +129,7 @@ struct AboutView: View {
                     Text("TempBox is lovingly developed in India. 🇮🇳")
                 }
             }
+            .listRowSeparator(.hidden)
             .padding(.bottom, 50)
         }
     }

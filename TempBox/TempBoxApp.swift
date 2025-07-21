@@ -69,6 +69,8 @@ struct TempBoxApp: App {
                 .environmentObject(addressViewModel)
                 .environmentObject(settingsViewModel)
                 .environmentObject(appController)
+                .environmentObject(remoteDataManager)
+                .environmentObject(iapManager)
         }
         .defaultSize(width: 700, height: 400)
         .windowResizability(.contentSize)

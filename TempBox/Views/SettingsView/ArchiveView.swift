@@ -88,6 +88,7 @@ struct ArchiveView: View {
             }
             .padding(.vertical)
         }
+        .navigationTitle("Archived Addresses")
     }
     
     @ViewBuilder

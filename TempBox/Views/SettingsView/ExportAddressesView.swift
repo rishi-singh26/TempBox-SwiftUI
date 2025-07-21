@@ -29,7 +29,7 @@ struct ExportAddressesView: View {
         } message: {
             Text("The exported addresses can be used to login and read your emails. Please store them securly.")
         }
-
+        .navigationTitle("Export Addresses")
     }
     
 #if os(iOS)
@@ -77,7 +77,6 @@ struct ExportAddressesView: View {
                 .disabled(settingsViewModel.selectedExportAddresses.isEmpty)
             }
         })
-        .navigationTitle("Export Addresses")
         .navigationBarTitleDisplayMode(.inline)
         .background(content: {
             ExporterView()

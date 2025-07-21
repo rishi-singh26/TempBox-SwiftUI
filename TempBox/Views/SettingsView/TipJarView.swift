@@ -5,7 +5,6 @@
 //  Created by Rishi Singh on 20/07/25.
 //
 
-#if os(iOS)
 import SwiftUI
 import StoreKit
 
@@ -19,6 +18,70 @@ struct TipJarView: View {
     
     var body: some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
+        Group {
+#if os(iOS)
+            IOSViewBuilder(accentColor: accentColor)
+#elseif os(macOS)
+            MacOSViewBuilder(accentColor: accentColor)
+#endif
+        }
+        .navigationTitle("Tip Jar")
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                if iapManager.isLoading && selectTipId.isEmpty {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+                Button("Refresh") {
+                    selectTipId = ""
+                    Task {
+                        await iapManager.refreshPurchaseStatus()
+                    }
+                }
+            }
+        }
+    }
+    
+#if os(macOS)
+    @ViewBuilder
+    private func MacOSViewBuilder(accentColor: Color) -> some View {
+        List {
+            MacCustomSection {
+                VStack(alignment: .leading, spacing: 10) {
+                    Image(systemName: "heart.fill")
+                        .resizable()
+                        .frame(width: 50, height: 46)
+                        .foregroundStyle(accentColor)
+                    Text("Donations Welcome")
+                        .font(.title2.bold())
+                    Text("If you enjoy using TempBox and want to support its continued development, we very much appreciate that! There is some overhead in keeping the app running, help keep TempBox free with kindness.")
+                }
+            }
+            .listRowSeparator(.hidden)
+            
+            if iapManager.hasTipped {
+                MacCustomSection {
+                    HStack {
+                        Text("Thanks for the tip😄! Your support means a lot and helps us keep improving the app.")
+                        Spacer()
+                    }
+                }
+                .listRowSeparator(.hidden)
+            }
+            
+            MacCustomSection {
+                ForEach(iapManager.availableProducts) { product in
+                    TipTileBuilder(product: product, accentColor: accentColor)
+                }
+            }
+            .listRowSeparator(.hidden)
+        }
+    }
+#endif
+    
+#if os(iOS)
+    @ViewBuilder
+    private func IOSViewBuilder(accentColor: Color) -> some View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 10) {
@@ -48,53 +111,54 @@ struct TipJarView: View {
                 }
             }
         }
-        .navigationTitle("Tip Jar")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Refresh") {
-                    Task {
-                        await iapManager.refreshPurchaseStatus()
-                    }
+    }
+#endif
+    
+    @ViewBuilder
+    private func TipTileBuilder(product: Product, accentColor: Color) -> some View {
+        let tipStatus: Bool = iapManager.getTipStatus(for: product.id)
+        if tipStatus {
+            TipTileLabelBuilder(product: product, tipStatus: tipStatus, accentColor: accentColor)
+        } else {
+            Button {
+                guard !tipStatus else { return }
+                selectTipId = product.id
+                Task {
+                    await iapManager.purchase(product: product)
                 }
+            } label: {
+                TipTileLabelBuilder(product: product, tipStatus: tipStatus, accentColor: accentColor)
             }
+            .buttonStyle(.plain)
         }
     }
     
     @ViewBuilder
-    private func TipTileBuilder(product: Product, accentColor: Color) -> some View {
-        Button {
-            selectTipId = product.id
-            Task {
-                await iapManager.purchase(product: product)
+    private func TipTileLabelBuilder(product: Product, tipStatus: Bool, accentColor: Color) -> some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(product.displayName)
+                    .font(.body.bold())
+                HeartsBuilder(accentColor: accentColor, name: product.id)
             }
-        } label: {
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(product.displayName)
-                        .font(.body.bold())
-                    HeartsBuilder(accentColor: accentColor, name: product.id)
+            Spacer()
+            Group {
+                if iapManager.isLoading && selectTipId == product.id {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(accentColor)
+                } else {
+                    Text(tipStatus ? iapManager.getTipMessage(for: product.id) : product.displayPrice)
                 }
-                Spacer()
-                Group {
-                    if iapManager.isLoading && selectTipId == product.id {
-                        ProgressView()
-                            .controlSize(.mini)
-                            .tint(accentColor)
-                    } else {
-                        Text(product.displayPrice)
-                    }
-                }
-                .font(.body.bold())
-                .padding(.vertical, 5)
-                .padding(.horizontal, 12)
-                .background(accentColor.opacity(0.2))
-                .foregroundColor(accentColor)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                //                                .frame(height: 20)
             }
+            .font(.body.bold())
+            .padding(.vertical, 5)
+            .padding(.horizontal, 12)
+            .background(accentColor.opacity(0.2))
+            .foregroundColor(accentColor)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
-        .buttonStyle(.plain)
     }
     
     @ViewBuilder
@@ -119,4 +183,3 @@ struct TipJarView: View {
 #Preview {
     TipJarView()
 }
-#endif

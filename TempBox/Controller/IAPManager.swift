@@ -145,16 +145,37 @@ class IAPManager: ObservableObject {
         } else {
             // Nothing
         }
-        updateTippedState()
+        
+        withAnimation {
+            hasTipped = hasTippedSmall || hasTippedMedium || hasTippedLarge
+        }
     }
     
     func updateUnlockedFeatures(for productIds: [String]) {
         productIds.forEach { updateTipStatus(for: $0, status: true) }
     }
     
-    func updateTippedState() {
-        withAnimation {
-            hasTipped = hasTippedSmall || hasTippedMedium || hasTippedLarge
+    func getTipStatus(for productId: String) -> Bool {
+        if productId.lowercased().contains("small") {
+            hasTippedSmall
+        } else if productId.lowercased().contains("medium") {
+            hasTippedMedium
+        } else if productId.lowercased().contains("large") {
+            hasTippedLarge
+        } else {
+            false
+        }
+    }
+    
+    func getTipMessage(for productId: String) -> String {
+        if productId.lowercased().contains("small") {
+            "Thank You!"
+        } else if productId.lowercased().contains("medium") {
+            "Awesome!"
+        } else if productId.lowercased().contains("large") {
+            "You rock!"
+        } else {
+            ""
         }
     }
 }

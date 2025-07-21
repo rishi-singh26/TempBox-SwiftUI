@@ -7,17 +7,6 @@
 
 import SwiftUI
 
-
-enum SettingPage {
-    case importPage
-    case exportPage
-    case appIconPage
-    case appColorPage
-    case archive
-    case aboutPage
-}
-
-
 struct SettingsView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
@@ -81,42 +70,7 @@ struct SettingsView: View {
     @ViewBuilder
     private func MacOSSettings() -> some View {
         NavigationSplitView {
-            List(
-                selection: Binding(get: {
-                    settingsViewModel.selectedSetting
-                }, set: { newValue in
-                    DispatchQueue.main.async {
-                        withAnimation(.linear(duration: 0.2)) {
-                            settingsViewModel.selectedSetting = newValue
-                        }
-                    }
-                })
-            ) {
-                NavigationLink(value: SettingPage.importPage) {
-                    Label("Import Addresses", systemImage: "square.and.arrow.down")
-                }
-                NavigationLink(value: SettingPage.exportPage) {
-                    Label("Export Addresses", systemImage: "square.and.arrow.up")
-                }
-//                NavigationLink(value: SettingPage.appColorPage) {
-//                    Label("Change App Color", systemImage: "paintpalette")
-//                }
-                NavigationLink(value: SettingPage.archive) {
-                    Label("Archived Addresses", systemImage: "archivebox")
-                }
-                
-                Text("")
-                NavigationLink(value: SettingPage.aboutPage) {
-                    Label("About TempBox", systemImage: "info.circle")
-                }
-            }
-            .listStyle(.sidebar)
-            .navigationTitle("Settings")
-            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 280)
-            .onChange(of: settingsViewModel.selectedSetting, { oldValue, newValue in
-                settingsViewModel.handleNavigationChange(oldValue, newValue)
-            })
-            .toolbar(content: MacOSToolbarBuilder)
+            NavigationListBuilder()
         } detail: {
             switch settingsViewModel.selectedSetting {
             case .importPage:
@@ -127,6 +81,8 @@ struct SettingsView: View {
                 EmptyView()
             case .appColorPage:
                 EmptyView()
+            case .tipJarPage:
+                TipJarView()
             case .archive:
                 ArchiveView()
             case .aboutPage:
@@ -134,6 +90,55 @@ struct SettingsView: View {
             }
         }
         .frame(minWidth: 700, minHeight: 400)
+    }
+    
+    @ViewBuilder
+    private func NavigationListBuilder() -> some View {
+        let selectionBinding = Binding(get: {
+            settingsViewModel.selectedSetting
+        }, set: { newValue in
+            DispatchQueue.main.async {
+                settingsViewModel.selectedSetting = newValue
+            }
+        })
+        List(selection: selectionBinding) {
+            NavigationLink(value: SettingPage.importPage) {
+                Label("Import Addresses", systemImage: "square.and.arrow.down")
+            }
+            NavigationLink(value: SettingPage.exportPage) {
+                Label("Export Addresses", systemImage: "square.and.arrow.up")
+            }
+            NavigationLink(value: SettingPage.archive) {
+                Label("Archived Addresses", systemImage: "archivebox")
+            }
+//            NavigationLink(value: SettingPage.appColorPage) {
+//                Label("Change App Color", systemImage: "paintpalette")
+//            }
+            
+            Text("")
+            NavigationLink(value: SettingPage.tipJarPage) {
+                Label {
+                    Text("Tip Jar")
+                } icon: {
+                    Text(Locale.current.currencySymbol ?? "$")
+                        .padding(7)
+                        .background(settingsViewModel.selectedSetting == .tipJarPage ? Color.primary.opacity(0.2) : Color.accentColor.opacity(0.2))
+                        .foregroundColor(settingsViewModel.selectedSetting == .tipJarPage ? Color.primary : Color.accentColor)
+                        .clipShape(Circle())
+                        .frame(height: 20)
+                }
+            }
+            NavigationLink(value: SettingPage.aboutPage) {
+                Label("About TempBox", systemImage: "info.circle")
+            }
+        }
+        .listStyle(.sidebar)
+        .navigationTitle("Settings")
+        .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 280)
+        .onChange(of: settingsViewModel.selectedSetting, { oldValue, newValue in
+            settingsViewModel.handleNavigationChange(oldValue, newValue)
+        })
+        .toolbar(content: MacOSToolbarBuilder)
     }
     
     @ToolbarContentBuilder
