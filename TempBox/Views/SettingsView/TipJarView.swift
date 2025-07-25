@@ -143,21 +143,27 @@ struct TipJarView: View {
                 HeartsBuilder(accentColor: accentColor, name: product.id)
             }
             Spacer()
-            Group {
-                if iapManager.isLoading && selectTipId == product.id {
-                    ProgressView()
-                        .controlSize(.mini)
-                        .tint(accentColor)
-                } else {
-                    Text(tipStatus ? iapManager.getTipMessage(for: product.id) : product.displayPrice)
+            if tipStatus {
+                Text(iapManager.getTipMessage(for: product.id))
+                    .font(.body.bold())
+                    .foregroundColor(accentColor)
+            } else {
+                Group {
+                    if iapManager.isLoading && selectTipId == product.id {
+                        ProgressView()
+                            .controlSize(.mini)
+                            .tint(accentColor)
+                    } else {
+                        Text(product.displayPrice)
+                    }
                 }
+                .font(.body.bold())
+                .padding(.vertical, 5)
+                .padding(.horizontal, 12)
+                .background(accentColor.opacity(0.2))
+                .foregroundColor(accentColor)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
             }
-            .font(.body.bold())
-            .padding(.vertical, 5)
-            .padding(.horizontal, 12)
-            .background(accentColor.opacity(0.2))
-            .foregroundColor(accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
     }
     

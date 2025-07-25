@@ -17,6 +17,7 @@ struct AppIconView: View {
     
     @State private var currentIcon = UIApplication.shared.alternateIconName ?? Self.defaultIconName
     @State private var alternateIconsSupported: Bool = true
+    @State private var showTipJarAlert: Bool = false
     
     init() {
         if !UIApplication.shared.supportsAlternateIcons {
@@ -35,7 +36,7 @@ struct AppIconView: View {
             }
             if alternateIconsSupported && !iapManager.hasTipped {
                 Section {
-                    Text("App Icon customization is available as a thank-you for supporting TempBox with a tip. Your support helps keep the app free for everyone.")
+                    Text(KAppIconTipJarMessage)
                 }
             }
             ForEach(remoteDataManager.iconPreviews) { preview in
@@ -45,7 +46,7 @@ struct AppIconView: View {
                     IconTileBuilder(preview: preview)
                 }
                 .buttonStyle(.plain)
-                .disabled(!alternateIconsSupported || !iapManager.hasTipped)
+                .disabled(!alternateIconsSupported)
             }
         }
         .navigationTitle("App Icon")
@@ -65,10 +66,19 @@ struct AppIconView: View {
                 }
             }
         }
+        .alert("Alert!", isPresented: $showTipJarAlert) {
+            Button("Ok", role: .cancel) {}
+        } message: {
+            Text(KAppIconTipJarMessage)
+        }
+
     }
     
     private func handleIconSelection(selected: IconPreview) {
-        guard iapManager.hasTipped else { return }
+        guard iapManager.hasTipped else {
+            showTipJarAlert = true
+            return
+        }
         currentIcon = selected.name
         if selected.name == Self.defaultIconName {
             setAppIcon(nil)
