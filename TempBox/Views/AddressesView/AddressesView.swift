@@ -77,19 +77,19 @@ struct AddressesView: View {
         }
         .sheet(isPresented: $addressesViewModel.isNewAddressSheetOpen) {
             AddAddressView()
-                .accentColor(accentColor)
+                .sheetAppearanceSetup(tint: accentColor)
         }
         .sheet(isPresented: $addressesViewModel.isAddressInfoSheetOpen) {
             AddressInfoView(address: addressesViewModel.selectedAddForInfoSheet!)
-                .accentColor(accentColor)
+                .sheetAppearanceSetup(tint: accentColor)
         }
         .sheet(isPresented: $addressesViewModel.isEditAddressSheetOpen) {
             EditAddressView(address: addressesViewModel.selectedAddForEditSheet!)
-                .accentColor(accentColor)
+                .sheetAppearanceSetup(tint: accentColor)
         }
         .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
             SettingsView()
-                .accentColor(accentColor)
+                .sheetAppearanceSetup(tint: accentColor)
         }
         .alert("Alert!", isPresented: $addressesViewModel.showDeleteAddressAlert) {
             Button("Cancel", role: .cancel) {

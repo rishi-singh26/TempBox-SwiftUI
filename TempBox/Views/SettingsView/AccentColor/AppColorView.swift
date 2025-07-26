@@ -41,7 +41,7 @@ struct AppColorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddColorSheet) {
             AddColorView(onColorSelect: addNewCustomColor)
-                .accentColor(appController.accentColor(colorScheme: colorScheme))
+                .sheetAppearanceSetup(tint: appController.accentColor(colorScheme: colorScheme))
         }
         .alert("Alert!", isPresented: $showTipJarAlert) {
             Button("Ok", role: .cancel) {}

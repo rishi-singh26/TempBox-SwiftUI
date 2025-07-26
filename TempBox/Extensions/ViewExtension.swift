@@ -25,4 +25,11 @@ extension View {
         self // For other platforms, return the view unchanged
         #endif
     }
+    
+    @ViewBuilder
+    func sheetAppearanceSetup(tint: Color) -> some View {
+        self
+            .accentColor(tint)
+            .presentationCornerRadius(25)
+    }
 }
