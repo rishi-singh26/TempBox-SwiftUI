@@ -22,18 +22,26 @@ struct ContentView: View {
     @AppStorage("didMigrateData") private var didMigrateData: Bool = false
     
     var body: some View {
-#if os(iOS)
         Group {
-            if DeviceType.isIphone {
-                IPhoneNavigtionBuilder()
-            } else {
-                IPadNavigationBuilder()
+#if os(iOS)
+            Group {
+                if DeviceType.isIphone {
+                    IPhoneNavigtionBuilder()
+                } else {
+                    IPadNavigationBuilder()
+                }
             }
-        }
-        .onAppear(perform: handleDataImport)
+            .onAppear(perform: handleDataImport)
 #elseif os(macOS)
-        MacNavigationBuilder()
+            MacNavigationBuilder()
 #endif
+        }
+        .sheet(isPresented: $appController.showOnboarding, content: {
+            OnboardingView(tint: .red, onContinue: appController.hideOnboardingSheet)
+        })
+        .onAppear {
+            Task(operation: appController.prfomrOnbordingCheck)
+        }
     }
     
 #if os(iOS)

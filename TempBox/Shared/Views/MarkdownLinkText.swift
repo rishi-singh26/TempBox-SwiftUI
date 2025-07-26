@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MarkdownLinkText: View {
     let markdownText: String
+    var askConfirmation: Bool = true
     @State private var showAlert = false
     @State private var linkToOpen: URL?
     
@@ -17,9 +18,15 @@ struct MarkdownLinkText: View {
     var body: some View {
         Text(attributedString)
             .onTapGesture {
-                if let url = linkURL {
-                    linkToOpen = url
-                    showAlert = true
+                if askConfirmation {
+                    if let url = linkURL {
+                        linkToOpen = url
+                        showAlert = true
+                    }
+                } else {
+                    if let url = linkURL {
+                        openURL(url)
+                    }
                 }
             }
             .alert("Open Link?", isPresented: $showAlert) {

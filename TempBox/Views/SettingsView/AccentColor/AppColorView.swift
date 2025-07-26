@@ -66,7 +66,6 @@ struct AppColorView: View {
     private func ColorTile(accentColor: AccentColorData, hasActions: Bool) -> some View {
         // Tile
         let tile = Button {
-            showTipJarAlert = true
             guard iapManager.hasTipped else {
                 showTipJarAlert = true
                 return

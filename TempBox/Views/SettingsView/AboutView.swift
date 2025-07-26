@@ -74,7 +74,7 @@ struct AboutView: View {
             MacCustomSection {
                 VStack(alignment: .leading) {
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/privacy-policy.html")
+                        settingsViewModel.showLinkConfirmation(url: KPrivactPolicyURL)
                     } label: {
                         CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Privacy Policy")
                     }
@@ -82,7 +82,7 @@ struct AboutView: View {
                     .help("Open TempBox privacy policy in web browser")
                     Divider()
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/terms-of-service.html")
+                        settingsViewModel.showLinkConfirmation(url: KTermsOfServiceURL)
                     } label: {
                         CustomLabel(leadingImageName: "list.bullet.rectangle.portrait", trailingImageName: "arrow.up.right", title: "Terms of Service")
                     }
@@ -177,13 +177,13 @@ struct AboutView: View {
             
             Section {
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/privacy-policy.html")
+                    settingsViewModel.showLinkConfirmation(url: KPrivactPolicyURL)
                 } label: {
                     CustomLabel(leadingImageName: "lock.shield", trailingImageName: "arrow.up.right", title: "Privacy Policy")
                 }
                 .help("Open TempBox privacy policy in web browser")
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in/terms-of-service.html")
+                    settingsViewModel.showLinkConfirmation(url: KTermsOfServiceURL)
                 } label: {
                     CustomLabel(leadingImageName: "list.bullet.rectangle.portrait", trailingImageName: "arrow.up.right", title: "Terms of Service")
                 }

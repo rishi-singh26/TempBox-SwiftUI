@@ -30,6 +30,10 @@ class AppController: ObservableObject {
         }
     }
     
+    // Onboarding view state
+    @AppStorage("seenOnBoardingView") private var seenOnBoardingView: Bool = false
+    @Published var showOnboarding: Bool = false
+    
     init() {
         if let saved = Self.loadAccentColorData() {
             selectedAccentColorData = saved
@@ -152,6 +156,22 @@ extension AppController {
                 print("JSON decode error: \(error)")
             }
         }.resume()
+    }
+}
+
+// MARK: - Onboarding View setup
+extension AppController {
+    func prfomrOnbordingCheck() async {
+        try? await Task.sleep(for: .seconds(0.2))
+        if !self.seenOnBoardingView {
+            await MainActor.run {
+                self.showOnboarding = true
+            }
+        }
+    }
+    func hideOnboardingSheet() {
+        seenOnBoardingView = true
+        showOnboarding = false
     }
 }
 
