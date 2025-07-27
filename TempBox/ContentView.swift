@@ -37,7 +37,7 @@ struct ContentView: View {
 #endif
         }
         .sheet(isPresented: $appController.showOnboarding, content: {
-            OnboardingView(tint: .red, onContinue: appController.hideOnboardingSheet)
+            OnboardingView(tint: .accentColor, onContinue: appController.hideOnboardingSheet)
         })
         .onAppear {
             Task(operation: appController.prfomrOnbordingCheck)

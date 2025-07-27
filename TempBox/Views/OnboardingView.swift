@@ -49,7 +49,7 @@ struct OnboardingView: View {
                         .font(.system(size: 50))
                         .frame(width: 100, height: 100)
                         .foregroundStyle(.white)
-                        .background(.red.gradient, in: .rect(cornerRadius: 25))
+                        .background(tint.gradient, in: .rect(cornerRadius: 25))
                         .frame(height: 180)
                         .frame(maxWidth: .infinity)
                         .blurSlide(animateIcon)
@@ -66,7 +66,7 @@ struct OnboardingView: View {
             
             VStack(spacing: 0, content: {
                 Text("By using TempBox, you agree to\n**[Privacy Policy](https://tempbox.rishisingh.in/privacy-policy.html)** and **[Terms of Service](https://tempbox.rishisingh.in/terms-of-service.html)**")
-                    .font(.caption2)
+                    .font(.footnote)
                     .foregroundStyle(.gray)
                     .multilineTextAlignment(.center)
                     .padding(.vertical, 15)
@@ -162,7 +162,7 @@ struct OnboardingView: View {
     // Constants
     let cards: [OnboardingCard] = [
         OnboardingCard(
-            symbol: "tray",
+            symbol: "envelope",
             title: "Generate Email Addresses",
             subTitle: "Quickly create email addresses, as many as you need."
         ),
