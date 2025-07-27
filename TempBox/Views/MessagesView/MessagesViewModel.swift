@@ -8,14 +8,12 @@
 import Foundation
 
 class MessagesViewModel: ObservableObject {
-    @Published var messagesLoading = true
-    @Published var messages = [Message]()
-    
     @Published var showingErrorAlert = false
     @Published var errorAlertMessage = ""
     
     @Published var searchText = ""
     
     @Published var showDeleteMessageAlert = false
+    @Published var selectedAddForMessDeletion: Address?
     @Published var selectedMessForDeletion: Message?
 }

@@ -253,3 +253,9 @@ enum AddressSchemaV2: VersionedSchema {
 
 
 typealias Address = AddressSchemaV2.Address
+
+extension Address {
+    static func empty(id: String) -> Address {
+        Address(id: id, name: "", address: "", quota: 0, used: 0, createdAt: Date.now, updatedAt: Date.now, token: "", password: "")
+    }
+}

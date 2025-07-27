@@ -108,32 +108,49 @@ struct AddressesView: View {
     
     @ViewBuilder
     func AddressesList() -> some View {
+        let emptyAddress = Address.empty(id: KUnifiedInboxId)
         let selectionBinding = Binding(get: {
-            addressesController.selectedAddress
+            addressesController.showUnifiedInbox ? emptyAddress : addressesController.selectedAddress
         }, set: { newVal in
             DispatchQueue.main.async {
-                withAnimation {
-                    addressesController.selectedAddress = newVal
-                }
+                addressesController.selectedAddress = newVal
+                addressesController.showUnifiedInbox = newVal?.id == KUnifiedInboxId
             }
         })
 #if os(iOS)
         if DeviceType.isIphone {
-            List(filteredAddresses) { address in
-                AddressItemView(address: address)
+            List {
+                Section {
+                    Text("All Inboxes")
+                }
+                ForEach(filteredAddresses) { address in
+                    AddressItemView(address: address)
+                }
             }
             .listStyle(.sidebar)
         } else {
-            List(filteredAddresses, selection: selectionBinding) { address in
-                NavigationLink(value: address) {
-                    AddressItemView(address: address)
+            List(selection: selectionBinding) {
+                ForEach(filteredAddresses) { address in
+                    NavigationLink(value: address) {
+                        AddressItemView(address: address)
+                    }
                 }
             }
         }
 #elseif os(macOS)
-        List(filteredAddresses, selection: selectionBinding) { address in
-            NavigationLink(value: address) {
-                AddressItemView(address: address)
+        List(selection: selectionBinding) {
+            NavigationLink(value: emptyAddress) {
+                HStack {
+                    Label("All Inboxes", systemImage: "tray.2")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.gray)
+                }
+            }
+            ForEach(filteredAddresses) { address in
+                NavigationLink(value: address) {
+                    AddressItemView(address: address)
+                }
             }
         }
 #endif

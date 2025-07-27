@@ -50,7 +50,6 @@ struct MessageItemView: View {
         }
         .contextMenu {
             BuildStatusButton(addTint: false)
-            Divider()
             BuildDeleteButton(addTint: false)
         }
     }
@@ -97,7 +96,7 @@ struct MessageItemView: View {
         let isSeen = messageFromStore?.seen ?? false
         Button {
             Task {
-                await addressesController.updateMessageSeenStatus(messageData: message, address: address, seen: !isSeen)
+                await addressesController.updateMessageSeenStatus(messageData: message, address: address)
             }
         } label: {
             Label(messageFromStore?.seen == true ? unreadMessage : readMessage, systemImage: isSeen ? "envelope.badge.fill" : "envelope.open.fill")
@@ -111,6 +110,7 @@ struct MessageItemView: View {
         Button {
             controller.showDeleteMessageAlert = true
             controller.selectedMessForDeletion = message
+            controller.selectedAddForMessDeletion = address
         } label: {
             Label("Delete", systemImage: "trash")
         }

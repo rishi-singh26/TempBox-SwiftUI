@@ -12,3 +12,5 @@ let KAppColorTipJarMessage = "Accent Color customization is available as a thank
 
 let KPrivactPolicyURL = "https://tempbox.rishisingh.in/privacy-policy.html"
 let KTermsOfServiceURL = "https://tempbox.rishisingh.in/terms-of-service.html"
+
+let KUnifiedInboxId = "unifiedInbox"

@@ -15,7 +15,7 @@ struct ContentView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
     @EnvironmentObject private var messagesViewModel: MessagesViewModel
-    @EnvironmentObject var appController: AppController
+    @EnvironmentObject private var appController: AppController
     @EnvironmentObject private var webViewController: WebViewController
     
     /// Ones data from flutter has been migrated successfully to swftdata, set this to true
@@ -92,20 +92,22 @@ extension ContentView {
                     .font(.footnote)
             }
             .navigationSplitViewColumnWidth(min: 195, ideal: 195, max: 340)
-            .toolbar {
-                ToolbarItem {
-                    Button {
-                        openWindow(id: "settings")
-                    } label: {
-                        Label("Settings", systemImage: "gear")
+            .toolbar(content: MacOSAddressesToolbar)
+        } content: {
+            Group {
+                if let safeAddress = addressesController.selectedAddress {
+                    if safeAddress.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                        UnifiedMessagesView()
+                            .toolbar(content: MacOSUnifiedInboxToolbar)
+                    } else {
+                        MessagesView()
+                            .toolbar(content: MacOSMessagesToolbar)
                     }
-                    .help("Open settings")
+                } else {
+                    Text("Please select an address")
                 }
             }
-        } content: {
-            MessagesView()
-                .navigationSplitViewColumnWidth(min: 290, ideal: 290, max: 400)
-                .toolbar(content: MacOSMessagesToolbar)
+            .navigationSplitViewColumnWidth(min: 320, ideal: 320, max: 400)
         } detail: {
             MessageDetailView()
                 .navigationSplitViewColumnWidth(min: 440, ideal: 440)
@@ -119,15 +121,16 @@ extension ContentView {
 #if os(macOS)
 extension ContentView {
     @ToolbarContentBuilder
-    func MacOSMessageDetailToolbar() -> some ToolbarContent {
+    private func MacOSMessageDetailToolbar() -> some ToolbarContent {
         ToolbarItemGroup {
             Button {
-                Task {
-                    await addressesController.updateMessageSeenStatus(
-                        messageData: addressesController.selectedMessage!,
-                        address: addressesController.selectedAddress!,
-                        seen: !addressesController.selectedMessage!.seen
-                    )
+                if let message = addressesController.getMessageFromStore(addressesController.selectedAddress?.id ?? "", addressesController.selectedMessage?.id ?? "") {
+                    Task {
+                        await addressesController.updateMessageSeenStatus(
+                            messageData: message,
+                            address: addressesController.selectedAddress!,
+                        )
+                    }
                 }
             } label: {
                 // Get seen status from messages store
@@ -142,6 +145,7 @@ extension ContentView {
             Button(role: .destructive) {
                 messagesViewModel.showDeleteMessageAlert = true
                 messagesViewModel.selectedMessForDeletion = addressesController.selectedMessage!
+                messagesViewModel.selectedAddForMessDeletion = addressesController.selectedAddress!
             } label: {
                 Label("Delete message", systemImage: "trash")
             }
@@ -181,8 +185,16 @@ extension ContentView {
     }
     
     @ToolbarContentBuilder
-    func MacOSMessagesToolbar() -> some ToolbarContent {
+    private func MacOSMessagesToolbar() -> some ToolbarContent {
         ToolbarItemGroup(placement: .automatic) {
+            Button {
+                addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
+                addressesViewModel.isAddressInfoSheetOpen = true
+            } label: {
+                Label("Address Info", systemImage: "info.circle")
+            }
+            .help("Address Information")
+            .disabled(addressesController.selectedAddress == nil)
             Button {
                 Task {
                     await addressesController.refreshMessages(for: addressesController.selectedAddress!)
@@ -193,13 +205,6 @@ extension ContentView {
             .help("Refresh messages")
             .disabled(addressesController.selectedAddress == nil)
             Menu {
-                Button {
-                    addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
-                    addressesViewModel.isAddressInfoSheetOpen = true
-                } label: {
-                    Label("Address Info", systemImage: "info.circle")
-                }
-                .help("Address Information")
                 Button {
                     addressesViewModel.selectedAddForEditSheet = addressesController.selectedAddress!
                     addressesViewModel.isEditAddressSheetOpen = true
@@ -226,6 +231,32 @@ extension ContentView {
                 Image(systemName: "ellipsis.circle")
             }
             .disabled(addressesController.selectedAddress == nil)
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private func MacOSUnifiedInboxToolbar() -> some ToolbarContent {
+        ToolbarItemGroup(placement: .automatic) {
+            Button {
+                Task {
+                    await addressesController.fetchAddresses()
+                }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise.circle")
+            }
+            .help("Refresh messages")
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private func MacOSAddressesToolbar() -> some ToolbarContent {
+        ToolbarItem {
+            Button {
+                openWindow(id: "settings")
+            } label: {
+                Label("Settings", systemImage: "gear")
+            }
+            .help("Open settings")
         }
     }
 }

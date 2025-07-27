@@ -22,6 +22,7 @@ class AddressesController: ObservableObject {
     @Published var archivedAddresses: [Address] = []
     @Published var isLoading: Bool = false
     @Published var messageStore: [String: MessageStore] = [:]
+    private var msgIdToAddId: [String: String] = [:] // [MessageID: AddressId], contains the addr
     // For showing error or success message to user
     @Published var message: String?
     @Published var showMessage: Bool = false
@@ -34,20 +35,21 @@ class AddressesController: ObservableObject {
     }
     @Published var selectedMessage: Message? {
         willSet {
+            selectedCompleteMessage = nil
             if let safeMessage = newValue, let safeAddress = selectedAddress {
-                selectedCompleteMessage = nil
                 Task {
                     // Get complete message HTML
                     await fetchCompleteMessage(of: safeMessage, address: safeAddress)
                     // Mark message as read
                     if let messageFromStore = getMessageFromStore(safeAddress.id, safeMessage.id), !messageFromStore.seen {
-                        await updateMessageSeenStatus(messageData: messageFromStore, address: safeAddress, seen: true)
+                        await updateMessageSeenStatus(messageData: messageFromStore, address: safeAddress)
                     }
                 }
             }
         }
     }
     @Published var selectedCompleteMessage: Message?
+    @Published var showUnifiedInbox: Bool = false
     // We will fetch complete message when a message from the list is selected
     @Published var loadingCompleteMessage = false
     
@@ -121,18 +123,23 @@ class AddressesController: ObservableObject {
                     do {
                         let messages = try await MailTMService.fetchMessages(token: token)
                         await self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messages))
+                        await self.updateMessageIdToAddIdMap(messages, address)
                     } catch {
+                        let messages = await self.messageStore[address.id]?.messages ?? []
                         await self.updateMessageStore(
                             for: address,
-                            store: MessageStore(
-                                isFetching: false,
-                                error: error.localizedDescription,
-                                messages: self.messageStore[address.id]?.messages ?? []
-                            )
+                            store: MessageStore(isFetching: false, error: error.localizedDescription, messages: messages)
                         )
+                        await self.updateMessageIdToAddIdMap(messages, address)
                     }
                 }
             }
+        }
+    }
+    
+    func updateMessageIdToAddIdMap(_ messages: [Message], _ address: Address) {
+        messages.forEach { message in
+            self.msgIdToAddId[message.id] = address.id
         }
     }
     
@@ -140,6 +147,10 @@ class AddressesController: ObservableObject {
         return addresses.first { address in
             address.id == addressId
         }
+    }
+    
+    func getAddress(withMsgID messageId: String) -> Address? {
+        return getAddress(withID: msgIdToAddId[messageId] ?? "")
     }
     
     /// Refresh messages for address
@@ -176,13 +187,21 @@ class AddressesController: ObservableObject {
         }
     }
     
+    func updateMessageSelection(message: Message?) async {
+        if let safeMessage = message, let safeAddress = getAddress(withID: msgIdToAddId[safeMessage.id] ?? "") {
+            await MainActor.run {
+                self.selectedAddress = safeAddress
+                self.selectedMessage = message
+            }
+        }
+    }
+    
     func fetchCompleteMessage(of message: Message, address: Address) async {
         guard let token = address.token, !token.isEmpty else { return }
         do {
             loadingCompleteMessage = true
             defer { loadingCompleteMessage = false }
-            let message = try await MailTMService.fetchMessage(id: message.id, token: token)
-            self.selectedCompleteMessage = message
+            self.selectedCompleteMessage = try await MailTMService.fetchMessage(id: message.id, token: token)
         } catch let decodingError as DecodingError {
             switch decodingError {
             case .keyNotFound(let key, let context):
@@ -302,7 +321,7 @@ class AddressesController: ObservableObject {
         }
     }
     
-    func updateMessageSeenStatus(messageData: Message, address: Address, seen: Bool) async {
+    func updateMessageSeenStatus(messageData: Message, address: Address) async {
         guard let token = address.token, !token.isEmpty else {
             self.show(message: "Unauthorized access attempt: Auth Token not available")
             return
@@ -311,12 +330,12 @@ class AddressesController: ObservableObject {
         self.clearMessage()
 
         do {
-            let _ = try await MailTMService.updateMessageSeenStatus(id: messageData.id, token: token, seen: seen)
+            let _ = try await MailTMService.updateMessageSeenStatus(id: messageData.id, token: token, seen: !messageData.seen)
 //            await self.fetchMessages(for: address.id)
             guard let index = messageStore[address.id]?.messages.firstIndex(where: { mes in
                 mes.id == messageData.id
             }) else { return }
-            updateMessageInStore(for: address, with: messageData.copyWith(seen: seen), at: index)
+            updateMessageInStore(for: address, with: messageData.copyWith(seen: !messageData.seen), at: index)
         } catch {
             self.show(message: error.localizedDescription)
         }
