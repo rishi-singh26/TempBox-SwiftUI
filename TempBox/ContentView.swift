@@ -72,7 +72,11 @@ extension ContentView {
         } detail: {
             NavigationStack(path: $appController.path) {
                 Group {
-                    MessagesView()
+                    if let safeAddress = addressesController.selectedAddress, safeAddress.id == KUnifiedInboxId, addressesController.showUnifiedInbox {
+                        UnifiedMessagesView()
+                    } else {
+                        MessagesView()
+                    }
                 }
                 .navigationDestination(for: Message.self) { message in
                     MessageDetailView()
