@@ -43,16 +43,6 @@ struct ContentView: View {
             Task(operation: appController.prfomrOnbordingCheck)
         }
     }
-    
-#if os(iOS)
-    private func handleAddressNavigation(address: Address) -> some View {
-        MessagesView()
-    }
-    
-    private func handleMessageNavigation(message: Message) -> some View {
-        MessageDetailView()
-    }
-#endif
 }
 
 // MARK: - Navigation View Builders
@@ -62,8 +52,16 @@ extension ContentView {
     private func IPhoneNavigtionBuilder() -> some View {
         NavigationStack(path: $appController.path) {
             AddressesView()
-                .navigationDestination(for: Address.self, destination: handleAddressNavigation)
-                .navigationDestination(for: Message.self, destination: handleMessageNavigation)
+                .navigationDestination(for: Address.self) { address in
+                    if address.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                        UnifiedMessagesView()
+                    } else {
+                        MessagesView()
+                    }
+                }
+                .navigationDestination(for: Message.self) { message in
+                    MessageDetailView()
+                }
         }
     }
     
@@ -76,7 +74,9 @@ extension ContentView {
                 Group {
                     MessagesView()
                 }
-                .navigationDestination(for: Message.self, destination: handleMessageNavigation)
+                .navigationDestination(for: Message.self) { message in
+                    MessageDetailView()
+                }
             }
         }
     }

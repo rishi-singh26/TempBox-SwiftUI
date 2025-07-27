@@ -33,7 +33,9 @@ struct MessageItemView: View {
         Group {
 #if os(iOS)
             Button {
-                addressesController.selectedMessage = message
+                Task {
+                    await addressesController.updateMessageSelection(message: message)
+                }
                 appController.path.append(message)
             } label: {
                 MessageTileBuilder()

@@ -120,8 +120,17 @@ struct AddressesView: View {
 #if os(iOS)
         if DeviceType.isIphone {
             List {
-                Section {
-                    Text("All Inboxes")
+                Button {
+                    addressesController.selectedAddress = emptyAddress
+                    addressesController.showUnifiedInbox = true
+                    appController.path.append(emptyAddress)
+                } label: {
+                    HStack {
+                        Label("All Inboxes", systemImage: "tray.2")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.gray)
+                    }
                 }
                 ForEach(filteredAddresses) { address in
                     AddressItemView(address: address)
@@ -130,6 +139,14 @@ struct AddressesView: View {
             .listStyle(.sidebar)
         } else {
             List(selection: selectionBinding) {
+                NavigationLink(value: emptyAddress) {
+                    HStack {
+                        Label("All Inboxes", systemImage: "tray.2")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.gray)
+                    }
+                }
                 ForEach(filteredAddresses) { address in
                     NavigationLink(value: address) {
                         AddressItemView(address: address)

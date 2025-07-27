@@ -62,17 +62,11 @@ struct UnifiedMessagesView: View {
         }
         .searchable(text: $controller.searchText)
         .navigationTitle("All Inboxes")
-#if os(iOS)
-        .toolbar(content: {
-            ToolbarItem {
-                Button("Address Information", systemImage: "info.circle") {
-                    addressesViewModel.selectedAddForInfoSheet = address
-                    addressesViewModel.isAddressInfoSheetOpen = true
-                }
-                .help("Address information")
+        .refreshable {
+            Task {
+                await addressesController.fetchAddresses()
             }
-        })
-#endif
+        }
     }
     
     @ViewBuilder
@@ -88,7 +82,9 @@ struct UnifiedMessagesView: View {
         Group {
 #if os(iOS)
             List(filteredMessages) { message in
-                MessageItemView(message: message, address: address)
+                if let address = addressesController.getAddress(withMsgID: message.id) {
+                    MessageItemView(message: message, address: address)
+                }
             }
 #elseif os(macOS)
             List(filteredMessages, selection: selectionBinding) { message in

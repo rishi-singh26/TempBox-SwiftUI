@@ -31,11 +31,8 @@ struct AddressItemView: View {
             if DeviceType.isIphone {
                 Button {
                     addressesController.selectedAddress = address
-                    if DeviceType.isIphone {
-                        appController.path.append(address)
-                    } else {
-                        appController.path = NavigationPath()
-                    }
+                    addressesController.showUnifiedInbox = address.id == KUnifiedInboxId
+                    appController.path.append(address)
                 } label: {
                     AddressTileBuilder()
                 }
@@ -68,26 +65,19 @@ struct AddressItemView: View {
     @ViewBuilder
     private func AddressTileBuilder() -> some View {
         HStack {
-            HStack {
-                Image(systemName: "tray")
-                    .foregroundColor(.accentColor)
-                HStack {
-                    Text(address.ifNameElseAddress.extractUsername())
-                    Spacer()
-                    if !address.isArchived && !address.isDeleted {
-                        if isMessagesFetching {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else if isMessagesFetchingFailed {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                        } else if unreadMessagesCount != 0 {
-                            Text("\(unreadMessagesCount)")
-                                .foregroundColor(.secondary)
-                        }
-                    }
+            Label(address.ifNameElseAddress.extractUsername(), systemImage: "tray")
+            Spacer()
+            if !address.isArchived && !address.isDeleted {
+                if isMessagesFetching {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else if isMessagesFetchingFailed {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                } else if unreadMessagesCount != 0 {
+                    Text("\(unreadMessagesCount)")
+                        .foregroundColor(.secondary)
                 }
             }
-            Spacer()
             Image(systemName: "chevron.right")
                 .foregroundColor(.gray)
         }
