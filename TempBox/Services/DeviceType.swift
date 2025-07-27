@@ -32,4 +32,12 @@ enum DeviceType {
     static var isIphone: Bool {
         DeviceType.current == DeviceType.iPhone
     }
+    
+    static var isIpad: Bool {
+        DeviceType.current == DeviceType.iPad
+    }
+    
+    static var isMac: Bool {
+        DeviceType.current == DeviceType.mac
+    }
 }

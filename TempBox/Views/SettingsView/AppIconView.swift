@@ -142,7 +142,7 @@ struct AppIconView: View {
         image
             .resizable()
             .frame(width: 80, height: 80)
-            .cornerRadius(11)
+            .cornerRadius(18)
             .padding(.vertical, 6)
             .shadow(radius: 3)
     }
