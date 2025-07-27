@@ -24,6 +24,7 @@ struct TempBoxApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Address.self,
+            Folder.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
