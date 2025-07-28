@@ -144,7 +144,6 @@ struct AddressesListView: View {
             Label("All Inboxes", systemImage: "tray.2")
             Spacer()
             Image(systemName: "chevron.right")
-                .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.leading, 4)
         }

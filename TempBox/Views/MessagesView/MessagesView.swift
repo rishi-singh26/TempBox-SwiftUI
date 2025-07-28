@@ -76,12 +76,14 @@ struct MessagesView: View {
         .navigationTitle(address.ifNameElseAddress.extractUsername())
 #if os(iOS)
         .toolbar(content: {
-            ToolbarItem {
-                Button("Address Information", systemImage: "info.circle") {
-                    addressesViewModel.selectedAddForInfoSheet = address
-                    addressesViewModel.isAddressInfoSheetOpen = true
+            if !addressesController.showUnifiedInbox {
+                ToolbarItem {
+                    Button("Address Information", systemImage: "info.circle") {
+                        addressesViewModel.selectedAddForInfoSheet = address
+                        addressesViewModel.isAddressInfoSheetOpen = true
+                    }
+                    .help("Address information")
                 }
-                .help("Address information")
             }
         })
 #endif

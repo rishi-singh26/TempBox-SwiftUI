@@ -77,7 +77,7 @@ struct AddressItemView: View {
                 }
             }
             Image(systemName: "chevron.right")
-                .font(.caption)
+                .font(.footnote.bold())
                 .foregroundColor(.secondary)
                 .padding(.leading, 4)
         }
