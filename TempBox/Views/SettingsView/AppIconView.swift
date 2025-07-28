@@ -7,6 +7,7 @@
 
 #if os(iOS)
 import SwiftUI
+import Kingfisher
 
 @MainActor
 struct AppIconView: View {
@@ -107,22 +108,20 @@ struct AppIconView: View {
         HStack(alignment: .center) {
             HStack {
                 if let url = preview.imageURL {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
+                    KFImage(url)
+                        .resizable()
+                        .placeholder {
                             ProgressView()
                                 .controlSize(.small)
                                 .frame(width: 80, height: 80)
                                 .padding(.vertical, 6)
                                 .shadow(radius: 2)
-                        case .success(let image):
-                            ImagePreviewBuilder(image: image)
-                        case .failure:
-                            ImagePreviewBuilder(image: Image(systemName: "photo"))
-                        @unknown default:
-                            EmptyView()
                         }
-                    }
+                        .fade(duration: 0.5)
+                        .frame(width: 80, height: 80)
+                        .cornerRadius(18)
+                        .padding(.vertical, 6)
+                        .shadow(radius: 3)
                 } else {
                     ImagePreviewBuilder(image: Image(systemName: "photo"))
                 }
