@@ -209,13 +209,6 @@ extension ContentView {
             .disabled(addressesController.selectedAddress == nil)
             Menu {
                 Button {
-                    addressesViewModel.selectedAddForEditSheet = addressesController.selectedAddress!
-                    addressesViewModel.isEditAddressSheetOpen = true
-                } label: {
-                    Label("Edit Address", systemImage: "pencil.circle")
-                }
-                .help("Edit address name")
-                Button {
                     Task {
                         await addressesController.toggleAddressStatus(addressesController.selectedAddress!)
                     }

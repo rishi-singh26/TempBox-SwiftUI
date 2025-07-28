@@ -46,7 +46,6 @@ struct AddressItemView: View {
         .swipeActions(edge: .leading) {
             BuildAddrInfoButton()
             BuildRefreshButton()
-            BuildEditButton()
         }
         .swipeActions(edge: .trailing) {
             BuildDeleteButton()
@@ -55,7 +54,6 @@ struct AddressItemView: View {
         .contextMenu(menuItems: {
             BuildRefreshButton(addTint: false)
             BuildAddrInfoButton(addTint: false)
-            BuildEditButton(addTint: false)
             Divider()
             BuildArchiveButton(addTint: false)
             BuildDeleteButton(addTint: false)
@@ -108,18 +106,6 @@ struct AddressItemView: View {
         }
         .help("Refresh address inbox")
         .tint(addTint ? .blue : nil)
-    }
-    
-    @ViewBuilder
-    private func BuildEditButton(addTint: Bool = true) -> some View {
-        Button {
-            addressesViewModel.selectedAddForEditSheet = address
-            addressesViewModel.isEditAddressSheetOpen = true
-        } label: {
-            Label("Edit", systemImage: "pencil.circle")
-        }
-        .help("Edit address name")
-        .tint(addTint ? .orange : nil)
     }
     
     @ViewBuilder

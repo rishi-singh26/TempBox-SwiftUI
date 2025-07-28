@@ -104,12 +104,6 @@ struct AddressesView: View {
                     .sheetAppearanceSetup(tint: accentColor)
             }
         }
-        .sheet(isPresented: $addressesViewModel.isEditAddressSheetOpen) {
-            if let selected = addressesViewModel.selectedAddForEditSheet {
-                EditAddressView(address: selected)
-                    .sheetAppearanceSetup(tint: accentColor)
-            }
-        }
         .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
             SettingsView()
                 .sheetAppearanceSetup(tint: accentColor)
