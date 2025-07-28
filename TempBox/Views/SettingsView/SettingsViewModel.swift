@@ -16,6 +16,7 @@ enum SettingPage {
     case tipJarPage
     case archive
     case aboutPage
+    case folders
 }
 
 class SettingsViewModel: ObservableObject {
@@ -152,6 +153,10 @@ class SettingsViewModel: ObservableObject {
     // MARK: - Archive page properties
     @Published var selectedArchivedAddresses: Set<Address> = []
     @Published var showArchAddrDeleteConf: Bool = false
+    
+    // MARK: - Archive page properties
+    @Published var selectedFolder: Folder? = nil
+    @Published var showDeleteFolderConf: Bool = false
     
     
     // MARK: - About page properties

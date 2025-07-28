@@ -79,7 +79,9 @@ struct AddressItemView: View {
                 }
             }
             Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.leading, 4)
         }
     }
     
@@ -144,11 +146,4 @@ struct AddressItemView: View {
         .help("Archive address")
         .tint(addTint ? .indigo : nil)
     }
-}
-
-
-#Preview {
-    ContentView()
-            .environmentObject(AddressesController.shared)
-            .environmentObject(AddressesViewModel.shared)
 }

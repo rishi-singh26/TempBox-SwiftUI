@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ExportAddressesView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
@@ -15,6 +16,9 @@ struct ExportAddressesView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var showExportAlert: Bool = false
+    
+    @Query(filter: #Predicate<Address> { !$0.isArchived }, sort: [SortDescriptor(\Address.createdAt, order: .reverse)])
+    private var addresses: [Address]
     
     var body: some View {
         Group {
@@ -39,11 +43,7 @@ struct ExportAddressesView: View {
     @ViewBuilder
     func IOSView() -> some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
-        List(
-            addressesController.addresses,
-            id: \.self,
-            selection: $settingsViewModel.selectedExportAddresses
-        ) { address in
+        List(addresses, id: \.self, selection: $settingsViewModel.selectedExportAddresses) { address in
             HStack {
                 VStack(alignment: .leading) {
                     Text(address.ifNameElseAddress)
@@ -74,7 +74,7 @@ struct ExportAddressesView: View {
                     settingsViewModel.selectedExportAddresses = []
                 }
                 Button("Select All") {
-                    settingsViewModel.selectedExportAddresses = Set(addressesController.addresses)
+                    settingsViewModel.selectedExportAddresses = Set(addresses)
                 }
                 Spacer()
                 Button("Export") {
@@ -203,7 +203,7 @@ struct ExportAddressesView: View {
     @ViewBuilder
     func AddressView() -> some View {
         List {
-            ForEach(addressesController.addresses) { address in
+            ForEach(addresses) { address in
                 HStack {
                     Toggle("", isOn: Binding(get: {
                         settingsViewModel.selectedExportAddresses.contains(address)
@@ -238,7 +238,7 @@ struct ExportAddressesView: View {
                 settingsViewModel.selectedExportAddresses = []
             }
             Button("Select All") {
-                settingsViewModel.selectedExportAddresses = Set(addressesController.addresses)
+                settingsViewModel.selectedExportAddresses = Set(addresses)
             }
             Button("Export") {
                 settingsViewModel.exportAddresses()
@@ -282,10 +282,4 @@ struct ExportAddressesView: View {
             }
         }
     }
-}
-
-#Preview {
-    ExportAddressesView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(SettingsViewModel.shared)
 }

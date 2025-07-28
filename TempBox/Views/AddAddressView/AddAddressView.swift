@@ -9,10 +9,14 @@ import SwiftUI
 
 struct AddAddressView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
+    
     @EnvironmentObject private var addressesController: AddressesController
+    @EnvironmentObject private var appController: AppController
     @StateObject var controller = AddAddressViewModel()
-
+    
     var body: some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
         Group {
 #if os(iOS)
             IOSAddAddressForm()
@@ -33,6 +37,10 @@ struct AddAddressView: View {
                 }
             }
         })
+        .sheet(isPresented: $controller.showNewFolderForm) {
+            NewFolderView()
+                .sheetAppearanceSetup(tint: accentColor)
+        }
     }
     
 #if os(iOS)
@@ -44,47 +52,15 @@ struct AddAddressView: View {
                     TextField("Address name (Optional)", text: $controller.addressName)
                 }
                 
-                if controller.selectedAuthMode == .create {
-                    Section {
-                        Picker(selection: $controller.selectedDomain) {
-                            ForEach(controller.domains, id: \.self) { domain in
-                                Text(domain.domain)
-                            }
-                        } label: {
-                            TextField("Address", text: $controller.address)
-                                .autocapitalization(.none)
-                        }
-                        Button("Random address") {
-                            controller.generateRandomAddress()
-                        }
-                        .help("Generate random address")
-                    }
-                } else {
-                    Section {
-                        TextField("Email", text: $controller.address)
-                            .keyboardType(.emailAddress)
+                Group {
+                    switch controller.selectedAuthMode {
+                    case .create:
+                        IOSCreateBuilder()
+                    case .login:
+                        IOSLoginBuilder()
                     }
                 }
-                
-                Section {
-                    if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
-                        SecureField("Password", text: $controller.password)
-                            .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
-                            .autocorrectionDisabled(true)
-                    }
-                    if controller.selectedAuthMode == .create {
-                        Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
-                    }
-                }
-                
-                HStack {
-                    Image(systemName: "info.square.fill")
-                        .font(.title2)
-                        .foregroundColor(.yellow)
-                        .background(RoundedRectangle(cornerRadius: 5).fill(.white))
-                    Text("The password once set can not be reset or changed.")
-                }
-                .listRowBackground(Color.yellow.opacity(0.2))
+                .compositingGroup()
             }
             .navigationTitle("Add Address")
             .toolbar {
@@ -110,7 +86,7 @@ struct AddAddressView: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    Picker("Select auth mode", selection: $controller.selectedAuthMode.animation()) {
+                    Picker("Select auth mode", selection: $controller.selectedAuthMode.animation(.bouncy)) {
                         ForEach(AuthTypes.allCases) { authType in
                             Text(authType.displayName).tag(authType)
                         }
@@ -123,6 +99,66 @@ struct AddAddressView: View {
             .alert(isPresented: $controller.showErrorAlert) {
                 Alert(title: Text("Alert!"), message: Text(controller.errorMessage))
             }
+        }
+    }
+    
+    @ViewBuilder
+    private func IOSCreateBuilder() -> some View {
+        Group {
+            Section {
+                Picker(selection: $controller.selectedDomain) {
+                    ForEach(controller.domains, id: \.self) { domain in
+                        Text(domain.domain)
+                    }
+                } label: {
+                    TextField("Address", text: $controller.address)
+                        .autocapitalization(.none)
+                }
+                Button("Random address") {
+                    controller.generateRandomAddress()
+                }
+                .help("Generate random address")
+            }
+            
+            Section {
+                if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
+                    SecureField("Password", text: $controller.password)
+                        .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
+                        .autocorrectionDisabled(true)
+                }
+                
+                Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
+            }
+            
+            Section {
+                FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
+            }
+            
+            HStack {
+                Image(systemName: "info.square.fill")
+                    .font(.title2)
+                    .foregroundColor(.yellow)
+                    .background(RoundedRectangle(cornerRadius: 5).fill(.white))
+                Text("The password once set can not be reset or changed.")
+            }
+            .listRowBackground(Color.yellow.opacity(0.2))
+        }
+    }
+    
+    @ViewBuilder
+    private func IOSLoginBuilder() -> some View {
+        Section {
+            TextField("Email", text: $controller.address)
+                .keyboardType(.emailAddress)
+            if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
+                SecureField("Password", text: $controller.password)
+                    .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
+                    .autocorrectionDisabled(true)
+            }
+        }
+        
+        Section {
+            FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
         }
     }
 #endif
@@ -156,77 +192,25 @@ struct AddAddressView: View {
                 }
                 
                 if controller.selectedAuthMode == .create {
-                    MacCustomSection {
-                        if !controller.shouldUseRandomAddress || controller.selectedAuthMode == .login {
-                            HStack {
-                                Text("Address")
-                                    .frame(width: 100, alignment: .leading)
-                                Spacer()
-                                TextField("", text: $controller.address)
-                                    .textFieldStyle(.roundedBorder)
-                            }
-                        }
-                        if controller.selectedAuthMode == .create {
-                            HStack(alignment: .center) {
-                                Text("Use random address")
-                                    .frame(width: 200, alignment: .leading)
-                                Spacer()
-                                Toggle("", isOn: $controller.shouldUseRandomAddress.animation())
-                                    .toggleStyle(.switch)
-                            }
-                        }
-                        HStack(alignment: .center) {
-                            Text("Domain")
-                                .frame(width: 100, alignment: .leading)
-                            Spacer()
-                            Picker("", selection: $controller.selectedDomain) {
-                                ForEach(controller.domains, id: \.self) { domain in
-                                    Text(domain.domain)
-                                }
-                            }
-                        }
-                    }
+                    MacOSCreateBuilder()
                 } else {
-                    MacCustomSection {
-                        HStack {
-                            Text("Email")
-                                .frame(width: 100, alignment: .leading)
-                            Spacer()
-                            TextField("", text: $controller.address)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                    }
+                    MacOSLoginBuilder()
                 }
                 
                 MacCustomSection {
-                    if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
-                        HStack {
-                            Text("Password")
-                                .frame(width: 100, alignment: .leading)
-                            Spacer()
-                            TextField("", text: $controller.password)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                    }
-                    if controller.selectedAuthMode == .create {
-                        HStack(alignment: .center) {
-                            Text("Use random password")
-                                .frame(width: 200, alignment: .leading)
-                            Spacer()
-                            Toggle("", isOn: $controller.shouldUseRandomPassword.animation())
-                                .toggleStyle(.switch)
-                        }
-                    }
+                    FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
                 }
                 
-                HStack {
-                    Image(systemName: "info.square.fill")
-                        .font(.title2)
-                        .foregroundColor(.yellow)
-                        .background(RoundedRectangle(cornerRadius: 5).fill(.white))
-                    Text("The password once set can not be reset or changed.")
+                if controller.selectedAuthMode == .create {
+                    HStack {
+                        Image(systemName: "info.square.fill")
+                            .font(.title2)
+                            .foregroundColor(.yellow)
+                            .background(RoundedRectangle(cornerRadius: 5).fill(.white))
+                        Text("The password once set can not be reset or changed.")
+                    }
+                    .padding(.vertical, 20)
                 }
-                .padding(.vertical, 20)
                 
             }
         }
@@ -258,9 +242,77 @@ struct AddAddressView: View {
             Alert(title: Text("Alert!"), message: Text(controller.errorMessage))
         }
     }
+    
+    @ViewBuilder
+    private func MacOSCreateBuilder() -> some View {
+        MacCustomSection {
+            HStack {
+                Text("Address")
+                    .frame(width: 100, alignment: .leading)
+                Spacer()
+                TextField("", text: $controller.address)
+                    .textFieldStyle(.roundedBorder)
+                
+                Button {
+                    controller.generateRandomAddress()
+                } label: {
+                    Image(systemName: "arrow.2.circlepath")
+                }
+                .help("Generate new address")
+            }
+            
+            HStack(alignment: .center) {
+                Text("Domain")
+                    .frame(width: 100, alignment: .leading)
+                Spacer()
+                Picker("", selection: $controller.selectedDomain) {
+                    ForEach(controller.domains, id: \.self) { domain in
+                        Text(domain.domain)
+                    }
+                }
+            }
+            
+            HStack {
+                Text("Password")
+                    .frame(width: 100, alignment: .leading)
+                Spacer()
+                TextField("", text: $controller.password)
+                    .textFieldStyle(.roundedBorder)
+                
+                Button {
+                    controller.generateRandomPass()
+                } label: {
+                    Image(systemName: "arrow.2.circlepath")
+                }
+                .help("Generate new password")
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func MacOSLoginBuilder() -> some View {
+        MacCustomSection {
+            HStack {
+                Text("Email")
+                    .frame(width: 100, alignment: .leading)
+                Spacer()
+                TextField("", text: $controller.address)
+                    .textFieldStyle(.roundedBorder)
+            }
+            
+            HStack {
+                Text("Password")
+                    .frame(width: 100, alignment: .leading)
+                Spacer()
+                TextField("", text: $controller.password)
+                    .textFieldStyle(.roundedBorder)
+            }
+        }
+        .padding(.bottom, 20)
+    }
 #endif
     
-    func handleSubmit() async {
+    private func handleSubmit() async {
         if controller.selectedAuthMode == .create {
             await createAddress()
         } else {
@@ -268,13 +320,11 @@ struct AddAddressView: View {
         }
     }
     
-    func createAddress() async {
+    private func createAddress() async {
         if !controller.validateInput() { return }
         
         controller.isLoading = true
-        defer {
-            controller.isLoading = false
-        }
+        defer { controller.isLoading = false }
         
         do {
             let account = try await MailTMService.createAccount(address: controller.getEmail(), password: controller.password)
@@ -284,7 +334,8 @@ struct AddAddressView: View {
               account: account,
               token: tokenData.token,
               password: controller.password,
-              addressName: controller.addressName
+              addressName: controller.addressName,
+              folder: controller.selectedFolder
             )
             dismiss()
         } catch {
@@ -293,11 +344,9 @@ struct AddAddressView: View {
         }
     }
     
-    func login() async {
+    private func login() async {
         controller.isLoading = true
-        defer {
-            controller.isLoading = false
-        }
+        defer { controller.isLoading = false }
         
         do {
             guard isAddressUnique() else { return }
@@ -308,7 +357,8 @@ struct AddAddressView: View {
               account: account,
               token: tokenData.token,
               password: controller.password,
-              addressName: controller.addressName
+              addressName: controller.addressName,
+              folder: controller.selectedFolder
             )
             dismiss()
         } catch {
@@ -319,13 +369,9 @@ struct AddAddressView: View {
     
     private func isAddressUnique() -> Bool {
         // check if the address is a new address
-        var allAddresses = addressesController.addresses
-        allAddresses.append(contentsOf: addressesController.archivedAddresses)
-        let existingAddresses = allAddresses.filter { add in
-            add.address == controller.getEmail()
-        }
-        guard existingAddresses.isEmpty else {
-            controller.errorMessage = existingAddresses.first?.isArchived == true
+        let (isUnique, isArchived) = addressesController.isAddressUnique(email: controller.getEmail())
+        guard isUnique else {
+            controller.errorMessage = isArchived
                 ? "This address has already been added and is present in the archived addresses section in settings."
                 : "This site has already been added."
             controller.showErrorAlert = true
@@ -333,9 +379,4 @@ struct AddAddressView: View {
         }
         return true
     }
-}
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
 }

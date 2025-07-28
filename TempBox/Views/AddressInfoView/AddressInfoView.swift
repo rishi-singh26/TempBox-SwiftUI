@@ -8,11 +8,18 @@
 import SwiftUI
 
 struct AddressInfoView: View {
+    @EnvironmentObject private var appController: AppController
+    
     @Environment(\.dismiss) var dismiss
-    let address: Address
+    @Environment(\.colorScheme) var colorScheme
     
     @State private var isPasswordBlurred = true
     @State private var addressName = ""
+    @State private var showAddFolderSheet: Bool = false
+    @State private var isEditingName: Bool = false
+    @FocusState private var isTextFieldFocused: Bool
+    
+    let address: Address
     
     init(address: Address) {
         self.address = address
@@ -20,23 +27,25 @@ struct AddressInfoView: View {
     }
     
     var body: some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
+        Group {
 #if os(iOS)
-        IOSAddressInfo()
+            IOSAddressInfo()
 #elseif os(macOS)
-        MacOSAddressInfo()
+            MacOSAddressInfo()
 #endif
+        }
+        .sheet(isPresented: $showAddFolderSheet) {
+            NewFolderView()
+                .sheetAppearanceSetup(tint: accentColor)
+        }
     }
     
     #if os(iOS)
     @ViewBuilder
     func IOSAddressInfo() -> some View {
-        let addressNameBinding = Binding {
-            addressName
-        } set: { newName in
-            addressName = newName
-            address.name = newName
-        }
-
+        let (addressNameBinding, folderBinding) = getNameAndFolderBindings()
+        
         NavigationView {
             List {
                 Section(footer: MarkdownLinkText(markdownText: "If you wish to use this address on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
@@ -80,6 +89,10 @@ struct AddressInfoView: View {
                     }
                 }
                 
+                Section {
+                    FolderPickerView(selectedFolder: folderBinding, showAddFolder: $showAddFolderSheet)
+                }
+                
                 Section(footer: Text("Once you reach your Quota limit, you cannot receive any more messages. Deleting your previous messages will free up your used Quota.")) {
                     VStack(alignment: .leading) {
                         HStack {
@@ -120,11 +133,30 @@ struct AddressInfoView: View {
 #if os(macOS)
     @ViewBuilder
     func MacOSAddressInfo() -> some View {
+        let (addressNameBinding, folderBinding) = getNameAndFolderBindings()
+        
         VStack {
             HStack {
-                Text(address.name ?? address.address.extractUsername())
-                    .font(.title.bold())
+                if isEditingName {
+                    TextField("Address Name", text: addressNameBinding)
+                        .font(.title.bold())
+                        .controlSize(.large)
+                        .textFieldStyle(.plain)
+                        .focused($isTextFieldFocused)
+                        .onSubmit {
+                            isEditingName = false
+                        }
+                } else {
+                    Text(address.ifNameElseAddress.extractUsername())
+                        .font(.title.bold())
+                }
                 Spacer()
+                Button(isEditingName ? "Done" : "Edit") {
+                    withAnimation {
+                        isEditingName.toggle()
+                        isTextFieldFocused.toggle()
+                    }
+                }
             }
             .padding()
             ScrollView {
@@ -172,6 +204,10 @@ struct AddressInfoView: View {
                     }
                 }
                 
+                MacCustomSection {
+                    FolderPickerView(selectedFolder: folderBinding, showAddFolder: $showAddFolderSheet)
+                }
+                
                 MacCustomSection(footer: "Once you reach your Quota limit, you cannot receive any more messages. Deleting your previous messages will free up your used Quota.") {
                     VStack(alignment: .leading) {
                         HStack {
@@ -201,12 +237,35 @@ struct AddressInfoView: View {
     }
 #endif
     
-    func getQuotaString(from bytes: Int, unit: SizeUnit) -> String {
+    private func getQuotaString(from bytes: Int, unit: SizeUnit) -> String {
         ByteConverterService(bytes: Double(bytes)).toHumanReadable(unit: unit)
     }
-}
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
+    
+    private func getNameAndFolderBindings() -> (Binding<String>, Binding<Folder?>) {
+        let addressNameBinding = Binding<String> {
+            addressName
+        } set: { newName in
+            addressName = newName
+            address.name = newName
+        }
+        
+        let folderBinding = Binding<Folder?> {
+            address.folder
+        } set: { newVal in
+            if let safeVal = newVal {
+                address.folder = safeVal
+                var addresses: [Address] = safeVal.addresses ?? []
+                addresses.append(address)
+                safeVal.addresses = Array(Set(addresses))
+            } else {
+                let prevFolder = address.folder
+                address.folder = newVal
+                var addresses: [Address] = prevFolder?.addresses ?? []
+                addresses.removeAll { $0.id == address.id }
+                prevFolder?.addresses = addresses
+            }
+        }
+        
+        return (addressNameBinding, folderBinding)
+    }
 }

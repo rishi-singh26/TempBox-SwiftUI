@@ -11,15 +11,11 @@ import Combine
 
 @MainActor
 class AddressesController: ObservableObject {
-    static let shared = AddressesController()
-    
     // SwiftData modelContainer and modelContext
-    private let modelContainer: ModelContainer
     private let modelContext: ModelContext
         
     // Published properties for UI updates
-    @Published var addresses: [Address] = []
-    @Published var archivedAddresses: [Address] = []
+    private var addresses: [Address] = []
     @Published var isLoading: Bool = false
     @Published var messageStore: [String: MessageStore] = [:]
     private var msgIdToAddId: [String: String] = [:] // [MessageID: AddressId], contains the addr
@@ -53,28 +49,15 @@ class AddressesController: ObservableObject {
     // We will fetch complete message when a message from the list is selected
     @Published var loadingCompleteMessage = false
     
-    private var cancellables = Set<AnyCancellable>()
-    private let baseURL = "https://api.mail.tm"
-    
     // MARK: - Initialization
-    
-    init() {
+    init(modelContext: ModelContext) {
         // Set up SwiftData container
-        do {
-            let schema = Schema([Address.self])
-            let configuration = ModelConfiguration(isStoredInMemoryOnly: false)
-            modelContainer = try ModelContainer(for: schema, configurations: [configuration])
-            modelContext = modelContainer.mainContext
-            
-            // Load addresses on initialization
-            Task { await fetchAddresses() }
-        } catch {
-            fatalError("Failed to create ModelContainer: \(error.localizedDescription)")
-        }
+        self.modelContext = modelContext
+        // Load addresses on initialization
+        Task { await fetchAddresses() }
     }
     
     // MARK: - Data Operations
-    
     /// Fetches all addresses from SwiftData
     func fetchAddresses() async {
         isLoading = true
@@ -82,22 +65,10 @@ class AddressesController: ObservableObject {
         do {
             // Fetch unarchived and not deleted addresses
             let descriptor = FetchDescriptor<Address>(
-                predicate: #Predicate<Address> { address in
-                    !address.isDeleted && !address.isArchived
-                },
+                predicate: #Predicate<Address> { !$0.isDeleted },
                 sortBy: [SortDescriptor(\Address.createdAt, order: .reverse)]
             )
             addresses = try modelContext.fetch(descriptor)
-            
-            // Fetch archived addresses
-            let archivedDescriptor = FetchDescriptor<Address>(
-                predicate: #Predicate<Address> { address in
-                    address.isArchived
-                },
-                sortBy: [SortDescriptor(\Address.createdAt, order: .reverse)]
-            )
-            archivedAddresses = try modelContext.fetch(archivedDescriptor)
-            
             self.clearMessage()
             
             /// Fetch messages for each address
@@ -113,7 +84,7 @@ class AddressesController: ObservableObject {
     func fetchMessagesForAllAddresses() async {
         await withTaskGroup(of: Void.self) { group in
             for address in self.addresses {
-                guard let token = address.token, !token.isEmpty else { return }
+                guard !address.isArchived, let token = address.token, !token.isEmpty else { return }
                 
                 await MainActor.run {
                     self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: messageStore[address.id]?.messages ?? []))
@@ -152,6 +123,12 @@ class AddressesController: ObservableObject {
     func getAddress(withMsgID messageId: String) -> Address? {
         return getAddress(withID: msgIdToAddId[messageId] ?? "")
     }
+    
+    func isAddressUnique(email: String) -> (Bool, Bool) {
+        let address = addresses.first { $0.address == email }
+        return (address == nil, address?.isArchived ?? false)
+    }
+
     
     /// Refresh messages for address
     func refreshMessages(for address: Address) async {
@@ -360,7 +337,7 @@ class AddressesController: ObservableObject {
     }
     
     /// Add a new address from MTAccount
-    func addAddress(account: Account, token: String, password: String, addressName: String) async {
+    func addAddress(account: Account, token: String, password: String, addressName: String, folder: Folder? = nil) async {
         let newAddress = Address(
             id: account.id,
             name: addressName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : addressName,
@@ -370,8 +347,13 @@ class AddressesController: ObservableObject {
             createdAt: account.createdAtDate,
             updatedAt: account.updatedAtDate,
             token: token,
-            password: password
+            password: password,
+            folder: folder
         )
+        var addresses = folder?.addresses ?? []
+        addresses.append(newAddress)
+        addresses = Array(Set(addresses))
+        folder?.addresses = addresses
         await addAddress(newAddress)
     }
     

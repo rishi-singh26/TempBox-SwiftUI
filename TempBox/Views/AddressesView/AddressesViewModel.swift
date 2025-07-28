@@ -10,8 +10,12 @@ import Foundation
 class AddressesViewModel: ObservableObject {
     static let shared = AddressesViewModel()
     
+    @Published var foldersSectionExpanded: Bool = true
+    @Published var noFoldersSectionExpanded: Bool = true
+    
     @Published var searchText = ""
     @Published var isNewAddressSheetOpen = false
+    @Published var isNewFolderSheetOpen = false
     
     @Published var showDeleteAddressAlert = false
     @Published var selectedAddForDeletion: Address?
@@ -26,8 +30,11 @@ class AddressesViewModel: ObservableObject {
     var selectedAddForEditSheet: Address?
     
     @Published var showSettingsSheet = false
-        
+    
     func openNewAddressSheet() {
         isNewAddressSheetOpen = true
+    }
+    func openNewFolderSheet() {
+        isNewFolderSheetOpen = true
     }
 }

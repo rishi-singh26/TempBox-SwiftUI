@@ -89,11 +89,10 @@ extension ContentView {
     @ViewBuilder
     private func MacNavigationBuilder() -> some View {
         NavigationSplitView {
-            VStack {
-                NewAddressBtn()
+            VStack(spacing: 0) {
                 AddressesView()
-                MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
-                    .font(.footnote)
+                Divider()
+                NewAddressBtn()
             }
             .navigationSplitViewColumnWidth(min: 195, ideal: 195, max: 340)
             .toolbar(content: MacOSAddressesToolbar)
@@ -268,29 +267,41 @@ extension ContentView {
 struct NewAddressBtn: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     
+    @State private var isHovering: Bool = false
+    
     var body: some View {
-        Button(action: addressesViewModel.openNewAddressSheet, label: {
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("New Address")
-                        .foregroundStyle(.primary)
-                        .padding(.leading, 4)
-                        .lineLimit(1)
-                    Spacer()
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(.primary)
+        VStack(alignment: .center, spacing: 10) {
+            HStack {
+                Button(action: addressesViewModel.openNewAddressSheet) {
+                    HStack(alignment: .center, spacing: 2) {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(.primary)
+                        Text("New Address")
+                            .foregroundStyle(.primary)
+                            .padding(.leading, 4)
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(isHovering ? Color.primary : Color.gray)
+                    .onHover(perform: { value in
+                        isHovering = value
+                    })
                 }
-                .padding(10)
-                .frame(maxWidth: .infinity)
-                .background(Color.secondary.opacity(0.2))
-                .cornerRadius(6)
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                Button(action: addressesViewModel.openNewFolderSheet) {
+                    Image(systemName: "folder.badge.plus")
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
             }
-        })
-        .help("Create new address or login to an address")
-        .padding(.horizontal)
-        .padding(.vertical, 5)
-        .buttonStyle(.plain)
-        .keyboardShortcut(.init("n", modifiers: [.command, .shift]))
+            
+            MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
+                .font(.caption2)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
     }
 }
 #endif
@@ -347,10 +358,7 @@ extension ContentView {
     /// This method will save the address to swiftdata
     private func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) async {
         let addresses = (v1Data?.addresses ?? []).filter { address in
-            let idMatches = addressesController.addresses.first(where: { existingAddress in
-                existingAddress.id == address.id
-            })
-            return idMatches == nil
+            addressesController.isAddressUnique(email: address.authenticatedUser.account.address).0
         }
         if addresses.isEmpty {
             didMigrateData = true
@@ -381,11 +389,3 @@ extension ContentView {
     }
 }
 #endif
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(SettingsViewModel.shared)
-        .environmentObject(AddressesViewModel.shared)
-        .environmentObject(AppController.shared)
-}

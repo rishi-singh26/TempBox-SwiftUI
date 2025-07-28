@@ -16,15 +16,6 @@ class AddAddressViewModel: ObservableObject {
     // MARK: - Address variables
     @Published var addressName: String = ""
     @Published var address: String = ""
-    @Published var shouldUseRandomAddress: Bool = false {
-        willSet {
-            if newValue {
-                generateRandomAddress()
-            } else {
-                address = ""
-            }
-        }
-    }
     
     @Published var password: String = ""
     @Published var shouldUseRandomPassword: Bool = false {
@@ -36,6 +27,9 @@ class AddAddressViewModel: ObservableObject {
             }
         }
     }
+    
+    @Published var selectedFolder: Folder? = nil
+    @Published var showNewFolderForm: Bool = false
     
     var isPasswordValid: Bool {
         (password != "" && password.count >= 6) || shouldUseRandomPassword
