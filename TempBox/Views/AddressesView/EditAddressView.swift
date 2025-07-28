@@ -119,8 +119,3 @@ struct EditAddressView: View {
     }
 #endif
 }
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-}

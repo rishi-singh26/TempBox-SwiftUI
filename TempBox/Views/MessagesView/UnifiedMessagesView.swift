@@ -99,9 +99,3 @@ struct UnifiedMessagesView: View {
         }
     }
 }
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
-}

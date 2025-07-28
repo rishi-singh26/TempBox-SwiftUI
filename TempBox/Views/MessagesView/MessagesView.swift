@@ -112,9 +112,3 @@ struct MessagesView: View {
         }
     }
 }
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
-}

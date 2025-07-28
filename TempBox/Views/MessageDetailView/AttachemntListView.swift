@@ -264,9 +264,3 @@ struct PreviewView: View {
     }
 }
 #endif
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
-}

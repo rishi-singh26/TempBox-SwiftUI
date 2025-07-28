@@ -120,9 +120,3 @@ struct MessageItemView: View {
         .tint(addTint ? .red : nil)
     }
 }
-
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-}

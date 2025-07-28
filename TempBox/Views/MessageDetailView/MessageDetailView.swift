@@ -125,9 +125,3 @@ struct EmptyView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
-}
