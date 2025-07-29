@@ -60,7 +60,7 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                 // limit width to 400 on large screens
                 .frame(maxWidth: DeviceType.isIphone ? (animateContent ? .infinity : 45) : (animateContent ? 400 : 45))
                 // limit height to 800 on large screens
-                .frame(maxHeight: DeviceType.isIphone ? (animateContent ? .infinity : 45) : (animateContent && showExpandedContent ? 800 : nil))
+//                .frame(maxHeight: DeviceType.isIphone ? (animateContent ? .infinity : 45) : (animateContent && showExpandedContent ? 800 : nil))
                 .geometryGroup()
                 .clipShape(.rect(cornerRadius: 30, style: .continuous))
                 .background {

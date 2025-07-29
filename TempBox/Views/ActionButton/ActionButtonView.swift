@@ -43,9 +43,9 @@ struct ActionButtonView: View {
                 .contentShape(.circle)
         } content: { dismiss in
             VStack(alignment: .leading, spacing: 12) {
-                RowView("plus.circle", "New Address", "Create or Login to new Address", .newAddress)
-                RowView("folder.badge.plus", "New Folder", "Create new Folder", .newFolder)
-                RowView("bolt", "Quick Address", "Create an address and copy", .quickAddress)
+                RowView(accentColor, "plus.circle", "New Address", "Create or Login to new Address", .newAddress)
+                RowView(accentColor, "folder.badge.plus", "New Folder", "Create new Folder", .newFolder)
+                RowView(accentColor, "bolt", "Quick Address", "Create an address and copy", .quickAddress)
             }
             .padding(.horizontal, 5)
             .padding(.vertical, 10)
@@ -62,7 +62,12 @@ struct ActionButtonView: View {
                         }
                     }
                 case .newFolder:
-                    Text("New Folder")
+                    IOSNewFolderActionView(accentColor: accentColor) {
+                        dismiss()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            showExpandedContent = false
+                        }
+                    }
                 case .quickAddress:
                     Text("Quick Address")
                 }
@@ -93,10 +98,10 @@ struct ActionButtonView: View {
     }
     
     @ViewBuilder
-    private func RowView(_ image: String, _ title: String, _ desc: String, _ page: ActionPage) -> some View {
+    private func RowView(_ accentColor: Color, _ image: String, _ title: String, _ desc: String, _ page: ActionPage) -> some View {
         HStack(spacing: 18) {
             Image(systemName: image)
-                .foregroundStyle(.primary)
+                .foregroundStyle(accentColor)
                 .frame(width: 45, height: 45)
                 .background(.background, in: .circle)
             

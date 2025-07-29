@@ -17,8 +17,10 @@ struct NewFolderView: View {
     var folder: Folder?
     
     init(folder: Folder? = nil) {
-        self.folder = folder
-        _folderName = State(wrappedValue: folder?.name ?? "")
+        if let safeFolder = folder {
+            self.folder = safeFolder
+            _folderName = State(wrappedValue: safeFolder.name)
+        }
     }
 
     var body: some View {
@@ -109,6 +111,68 @@ struct NewFolderView: View {
         }
     }
 #endif
+    
+    private func createFolder() {
+        do {
+            guard !folderName.isEmpty else { return }
+            let newFolder = Folder(id: UUID().uuidString, name: folderName)
+            modelContext.insert(newFolder)
+            try modelContext.save()
+            dismiss()
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+}
+
+struct IOSNewFolderActionView: View {
+    @Environment(\.modelContext) private var modelContext
+    @State private var folderName: String = ""
+    @FocusState private var isTextFieldFocused: Bool
+    
+    var accentColor: Color
+    var dismiss: () -> Void
+    
+    var body: some View {
+        VStack {
+            TextField("Folder name", text: $folderName)
+                .textInputAutocapitalization(.words)
+                .focused($isTextFieldFocused)
+                .onSubmit(createFolder)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 15)
+                .padding(.vertical, 12)
+                .background {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.thinMaterial)
+                }
+            
+            BuildContinueBtn(accentColor: accentColor)
+            
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .onAppear {
+            isTextFieldFocused = true
+        }
+    }
+    
+    
+    @ViewBuilder
+    private func BuildContinueBtn(accentColor: Color) -> some View {
+        Button(action: createFolder) {
+            Text("Create")
+            .fontWeight(.semibold)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 15)
+            .foregroundStyle(.white)
+            .background(accentColor, in: .capsule)
+        }
+        .padding(.top, 15)
+        .listRowBackground(Color.yellow.opacity(0))
+        .listRowInsets(.none)
+        .listRowSeparator(.hidden)
+    }
     
     private func createFolder() {
         do {
