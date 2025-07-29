@@ -6,14 +6,27 @@
 //
 
 import SwiftUI
+#if os(iOS)
+import SwiftData
+#endif
 
 struct AddAddressView: View {
+#if os(iOS)
+    var dismiss: () -> Void
+#elseif os(macOS)
     @Environment(\.dismiss) var dismiss
+#endif
+    
     @Environment(\.colorScheme) var colorScheme
     
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var appController: AppController
     @StateObject var controller = AddAddressViewModel()
+    
+#if os(iOS)
+    @Query(sort: [SortDescriptor(\Folder.name, order: .forward)])
+    private var folders: [Folder]
+#endif
     
     var body: some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
@@ -24,17 +37,10 @@ struct AddAddressView: View {
             MacOSAddAddressForm()
 #endif
         }
-        .onChange(of: controller.selectedAuthMode, { _, newValue in
-            if newValue == .create {
-                withAnimation {
-                    controller.address = ""
-                    controller.shouldUseRandomPassword ? controller.generateRandomPass() : nil
-                }
-            } else {
-                withAnimation {
-                    controller.address = ""
-                    controller.password = ""
-                }
+        .onAppear(perform: {
+            Task {
+                try? await Task.sleep(for: .seconds(0.4))
+                await controller.loadDomains()
             }
         })
         .sheet(isPresented: $controller.showNewFolderForm) {
@@ -46,94 +52,81 @@ struct AddAddressView: View {
 #if os(iOS)
     @ViewBuilder
     func IOSAddAddressForm() -> some View {
-        NavigationView {
-            Form {
-                Section(footer: Text("Address name appears on the addresses list screen.")) {
-                    TextField("Address name (Optional)", text: $controller.addressName)
-                }
-                
-                Group {
-                    switch controller.selectedAuthMode {
-                    case .create:
-                        IOSCreateBuilder()
-                    case .login:
-                        IOSLoginBuilder()
-                    }
-                }
-                .compositingGroup()
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
+        List {
+            AuthModeBuilder()
+            
+            AddressNameInputBuilder()
+            
+            if controller.showErrorAlert {
+                BuildErrorSection()
             }
-            .navigationTitle("Add Address")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
+            
+            switch controller.selectedAuthMode {
+            case .create:
+                IOSCreateBuilder(accentColor: accentColor)
+            case .login:
+                IOSLoginBuilder(accentColor: accentColor)
+            }
+            
+            Button {
+                Task { await handleSubmit() }
+            } label: {
+                Group {
                     if controller.isLoading {
                         ProgressView()
                             .controlSize(.small)
                     } else {
-                        Button {
-                            Task {
-                                await handleSubmit()
-                            }
-                        } label: {
-                            Text(controller.submitBtnText)
-                                .font(.headline)
-                        }
+                        Text(controller.submitBtnText)
                     }
                 }
-                ToolbarItem(placement: .principal) {
-                    Picker("Select auth mode", selection: $controller.selectedAuthMode.animation(.bouncy)) {
-                        ForEach(AuthTypes.allCases) { authType in
-                            Text(authType.displayName).tag(authType)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 170)
-                }
-                
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 15)
+                .foregroundStyle(.white)
+                .background(accentColor, in: .capsule)
             }
-            .alert(isPresented: $controller.showErrorAlert) {
-                Alert(title: Text("Alert!"), message: Text(controller.errorMessage))
-            }
+            .padding(.top, 15)
+            .listRowBackground(Color.yellow.opacity(0))
+            .listRowInsets(.none)
+            .listRowSeparator(.hidden)
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
     }
     
     @ViewBuilder
-    private func IOSCreateBuilder() -> some View {
-        Group {
-            Section {
-                Picker(selection: $controller.selectedDomain) {
-                    ForEach(controller.domains, id: \.self) { domain in
-                        Text(domain.domain)
-                    }
-                } label: {
-                    TextField("Address", text: $controller.address)
-                        .autocapitalization(.none)
+    private func IOSCreateBuilder(accentColor: Color) -> some View {
+        Section {
+            Picker(selection: $controller.selectedDomain) {
+                ForEach(controller.domains, id: \.self) { domain in
+                    Text(domain.domain)
                 }
-                Button("Random address") {
-                    controller.generateRandomAddress()
-                }
-                .help("Generate random address")
+            } label: {
+                TextField("Address", text: $controller.address)
+                    .autocapitalization(.none)
             }
             
-            Section {
-                if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
-                    SecureField("Password", text: $controller.password)
-                        .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
-                        .autocorrectionDisabled(true)
-                }
-                
-                Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
+            Button("Random address") {
+                controller.generateRandomAddress()
+            }
+            .foregroundStyle(accentColor)
+            .help("Generate random address")
+        }.customListStyle()
+        
+        Section {
+            if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
+                SecureField("Password", text: $controller.password)
+                    .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
+                    .autocorrectionDisabled(true)
             }
             
-            Section {
-                FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
-            }
-            
+            Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
+        }.customListStyle()
+        
+        FolderPickerBuilder(accentColor: accentColor)
+        
+        Section {
             HStack {
                 Image(systemName: "info.square.fill")
                     .font(.title2)
@@ -141,12 +134,11 @@ struct AddAddressView: View {
                     .background(RoundedRectangle(cornerRadius: 5).fill(.white))
                 Text("The password once set can not be reset or changed.")
             }
-            .listRowBackground(Color.yellow.opacity(0.2))
-        }
+        }.yellowListStyle()
     }
     
     @ViewBuilder
-    private func IOSLoginBuilder() -> some View {
+    private func IOSLoginBuilder(accentColor: Color) -> some View {
         Section {
             TextField("Email", text: $controller.address)
                 .keyboardType(.emailAddress)
@@ -155,11 +147,94 @@ struct AddAddressView: View {
                     .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
                     .autocorrectionDisabled(true)
             }
-        }
+        }.customListStyle()
         
-        Section {
-            FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
+        FolderPickerBuilder(accentColor: accentColor)
+    }
+    
+    @ViewBuilder
+    private func AuthModeBuilder() -> some View {
+        Picker("Select auth mode", selection: $controller.selectedAuthMode.animation(.bouncy)) {
+            ForEach(AuthTypes.allCases) { authType in
+                Text(authType.displayName).tag(authType)
+            }
         }
+        .pickerStyle(.segmented)
+        .customListStyle()
+    }
+    
+    @ViewBuilder
+    private func AddressNameInputBuilder() -> some View {
+        Section {
+            TextField("Address name (Optional)", text: $controller.addressName)
+        } footer: {
+            Text("Address name appears on the addresses list screen.")
+                .font(.caption)
+        }.customListStyle()
+    }
+    
+    @ViewBuilder
+    private func BuildErrorSection() -> some View {
+        Section {
+            HStack {
+                Text(controller.errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                Spacer()
+                
+                Button {
+                    controller.showErrorAlert = false
+                    controller.errorMessage = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.gray)
+                }
+                .buttonStyle(.plain)
+            }
+        }.customListStyle()
+    }
+    
+    @ViewBuilder
+    private func FolderPickerBuilder(accentColor: Color) -> some View {
+        Section {
+            Picker("Select Folder", selection: $controller.selectedFolder) {
+                Text("No Folder")
+                    .tag(nil as Folder?)
+                ForEach(folders) { folder in
+                    Text(folder.name)
+                        .tag(folder)
+                }
+            }
+            .pickerStyle(.menu)
+            .tint(accentColor)
+        }.customListStyle()
+    }
+    
+    @ViewBuilder
+    private func BuildContinueBtn(accentColor: Color) -> some View {
+        Button {
+            Task { await handleSubmit() }
+        } label: {
+            Group {
+                if controller.isLoading {
+                    ProgressView()
+                        .controlSize(.regular)
+                        .foregroundStyle(.white)
+                } else {
+                    Text(controller.submitBtnText)
+                }
+            }
+            .fontWeight(.semibold)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 15)
+            .foregroundStyle(.white)
+            .background(accentColor, in: .capsule)
+        }
+        .padding(.top, 15)
+        .listRowBackground(Color.yellow.opacity(0))
+        .listRowInsets(.none)
+        .listRowSeparator(.hidden)
     }
 #endif
     
@@ -339,8 +414,7 @@ struct AddAddressView: View {
             )
             dismiss()
         } catch {
-            controller.errorMessage = error.localizedDescription
-            controller.showErrorAlert = true
+            controller.showError(with: error.localizedDescription)
         }
     }
     
@@ -362,8 +436,7 @@ struct AddAddressView: View {
             )
             dismiss()
         } catch {
-            controller.errorMessage = error.localizedDescription
-            controller.showErrorAlert = true
+            controller.showError(with: error.localizedDescription)
         }
     }
     
@@ -371,12 +444,31 @@ struct AddAddressView: View {
         // check if the address is a new address
         let (isUnique, isArchived) = addressesController.isAddressUnique(email: controller.getEmail())
         guard isUnique else {
-            controller.errorMessage = isArchived
-                ? "This address has already been added and is present in the archived addresses section in settings."
-                : "This site has already been added."
-            controller.showErrorAlert = true
+            controller.showError(with: isArchived
+                                 ? "This address has already been added and is present in the archived addresses section in settings."
+                                 : "This site has already been added.")
             return false
         }
         return true
     }
 }
+
+#if os(iOS)
+fileprivate extension View {
+    @ViewBuilder
+    func customListStyle() -> some View {
+        self
+            .listRowBackground(Rectangle().fill(.thinMaterial))
+            .listRowSpacing(10)
+            .listSectionSpacing(10)
+    }
+    
+    @ViewBuilder
+    func yellowListStyle() -> some View {
+        self
+            .listRowBackground(Color.yellow.opacity(0.2))
+            .listRowSpacing(10)
+            .listSectionSpacing(10)
+    }
+}
+#endif

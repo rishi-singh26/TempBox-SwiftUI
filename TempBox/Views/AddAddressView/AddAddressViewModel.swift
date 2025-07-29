@@ -50,23 +50,36 @@ class AddAddressViewModel: ObservableObject {
     // MARK: - Error Alert variables
     @Published var errorMessage = ""
     @Published var showErrorAlert = false
+    func showError(with message: String) {
+        errorMessage = message
+        withAnimation {
+            showErrorAlert = true
+        }
+    }
     
     // MARK: Create Address properties
     @Published var isCreatingAddress = false
     var subscriptions: Set<AnyCancellable> = []
     
     // MARK: - Add address or Login
-    @Published var selectedAuthMode: AuthTypes = .create
+    @Published var selectedAuthMode: AuthTypes = .create {
+        didSet {
+            address = ""
+            showErrorAlert = false
+            errorMessage = ""
+            if selectedAuthMode == .create {
+                shouldUseRandomPassword ? generateRandomPass() : nil
+            } else {
+                password = ""
+            }
+        }
+    }
     
     var submitBtnText: String {
         selectedAuthMode == .create ? "Create" : "Login"
     }
     
-    init() {
-        Task {
-            await loadDomains()
-        }
-    }
+    init() { }
     
     func loadDomains() async {
         do {
@@ -94,9 +107,14 @@ class AddAddressViewModel: ObservableObject {
     }
     
     func validateInput() -> Bool {
-        // Common validation for address and password
-        if address.isEmpty || password.isEmpty {
-            self.errorMessage = "Please enter address and password"
+        if address.isEmpty {
+            self.errorMessage = "Please enter address"
+            self.showErrorAlert = true
+            return false
+        }
+        
+        if password.isEmpty {
+            self.errorMessage = "Please enter password"
             self.showErrorAlert = true
             return false
         }

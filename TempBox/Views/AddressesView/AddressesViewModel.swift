@@ -28,8 +28,6 @@ class AddressesViewModel: ObservableObject {
     
     @Published var showSettingsSheet = false
     
-    @Published var showExpandedContent: Bool = false
-    
     func openNewAddressSheet() {
         isNewAddressSheetOpen = true
     }

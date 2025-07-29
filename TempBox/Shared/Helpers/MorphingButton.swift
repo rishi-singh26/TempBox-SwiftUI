@@ -12,8 +12,8 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
     var backgroundColor: Color
     @Binding var showExpandedContent: Bool
     @ViewBuilder var label: Label
-    @ViewBuilder var content: Content
-    @ViewBuilder var expandedContent: ExpandedContent
+    @ViewBuilder var content: (_ dismiss: @escaping () -> Void) -> Content
+    @ViewBuilder var expandedContent: (_ dismiss: @escaping () -> Void) -> ExpandedContent
     
     // View Properties
     @State private var showFullScreenCover: Bool = false
@@ -44,10 +44,10 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                     if animateContent {
                         ZStack(alignment: .top) {
                             if showExpandedContent {
-                                expandedContent
+                                expandedContent(dismissContent)
                                     .transition(.blurReplace)
                             } else {
-                                content
+                                content(dismissContent)
                                     .transition(.blurReplace)
                             }
                         }
@@ -57,8 +57,10 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                             .transition(.blurReplace)
                     }
                 }
-                // limit width to 400 on large screebs
+                // limit width to 400 on large screens
                 .frame(maxWidth: DeviceType.isIphone ? (animateContent ? .infinity : 45) : (animateContent ? 400 : 45))
+                // limit height to 800 on large screens
+                .frame(maxHeight: DeviceType.isIphone ? (animateContent ? .infinity : 45) : (animateContent && showExpandedContent ? 800 : nil))
                 .geometryGroup()
                 .clipShape(.rect(cornerRadius: 30, style: .continuous))
                 .background {
