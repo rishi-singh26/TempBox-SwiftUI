@@ -87,6 +87,8 @@ struct SettingsView: View {
                 ArchiveView()
             case .aboutPage:
                 AboutView()
+            case .folders:
+                ManageFoldersView()
             }
         }
         .frame(minWidth: 700, minHeight: 400)
@@ -111,9 +113,9 @@ struct SettingsView: View {
             NavigationLink(value: SettingPage.archive) {
                 Label("Archived Addresses", systemImage: "archivebox")
             }
-//            NavigationLink(value: SettingPage.appColorPage) {
-//                Label("Change App Color", systemImage: "paintpalette")
-//            }
+            NavigationLink(value: SettingPage.folders) {
+                Label("Manage Folders", systemImage: "folder")
+            }
             
             Text("")
             NavigationLink(value: SettingPage.tipJarPage) {
@@ -181,6 +183,11 @@ struct SettingsView: View {
                 } label: {
                     Label("Archived Addresses", systemImage: "archivebox")
                 }
+                NavigationLink {
+                    ManageFoldersView()
+                } label: {
+                    Label("Manage Folders", systemImage: "folder")
+                }
             }
             
             Section {
@@ -223,7 +230,7 @@ struct SettingsView: View {
     }
 #endif
     
-    
+
     private func deleteArchivedAddresses() async {
         if settingsViewModel.selectedArchivedAddresses.isEmpty {
             settingsViewModel.showAlert(with: "Select addresses to delete.")
@@ -240,11 +247,4 @@ struct SettingsView: View {
         
         settingsViewModel.selectedArchivedAddresses.removeAll()
     }
-}
-
-#Preview {
-    SettingsView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
-        .environmentObject(SettingsViewModel.shared)
 }

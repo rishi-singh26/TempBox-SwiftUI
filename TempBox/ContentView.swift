@@ -15,36 +15,34 @@ struct ContentView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
     @EnvironmentObject private var messagesViewModel: MessagesViewModel
-    @EnvironmentObject var appController: AppController
+    @EnvironmentObject private var appController: AppController
     @EnvironmentObject private var webViewController: WebViewController
     
     /// Ones data from flutter has been migrated successfully to swftdata, set this to true
     @AppStorage("didMigrateData") private var didMigrateData: Bool = false
     
     var body: some View {
-#if os(iOS)
         Group {
-            if DeviceType.isIphone {
-                IPhoneNavigtionBuilder()
-            } else {
-                IPadNavigationBuilder()
-            }
-        }
-        .onAppear(perform: handleDataImport)
-#elseif os(macOS)
-        MacNavigationBuilder()
-#endif
-    }
-    
 #if os(iOS)
-    private func handleAddressNavigation(address: Address) -> some View {
-        MessagesView()
-    }
-    
-    private func handleMessageNavigation(message: Message) -> some View {
-        MessageDetailView()
-    }
+            Group {
+                if DeviceType.isIphone {
+                    IPhoneNavigtionBuilder()
+                } else {
+                    IPadNavigationBuilder()
+                }
+            }
+            .onAppear(perform: handleDataImport)
+#elseif os(macOS)
+            MacNavigationBuilder()
 #endif
+        }
+        .sheet(isPresented: $appController.showOnboarding, content: {
+            OnboardingView(tint: .accentColor, onContinue: appController.hideOnboardingSheet)
+        })
+        .onAppear {
+            Task(operation: appController.prfomrOnbordingCheck)
+        }
+    }
 }
 
 // MARK: - Navigation View Builders
@@ -54,8 +52,16 @@ extension ContentView {
     private func IPhoneNavigtionBuilder() -> some View {
         NavigationStack(path: $appController.path) {
             AddressesView()
-                .navigationDestination(for: Address.self, destination: handleAddressNavigation)
-                .navigationDestination(for: Message.self, destination: handleMessageNavigation)
+                .navigationDestination(for: Address.self) { address in
+                    if address.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                        UnifiedMessagesView()
+                    } else {
+                        MessagesView()
+                    }
+                }
+                .navigationDestination(for: Message.self) { message in
+                    MessageDetailView()
+                }
         }
     }
     
@@ -66,9 +72,15 @@ extension ContentView {
         } detail: {
             NavigationStack(path: $appController.path) {
                 Group {
-                    MessagesView()
+                    if let safeAddress = addressesController.selectedAddress, safeAddress.id == KUnifiedInboxId, addressesController.showUnifiedInbox {
+                        UnifiedMessagesView()
+                    } else {
+                        MessagesView()
+                    }
                 }
-                .navigationDestination(for: Message.self, destination: handleMessageNavigation)
+                .navigationDestination(for: Message.self) { message in
+                    MessageDetailView()
+                }
             }
         }
     }
@@ -77,30 +89,30 @@ extension ContentView {
     @ViewBuilder
     private func MacNavigationBuilder() -> some View {
         NavigationSplitView {
-            VStack {
-                NewAddressBtn()
+            VStack(spacing: 0) {
                 AddressesView()
-                MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
-                    .font(.footnote)
+                Divider()
+                NewAddressBtn()
             }
             .navigationSplitViewColumnWidth(min: 195, ideal: 195, max: 340)
-            .toolbar {
-                ToolbarItem {
-                    Button {
-                        openWindow(id: "settings")
-                    } label: {
-                        Label("Settings", systemImage: "gear")
+            .toolbar(content: MacOSAddressesToolbar)
+        } content: {
+            Group {
+                if let safeAddress = addressesController.selectedAddress {
+                    if safeAddress.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                        UnifiedMessagesView()
+                    } else {
+                        MessagesView()
                     }
-                    .help("Open settings")
+                } else {
+                    List { Text("Please select an address") }
                 }
             }
-        } content: {
-            MessagesView()
-                .navigationSplitViewColumnWidth(min: 290, ideal: 290, max: 400)
-                .toolbar(content: MacOSMessagesToolbar)
+            .toolbar(content: MacOSMessagesToolbar)
+            .navigationSplitViewColumnWidth(min: 320, ideal: 320, max: 400)
         } detail: {
             MessageDetailView()
-                .navigationSplitViewColumnWidth(min: 440, ideal: 440)
+                .navigationSplitViewColumnWidth(min: 440, ideal: 740)
                 .toolbar(content: MacOSMessageDetailToolbar)
         }
     }
@@ -111,15 +123,16 @@ extension ContentView {
 #if os(macOS)
 extension ContentView {
     @ToolbarContentBuilder
-    func MacOSMessageDetailToolbar() -> some ToolbarContent {
+    private func MacOSMessageDetailToolbar() -> some ToolbarContent {
         ToolbarItemGroup {
             Button {
-                Task {
-                    await addressesController.updateMessageSeenStatus(
-                        messageData: addressesController.selectedMessage!,
-                        address: addressesController.selectedAddress!,
-                        seen: !addressesController.selectedMessage!.seen
-                    )
+                if let message = addressesController.getMessageFromStore(addressesController.selectedAddress?.id ?? "", addressesController.selectedMessage?.id ?? "") {
+                    Task {
+                        await addressesController.updateMessageSeenStatus(
+                            messageData: message,
+                            address: addressesController.selectedAddress!,
+                        )
+                    }
                 }
             } label: {
                 // Get seen status from messages store
@@ -134,6 +147,7 @@ extension ContentView {
             Button(role: .destructive) {
                 messagesViewModel.showDeleteMessageAlert = true
                 messagesViewModel.selectedMessForDeletion = addressesController.selectedMessage!
+                messagesViewModel.selectedAddForMessDeletion = addressesController.selectedAddress!
             } label: {
                 Label("Delete message", systemImage: "trash")
             }
@@ -173,11 +187,23 @@ extension ContentView {
     }
     
     @ToolbarContentBuilder
-    func MacOSMessagesToolbar() -> some ToolbarContent {
+    private func MacOSMessagesToolbar() -> some ToolbarContent {
         ToolbarItemGroup(placement: .automatic) {
             Button {
+                addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
+                addressesViewModel.isAddressInfoSheetOpen = true
+            } label: {
+                Label("Address Info", systemImage: "info.circle")
+            }
+            .help("Address Information")
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox)
+            Button {
                 Task {
-                    await addressesController.refreshMessages(for: addressesController.selectedAddress!)
+                    if addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                        await addressesController.fetchAddresses()
+                    } else {
+                        await addressesController.refreshMessages(for: addressesController.selectedAddress!)
+                    }
                 }
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise.circle")
@@ -185,20 +211,6 @@ extension ContentView {
             .help("Refresh messages")
             .disabled(addressesController.selectedAddress == nil)
             Menu {
-                Button {
-                    addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
-                    addressesViewModel.isAddressInfoSheetOpen = true
-                } label: {
-                    Label("Address Info", systemImage: "info.circle")
-                }
-                .help("Address Information")
-                Button {
-                    addressesViewModel.selectedAddForEditSheet = addressesController.selectedAddress!
-                    addressesViewModel.isEditAddressSheetOpen = true
-                } label: {
-                    Label("Edit Address", systemImage: "pencil.circle")
-                }
-                .help("Edit address name")
                 Button {
                     Task {
                         await addressesController.toggleAddressStatus(addressesController.selectedAddress!)
@@ -217,7 +229,19 @@ extension ContentView {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
-            .disabled(addressesController.selectedAddress == nil)
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox)
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private func MacOSAddressesToolbar() -> some ToolbarContent {
+        ToolbarItem {
+            Button {
+                openWindow(id: "settings")
+            } label: {
+                Label("Settings", systemImage: "gear")
+            }
+            .help("Open settings")
         }
     }
 }
@@ -225,29 +249,43 @@ extension ContentView {
 struct NewAddressBtn: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     
+    @State private var isHovering: Bool = false
+    
     var body: some View {
-        Button(action: addressesViewModel.openNewAddressSheet, label: {
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("New Address")
-                        .foregroundStyle(.primary)
-                        .padding(.leading, 4)
-                        .lineLimit(1)
-                    Spacer()
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(.primary)
+        VStack(alignment: .center, spacing: 10) {
+            HStack {
+                Button(action: addressesViewModel.openNewAddressSheet) {
+                    HStack(alignment: .center, spacing: 2) {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(.primary)
+                        Text("New Address")
+                            .foregroundStyle(.primary)
+                            .padding(.leading, 4)
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(isHovering ? Color.primary : Color.gray)
+                    .onHover(perform: { value in
+                        isHovering = value
+                    })
                 }
-                .padding(10)
-                .frame(maxWidth: .infinity)
-                .background(Color.secondary.opacity(0.2))
-                .cornerRadius(6)
+                .keyboardShortcut("N", modifiers: .command)
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                Button(action: addressesViewModel.openNewFolderSheet) {
+                    Image(systemName: "folder.badge.plus")
+                        .foregroundStyle(Color.accentColor)
+                }
+                .keyboardShortcut("F", modifiers: .command)
+                .buttonStyle(.plain)
             }
-        })
-        .help("Create new address or login to an address")
-        .padding(.horizontal)
-        .padding(.vertical, 5)
-        .buttonStyle(.plain)
-        .keyboardShortcut(.init("n", modifiers: [.command, .shift]))
+            
+            MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
+                .font(.caption2)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
     }
 }
 #endif
@@ -304,10 +342,7 @@ extension ContentView {
     /// This method will save the address to swiftdata
     private func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) async {
         let addresses = (v1Data?.addresses ?? []).filter { address in
-            let idMatches = addressesController.addresses.first(where: { existingAddress in
-                existingAddress.id == address.id
-            })
-            return idMatches == nil
+            addressesController.isAddressUnique(email: address.authenticatedUser.account.address).0
         }
         if addresses.isEmpty {
             didMigrateData = true
@@ -338,11 +373,3 @@ extension ContentView {
     }
 }
 #endif
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(SettingsViewModel.shared)
-        .environmentObject(AddressesViewModel.shared)
-        .environmentObject(AppController.shared)
-}

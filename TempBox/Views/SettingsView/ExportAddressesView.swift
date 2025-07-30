@@ -6,12 +6,19 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ExportAddressesView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var addressesController: AddressesController
+    @EnvironmentObject private var appController: AppController
+    
+    @Environment(\.colorScheme) private var colorScheme
     
     @State private var showExportAlert: Bool = false
+    
+    @Query(filter: #Predicate<Address> { !$0.isArchived }, sort: [SortDescriptor(\Address.createdAt, order: .reverse)])
+    private var addresses: [Address]
     
     var body: some View {
         Group {
@@ -35,11 +42,8 @@ struct ExportAddressesView: View {
 #if os(iOS)
     @ViewBuilder
     func IOSView() -> some View {
-        List(
-            addressesController.addresses,
-            id: \.self,
-            selection: $settingsViewModel.selectedExportAddresses
-        ) { address in
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
+        List(addresses, id: \.self, selection: $settingsViewModel.selectedExportAddresses) { address in
             HStack {
                 VStack(alignment: .leading) {
                     Text(address.ifNameElseAddress)
@@ -56,10 +60,12 @@ struct ExportAddressesView: View {
         }
         .environment(\.editMode, .constant(.active))
         .toolbar {
-            Picker("Export Type", selection: $settingsViewModel.selectedExportType) {
-                ForEach(ExportTypes.allCases) { exportType in
-                    Text(exportType.displayName).tag(exportType)
-                }
+            Button {
+                settingsViewModel.showExportTypePicker = true
+            } label: {
+                Text(settingsViewModel.selectedExportType.displayName)
+                    .contentTransition(.numericText())
+                    .frame(minWidth: 80)
             }
         }
         .toolbar(content: {
@@ -68,7 +74,7 @@ struct ExportAddressesView: View {
                     settingsViewModel.selectedExportAddresses = []
                 }
                 Button("Select All") {
-                    settingsViewModel.selectedExportAddresses = Set(addressesController.addresses)
+                    settingsViewModel.selectedExportAddresses = Set(addresses)
                 }
                 Spacer()
                 Button("Export") {
@@ -81,6 +87,85 @@ struct ExportAddressesView: View {
         .background(content: {
             ExporterView()
         })
+        .systemTrayView($settingsViewModel.showExportTypePicker) {
+            ExportTypePicker(accentColor: accentColor)
+        }
+    }
+    
+    @ViewBuilder
+    private func ExportTypePicker(accentColor: Color) -> some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Choose Export Type")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                    
+                    Spacer(minLength: 0)
+                    
+                    Button {
+                        settingsViewModel.showExportTypePicker = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(Color.gray, Color.primary.opacity(0.1))
+                    }
+                }
+                .padding(.bottom, 25)
+                
+                VStack(alignment: .leading) {
+                    Text(settingsViewModel.selectedExportType.description)
+                        .multilineTextAlignment(.leading)
+                        .transition(.blurReplace)
+                        .padding(20)
+                }
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 25))
+                .padding(.bottom, 25)
+                
+                ForEach(ExportTypes.allCases) { exportType in
+                    let isSelected: Bool = exportType == settingsViewModel.selectedExportType
+                    
+                    HStack(spacing: 10) {
+//                        Label(exportType.displayName, systemImage: exportType.symbol)
+                        Image(systemName: exportType.symbol)
+                            .frame(width: 40)
+                        
+                        Text(exportType.displayName)
+                        
+                        Spacer()
+                        
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle.fill")
+                            .font(.title3)
+                            .contentTransition(.symbolEffect)
+                            .foregroundStyle(isSelected ? accentColor : Color.gray.opacity(0.2))
+                    }
+                    .padding(.vertical, 6)
+                    .contentShape(.rect)
+                    .onTapGesture {
+                        if !isSelected {
+                            withAnimation(.bouncy) {
+                                settingsViewModel.selectedExportType = exportType
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Continue button
+            Button {
+                settingsViewModel.showExportTypePicker = false
+            } label: {
+                Text("Continue")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .foregroundStyle(.white)
+                    .background(accentColor, in: .capsule)
+            }
+            .padding(.top, 15)
+        }
+        .padding(20)
     }
 #endif
     
@@ -118,7 +203,7 @@ struct ExportAddressesView: View {
     @ViewBuilder
     func AddressView() -> some View {
         List {
-            ForEach(addressesController.addresses) { address in
+            ForEach(addresses) { address in
                 HStack {
                     Toggle("", isOn: Binding(get: {
                         settingsViewModel.selectedExportAddresses.contains(address)
@@ -153,7 +238,7 @@ struct ExportAddressesView: View {
                 settingsViewModel.selectedExportAddresses = []
             }
             Button("Select All") {
-                settingsViewModel.selectedExportAddresses = Set(addressesController.addresses)
+                settingsViewModel.selectedExportAddresses = Set(addresses)
             }
             Button("Export") {
                 settingsViewModel.exportAddresses()
@@ -197,10 +282,4 @@ struct ExportAddressesView: View {
             }
         }
     }
-}
-
-#Preview {
-    ExportAddressesView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(SettingsViewModel.shared)
 }

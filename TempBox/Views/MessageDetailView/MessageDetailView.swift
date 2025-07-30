@@ -29,6 +29,7 @@ struct MessageDetailView: View {
     
     @ViewBuilder
     private func MessageViewBuilder(message: Message, address: Address) -> some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
         VStack(alignment: .leading, spacing: 0) {
             MessageHeaderView(message: message)
             Text(message.subject)
@@ -51,16 +52,16 @@ struct MessageDetailView: View {
         .sheet(isPresented: $messageDetailController.showMessageInfoSheet, content: {
             MessageInfoView(message: message)
                 .environmentObject(messageDetailController)
-                .accentColor(appController.accentColor(colorScheme: colorScheme))
+                .sheetAppearanceSetup(tint: accentColor)
         })
         .sheet(isPresented: $messageDetailController.showAttachmentsSheet, content: {
             AttachemntListView(address: address, message: message)
                 .environmentObject(messageDetailController)
-                .accentColor(appController.accentColor(colorScheme: colorScheme))
+                .sheetAppearanceSetup(tint: accentColor)
         })
         .sheet(isPresented: $messageDetailController.showShareEmailSheet, content: {
             ShareMessageView()
-                .accentColor(appController.accentColor(colorScheme: colorScheme))
+                .sheetAppearanceSetup(tint: accentColor)
         })
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -123,10 +124,4 @@ struct EmptyView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-}
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
 }

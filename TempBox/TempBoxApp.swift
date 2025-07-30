@@ -10,8 +10,10 @@ import SwiftData
 
 @main
 struct TempBoxApp: App {
+    var sharedModelContainer: ModelContainer
+    
     @Environment(\.openWindow) var openWindow
-    @StateObject private var addressesController = AddressesController()
+    @StateObject private var addressesController: AddressesController
     @StateObject private var addressViewModel = AddressesViewModel()
     @StateObject private var settingsViewModel = SettingsViewModel()
     @StateObject private var appController = AppController.shared
@@ -21,18 +23,22 @@ struct TempBoxApp: App {
     @StateObject private var webViewController = WebViewController()
     @StateObject private var remoteDataManager = RemoteDataManager()
     
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Address.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+    init() {
+        let container: ModelContainer
         do {
-            return try ModelContainer(for: schema, migrationPlan: AddressMigrationPlan.self, configurations: [modelConfiguration])
+            let schema = Schema([
+                Address.self,
+                Folder.self,
+            ])
+            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            container = try ModelContainer(for: schema, migrationPlan: AddressMigrationPlan.self, configurations: [modelConfiguration])
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
-    }()
+        
+        self.sharedModelContainer = container
+        _addressesController = StateObject(wrappedValue: AddressesController(modelContext: container.mainContext))
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -75,6 +81,7 @@ struct TempBoxApp: App {
         .defaultSize(width: 700, height: 400)
         .windowResizability(.contentSize)
         .windowStyle(.titleBar)
+        .modelContainer(sharedModelContainer)
 #endif
     }
 }

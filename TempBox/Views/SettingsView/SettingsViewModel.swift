@@ -16,6 +16,7 @@ enum SettingPage {
     case tipJarPage
     case archive
     case aboutPage
+    case folders
 }
 
 class SettingsViewModel: ObservableObject {
@@ -84,6 +85,7 @@ class SettingsViewModel: ObservableObject {
     // MARK: - Export page properties
     @Published var selectedExportAddresses: Set<Address> = []
     @Published var selectedExportType: ExportTypes = .encoded
+    @Published var showExportTypePicker: Bool = false
     
     @Published var textFileDocument = TextFileDocument(text: "Hello World!")
     @Published var isExportingTextFile: Bool = false
@@ -151,6 +153,10 @@ class SettingsViewModel: ObservableObject {
     // MARK: - Archive page properties
     @Published var selectedArchivedAddresses: Set<Address> = []
     @Published var showArchAddrDeleteConf: Bool = false
+    
+    // MARK: - Archive page properties
+    @Published var selectedFolder: Folder? = nil
+    @Published var showDeleteFolderConf: Bool = false
     
     
     // MARK: - About page properties
@@ -259,6 +265,37 @@ enum ExportTypes: String, CaseIterable, Identifiable {
         case .encoded: return "Encoded"
         case .JSON: return "JSON"
         case .CSV: return "CSV"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .encoded:
+            return "Exported data will be Base64 encoded in a .txt file containing emails and passwords. It can not be read directly without decoding. It can be easily decoded by tools available online. Keep it safe."
+        case .JSON:
+            return "Exported data will be in JSON format in a .json file containing emails and passwords. JSON format is easy to read and understand, keep the exported file secure to prevent unauthirized access.."
+        case .CSV:
+            return "Exported data will be in CSV format in a .csv file with emails and passwords. CSV is a very accessible format, keep the exported file secure to prevent unauthirized access."
+        }
+    }
+    
+//    var description: String {
+//        switch self {
+//        case .encoded:
+//            return "Exported data will be Base64 encoded. While it can be easily decoded, it is not directly readable without decoding. Keep this file secure to prevent unauthorized access."
+//        case .JSON:
+//            return "Exported data will be in JSON format, containing information such as emails and passwords. This format is easy to read, data should be stored securly to prevent unauthorized access."
+//        case .CSV:
+//            return "Exported data will be in CSV format, saved in a .csv file, containing account information like emails and passwords. It is easy to read and should be kept secure to prevent unauthorized access."
+//        }
+//    }
+
+    
+    var symbol: String {
+        switch self {
+        case .encoded: return "text.page"
+        case .JSON: return "ellipsis.curlybraces"
+        case .CSV: return "table"
         }
     }
 }

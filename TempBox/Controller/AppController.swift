@@ -30,6 +30,10 @@ class AppController: ObservableObject {
         }
     }
     
+    // Onboarding view state
+    @AppStorage("seenOnBoardingView") private var seenOnBoardingView: Bool = false
+    @Published var showOnboarding: Bool = false
+    
     init() {
         if let saved = Self.loadAccentColorData() {
             selectedAccentColorData = saved
@@ -37,7 +41,9 @@ class AppController: ObservableObject {
             selectedAccentColorData = AppController.defaultAccentColors.first!
         }
         
+        #if os(iOS)
         self.customColors = Self.loadCustomColorsFromFile()
+        #endif
     }
     
     func addCustomColor(_ color: AccentColorData) {
@@ -117,7 +123,7 @@ extension AppController {
             let data = try Data(contentsOf: url)
             return try decoder.decode([AccentColorData].self, from: data)
         } catch {
-            print("Error loading custom colors from file: \(error)")
+            //print("Error loading custom colors from file: \(error)")
             return []
         }
     }
@@ -152,6 +158,22 @@ extension AppController {
                 print("JSON decode error: \(error)")
             }
         }.resume()
+    }
+}
+
+// MARK: - Onboarding View setup
+extension AppController {
+    func prfomrOnbordingCheck() async {
+        try? await Task.sleep(for: .seconds(0.2))
+        if !self.seenOnBoardingView {
+            await MainActor.run {
+                self.showOnboarding = true
+            }
+        }
+    }
+    func hideOnboardingSheet() {
+        seenOnBoardingView = true
+        showOnboarding = false
     }
 }
 

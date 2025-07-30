@@ -15,6 +15,7 @@ struct AppColorView: View {
     @EnvironmentObject private var iapManager: IAPManager
     
     @State private var showAddColorSheet = false
+    @State private var showTipJarAlert: Bool = false
     
     var sortedCustomColors: [AccentColorData] {
         appController.customColors.sorted { !$0.isSame && $1.isSame }
@@ -24,11 +25,11 @@ struct AppColorView: View {
         List {
             if !iapManager.hasTipped {
                 Section {
-                    Text("Accent color customization is available as a thank-you for supporting TempBox with a tip. Your support helps keep the app free for everyone.")
+                    Text(KAppColorTipJarMessage)
                 }
             }
             ColorsListSection(colors: AppController.defaultAccentColors)
-            Section(header: AddColorSectionHeader("Custom Colors", openAddColorSheet)) {
+            Section(header: AddColorSectionHeader("Custom Colors", openAddColorSheet), footer: Text("Custom accent colors will be deleted when app is uninstalled from device")) {
                 ForEach(sortedCustomColors) { accentColor in
                     ColorTile(accentColor: accentColor, hasActions: true)
                 }
@@ -40,7 +41,12 @@ struct AppColorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddColorSheet) {
             AddColorView(onColorSelect: addNewCustomColor)
-                .accentColor(appController.accentColor(colorScheme: colorScheme))
+                .sheetAppearanceSetup(tint: appController.accentColor(colorScheme: colorScheme))
+        }
+        .alert("Alert!", isPresented: $showTipJarAlert) {
+            Button("Ok", role: .cancel) {}
+        } message: {
+            Text(KAppColorTipJarMessage)
         }
     }
     
@@ -60,16 +66,18 @@ struct AppColorView: View {
     private func ColorTile(accentColor: AccentColorData, hasActions: Bool) -> some View {
         // Tile
         let tile = Button {
-            guard iapManager.hasTipped else { return }
+            guard iapManager.hasTipped else {
+                showTipJarAlert = true
+                return
+            }
             appController.selectedAccentColorData = accentColor
         } label: {
             ColorTileLabel(accentColor: accentColor)
         }
             .buttonStyle(.plain)
-            .disabled(!iapManager.hasTipped)
         
         // Delete Button
-        let deleteButton = Button {
+        let deleteButton = Button(role: .destructive) {
             deleteColor(color: accentColor)
         } label: {
             Label("Delete", systemImage: "trash")

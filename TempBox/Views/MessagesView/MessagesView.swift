@@ -58,6 +58,8 @@ struct MessagesView: View {
                                 guard let messForDeletion = controller.selectedMessForDeletion else { return }
                                 await addressesController.deleteMessage(message: messForDeletion, address: address)
                                 controller.selectedMessForDeletion = nil
+                                controller.selectedAddForMessDeletion = nil
+                                addressesController.selectedMessage = nil
                             }
                         }
                     } message: {
@@ -74,12 +76,14 @@ struct MessagesView: View {
         .navigationTitle(address.ifNameElseAddress.extractUsername())
 #if os(iOS)
         .toolbar(content: {
-            ToolbarItem {
-                Button("Address Information", systemImage: "info.circle") {
-                    addressesViewModel.selectedAddForInfoSheet = address
-                    addressesViewModel.isAddressInfoSheetOpen = true
+            if !addressesController.showUnifiedInbox {
+                ToolbarItem {
+                    Button("Address Information", systemImage: "info.circle") {
+                        addressesViewModel.selectedAddForInfoSheet = address
+                        addressesViewModel.isAddressInfoSheetOpen = true
+                    }
+                    .help("Address information")
                 }
-                .help("Address information")
             }
         })
 #endif
@@ -109,10 +113,4 @@ struct MessagesView: View {
 #endif
         }
     }
-}
-
-#Preview {
-    ContentView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
 }

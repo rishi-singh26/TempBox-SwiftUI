@@ -7,6 +7,7 @@
 
 #if os(iOS)
 import SwiftUI
+import Kingfisher
 
 @MainActor
 struct AppIconView: View {
@@ -17,6 +18,7 @@ struct AppIconView: View {
     
     @State private var currentIcon = UIApplication.shared.alternateIconName ?? Self.defaultIconName
     @State private var alternateIconsSupported: Bool = true
+    @State private var showTipJarAlert: Bool = false
     
     init() {
         if !UIApplication.shared.supportsAlternateIcons {
@@ -35,7 +37,7 @@ struct AppIconView: View {
             }
             if alternateIconsSupported && !iapManager.hasTipped {
                 Section {
-                    Text("App Icon customization is available as a thank-you for supporting TempBox with a tip. Your support helps keep the app free for everyone.")
+                    Text(KAppIconTipJarMessage)
                 }
             }
             ForEach(remoteDataManager.iconPreviews) { preview in
@@ -45,7 +47,7 @@ struct AppIconView: View {
                     IconTileBuilder(preview: preview)
                 }
                 .buttonStyle(.plain)
-                .disabled(!alternateIconsSupported || !iapManager.hasTipped)
+                .disabled(!alternateIconsSupported)
             }
         }
         .navigationTitle("App Icon")
@@ -65,10 +67,19 @@ struct AppIconView: View {
                 }
             }
         }
+        .alert("Alert!", isPresented: $showTipJarAlert) {
+            Button("Ok", role: .cancel) {}
+        } message: {
+            Text(KAppIconTipJarMessage)
+        }
+
     }
     
     private func handleIconSelection(selected: IconPreview) {
-        guard iapManager.hasTipped else { return }
+        guard iapManager.hasTipped else {
+            showTipJarAlert = true
+            return
+        }
         currentIcon = selected.name
         if selected.name == Self.defaultIconName {
             setAppIcon(nil)
@@ -97,22 +108,20 @@ struct AppIconView: View {
         HStack(alignment: .center) {
             HStack {
                 if let url = preview.imageURL {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
+                    KFImage(url)
+                        .resizable()
+                        .placeholder {
                             ProgressView()
                                 .controlSize(.small)
                                 .frame(width: 80, height: 80)
                                 .padding(.vertical, 6)
                                 .shadow(radius: 2)
-                        case .success(let image):
-                            ImagePreviewBuilder(image: image)
-                        case .failure:
-                            ImagePreviewBuilder(image: Image(systemName: "photo"))
-                        @unknown default:
-                            EmptyView()
                         }
-                    }
+                        .fade(duration: 0.5)
+                        .frame(width: 80, height: 80)
+                        .cornerRadius(18)
+                        .padding(.vertical, 6)
+                        .shadow(radius: 3)
                 } else {
                     ImagePreviewBuilder(image: Image(systemName: "photo"))
                 }
@@ -132,7 +141,7 @@ struct AppIconView: View {
         image
             .resizable()
             .frame(width: 80, height: 80)
-            .cornerRadius(11)
+            .cornerRadius(18)
             .padding(.vertical, 6)
             .shadow(radius: 3)
     }

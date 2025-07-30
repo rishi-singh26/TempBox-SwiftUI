@@ -6,10 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ArchiveView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var addressesController: AddressesController
+    
+    @Query(filter: #Predicate<Address> { $0.isArchived }, sort: [SortDescriptor(\Address.createdAt, order: .reverse)])
+    private var archivedAddresses: [Address]
     
     var body: some View {
 #if os(iOS)
@@ -23,12 +27,8 @@ struct ArchiveView: View {
     @ViewBuilder
     func IOSView() -> some View {
         Group {
-            if !addressesController.archivedAddresses.isEmpty {
-                List(
-                    addressesController.archivedAddresses,
-                    id: \.self,
-                    selection: $settingsViewModel.selectedArchivedAddresses
-                ) { address in
+            if !archivedAddresses.isEmpty {
+                List(archivedAddresses, id: \.self, selection: $settingsViewModel.selectedArchivedAddresses) { address in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(address.ifNameElseAddress)
@@ -56,7 +56,7 @@ struct ArchiveView: View {
                     settingsViewModel.selectedArchivedAddresses = []
                 }
                 Button("Select All") {
-                    settingsViewModel.selectedArchivedAddresses = Set(addressesController.archivedAddresses)
+                    settingsViewModel.selectedArchivedAddresses = Set(archivedAddresses)
                 }
                 Spacer()
                 Button("Restore") {
@@ -94,7 +94,7 @@ struct ArchiveView: View {
     @ViewBuilder
     func AddressView() -> some View {
         List {
-            ForEach(addressesController.archivedAddresses) { address in
+            ForEach(archivedAddresses) { address in
                 HStack {
                     Toggle("", isOn: Binding(get: {
                         settingsViewModel.selectedArchivedAddresses.contains(address)
@@ -129,7 +129,7 @@ struct ArchiveView: View {
                 settingsViewModel.selectedArchivedAddresses = []
             }
             Button("Select All") {
-                settingsViewModel.selectedArchivedAddresses = Set(addressesController.archivedAddresses)
+                settingsViewModel.selectedArchivedAddresses = Set(archivedAddresses)
             }
             Button("Restore") {
                 Task {
@@ -173,11 +173,4 @@ struct ArchiveView: View {
         settingsViewModel.selectedArchivedAddresses.removeAll()
         settingsViewModel.errorDict = errorMap
     }
-}
-
-
-#Preview {
-    ArchiveView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(SettingsViewModel.shared)
 }

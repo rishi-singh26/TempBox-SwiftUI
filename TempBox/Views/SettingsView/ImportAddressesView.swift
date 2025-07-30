@@ -6,10 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ImportAddressesView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var addressesController: AddressesController
+    
+    @Query(filter: #Predicate<Address> { !$0.isArchived }, sort: [SortDescriptor(\Address.createdAt, order: .reverse)])
+    private var addresses: [Address]
     
     var body: some View {
 #if os(iOS)
@@ -25,7 +29,7 @@ struct ImportAddressesView: View {
         Group {
             if settingsViewModel.importDataVersion == ExportVersionOne.staticVersion {
                 List(
-                    settingsViewModel.getV1Addresses(addresses: addressesController.addresses),
+                    settingsViewModel.getV1Addresses(addresses: addresses),
                     id: \.self,
                     selection: $settingsViewModel.selectedV1Addresses
                 ) { address in
@@ -45,7 +49,7 @@ struct ImportAddressesView: View {
                 }
             } else if settingsViewModel.importDataVersion == ExportVersionTwo.staticVersion {
                 List(
-                    settingsViewModel.getV2Addresses(addresses: addressesController.addresses),
+                    settingsViewModel.getV2Addresses(addresses: addresses),
                     id: \.self,
                     selection: $settingsViewModel.selectedV2Addresses
                 ) { address in
@@ -91,7 +95,7 @@ struct ImportAddressesView: View {
                     settingsViewModel.unSelectAllAddresses()
                 }
                 Button("Select All") {
-                    settingsViewModel.selectAllAddresses(addresses: addressesController.addresses)
+                    settingsViewModel.selectAllAddresses(addresses: addresses)
                 }
                 Spacer()
                 Button("Import") {
@@ -158,7 +162,7 @@ struct ImportAddressesView: View {
         Group {
             if settingsViewModel.importDataVersion == ExportVersionOne.staticVersion {
                 List(
-                    settingsViewModel.getV1Addresses(addresses: addressesController.addresses),
+                    settingsViewModel.getV1Addresses(addresses: addresses),
                     selection: $settingsViewModel.selectedV1Addresses
                 ) { address in
                     HStack {
@@ -186,7 +190,7 @@ struct ImportAddressesView: View {
                 }
             } else if settingsViewModel.importDataVersion == ExportVersionTwo.staticVersion {
                 List(
-                    settingsViewModel.getV2Addresses(addresses: addressesController.addresses),
+                    settingsViewModel.getV2Addresses(addresses: addresses),
                     selection: $settingsViewModel.selectedV2Addresses
                 ) { address in
                     HStack {
@@ -224,7 +228,7 @@ struct ImportAddressesView: View {
                 settingsViewModel.unSelectAllAddresses()
             }
             Button("Select All") {
-                settingsViewModel.selectAllAddresses(addresses: addressesController.addresses)
+                settingsViewModel.selectAllAddresses(addresses: addresses)
             }
             Button("Import") {
                 Task {
@@ -294,11 +298,4 @@ struct ImportAddressesView: View {
             completion(errorMap)
         }
     }
-}
-
-#Preview {
-    SettingsView()
-        .environmentObject(AddressesController.shared)
-        .environmentObject(AddressesViewModel.shared)
-        .environmentObject(SettingsViewModel.shared)
 }

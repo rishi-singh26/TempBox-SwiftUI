@@ -16,15 +16,6 @@ class AddAddressViewModel: ObservableObject {
     // MARK: - Address variables
     @Published var addressName: String = ""
     @Published var address: String = ""
-    @Published var shouldUseRandomAddress: Bool = false {
-        willSet {
-            if newValue {
-                generateRandomAddress()
-            } else {
-                address = ""
-            }
-        }
-    }
     
     @Published var password: String = ""
     @Published var shouldUseRandomPassword: Bool = false {
@@ -36,6 +27,9 @@ class AddAddressViewModel: ObservableObject {
             }
         }
     }
+    
+    @Published var selectedFolder: Folder? = nil
+    @Published var showNewFolderForm: Bool = false
     
     var isPasswordValid: Bool {
         (password != "" && password.count >= 6) || shouldUseRandomPassword
@@ -56,23 +50,41 @@ class AddAddressViewModel: ObservableObject {
     // MARK: - Error Alert variables
     @Published var errorMessage = ""
     @Published var showErrorAlert = false
+    func showError(with message: String) {
+        withAnimation {
+            errorMessage = message
+            showErrorAlert = true
+        }
+    }
+    func hideError() {
+        withAnimation {
+            errorMessage = ""
+            showErrorAlert = false
+        }
+    }
     
     // MARK: Create Address properties
     @Published var isCreatingAddress = false
     var subscriptions: Set<AnyCancellable> = []
     
     // MARK: - Add address or Login
-    @Published var selectedAuthMode: AuthTypes = .create
+    @Published var selectedAuthMode: AuthTypes = .create {
+        didSet {
+            address = ""
+            hideError()
+            if selectedAuthMode == .create {
+                shouldUseRandomPassword ? generateRandomPass() : nil
+            } else {
+                password = ""
+            }
+        }
+    }
     
     var submitBtnText: String {
         selectedAuthMode == .create ? "Create" : "Login"
     }
     
-    init() {
-        Task {
-            await loadDomains()
-        }
-    }
+    init() { }
     
     func loadDomains() async {
         do {
@@ -82,17 +94,16 @@ class AddAddressViewModel: ObservableObject {
                 self.selectedDomain = domains[0]
             }
         } catch {
-            errorMessage = error.localizedDescription
-            showErrorAlert = true
+            showError(with: error.localizedDescription)
         }
     }
     
     func generateRandomAddress() {
-        address = String.generateRandomString(of: 10)
+        address = String.generateUsername()
     }
     
     func generateRandomPass() {
-        password = String.generateRandomString(of: 12, useUpperCase: true, useNumbers: true, useSpecialCharacters: true)
+        password = String.generatePassword(of: 12, useUpperCase: true, useNumbers: true, useSpecialCharacters: true)
     }
     
     func getEmail() -> String {
@@ -100,17 +111,19 @@ class AddAddressViewModel: ObservableObject {
     }
     
     func validateInput() -> Bool {
-        // Common validation for address and password
-        if address.isEmpty || password.isEmpty {
-            self.errorMessage = "Please enter address and password"
-            self.showErrorAlert = true
+        if address.isEmpty {
+            self.showError(with: "Please enter address")
+            return false
+        }
+        
+        if password.isEmpty {
+            self.showError(with: "Please enter password")
             return false
         }
 
         // Additional validation for new address creation
         if selectedAuthMode == .create && selectedDomain.id.isEmpty {
-            self.errorMessage = "Please select a domain"
-            self.showErrorAlert = true
+            self.showError(with: "Please select a domain")
             return false
         }
 

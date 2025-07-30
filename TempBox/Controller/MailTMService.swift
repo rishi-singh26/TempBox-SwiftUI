@@ -66,8 +66,12 @@ class MailTMService {
                 throw MailTMError.authenticationRequired
             case 404:
                 throw MailTMError.notFound
+            case 422:
+                throw MailTMError.addressAlredyInUse
             case 429:
-                throw MailTMError.rateLimitExceeded
+                try await Task.sleep(for: .seconds(1.5))
+                // throw MailTMError.rateLimitExceeded
+                return try await performRequest(request, responseType: responseType)
             case 500...599:
                 throw MailTMError.serverError
             default:
@@ -122,17 +126,12 @@ class MailTMService {
         }
         
         // Generate random username and password
-        let username = "user\(Int.random(in: 100000...999999))"
-        let password = generateRandomPassword()
+        let username = String.generateUsername()
+        let password = String.generatePassword(of: 12, useUpperCase: true, useNumbers: true, useSpecialCharacters: true)
         let address = "\(username)@\(firstDomain.domain)"
         
         let account = try await createAccount(address: address, password: password)
         return (account, password)
-    }
-    
-    static private func generateRandomPassword() -> String {
-        let characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-        return String((0..<12).map { _ in characters.randomElement()! })
     }
     
     static func authenticate(address: String, password: String) async throws -> TokenResponse {
@@ -327,6 +326,7 @@ enum MailTMError: Error, LocalizedError {
     case invalidRequest
     case notFound
     case serverError
+    case addressAlredyInUse
     
     var errorDescription: String? {
         switch self {
@@ -350,6 +350,8 @@ enum MailTMError: Error, LocalizedError {
             return "Resource not found"
         case .serverError:
             return "Server error"
+        case .addressAlredyInUse:
+            return "This address is already in use, you can login to this address."
         }
     }
 }
