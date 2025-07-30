@@ -8,18 +8,69 @@
 import SwiftUI
 
 extension String {
-    static func generateRandomString(of length: Int, useUpperCase: Bool = false, useNumbers: Bool = false, useSpecialCharacters: Bool = false) -> String {
-        var letters = "abcdefghijklmnopqrstuvwxyz"
+    /// Generates a unique, fun username suitable for an email address.
+    /// - Returns: A unique username string.
+    static func generateUsername() -> String {
+        var username: String
+        
+        let adjective = KAdjectives.randomElement()!
+        let noun = KNouns.randomElement()!
+        let number = Int.random(in: 0...9999)
+        
+        // Compose username like "FunkyTiger47213"
+        username = "\(adjective)\(noun)\(number)"
+        
+        return username.lowercased()
+    }
+
+    /// Generates a random password containing uppercase, lowercase, digits, and special characters.
+    /// - Parameter length: The desired length of the password. Default is 12 characters.
+    /// - Parameter useUpperCase: Include upper case characters in the result. Default `false`.
+    /// - Parameter useNumbers: Include numbers in the result. Default `false`.
+    /// - Parameter useSpecialCharacters: Include special characters in the result. Default `false`.
+    /// - Returns: A randomly generated password string.
+    static func generatePassword(of length: Int, useUpperCase: Bool = false, useNumbers: Bool = false, useSpecialCharacters: Bool = false) -> String {
+        var characterPool = "abcdefghijklmnopqrstuvwxyz" // Always include lowercase letters
+        
         if useUpperCase {
-            letters += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            characterPool += "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // Add uppercase letters if specified
         }
+        
         if useNumbers {
-            letters += "0123456789"
+            characterPool += "0123456789" // Add digits if specified
         }
+        
         if useSpecialCharacters {
-            letters += "@$%&*#()"
+            characterPool += "!@#$%^&*()_-+=<>?" // Add special characters if specified
         }
-        return String((0..<length).map{ _ in letters.randomElement()! })
+        
+        // Ensure the pool is not empty
+        if characterPool.isEmpty {
+            fatalError("You must select at least one character type (uppercase, numbers, or special characters).")
+        }
+
+        var password = ""
+        
+        // Ensure the password has at least one character from each selected category
+        if useUpperCase {
+            password += String("ABCDEFGHIJKLMNOPQRSTUVWXYZ".randomElement()!)
+        }
+        
+        if useNumbers {
+            password += String("0123456789".randomElement()!)
+        }
+        
+        if useSpecialCharacters {
+            password += String("!@#$%^&*()_-+=<>?".randomElement()!)
+        }
+        
+        // Add random characters from the selected pool until the password reaches the desired length
+        for _ in password.count..<length {
+            password += String(characterPool.randomElement()!)
+        }
+        
+        // Shuffle the password to make it more unpredictable
+        return String(password.shuffled())
     }
     
     func getInitials() -> String {

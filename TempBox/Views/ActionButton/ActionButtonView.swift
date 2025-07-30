@@ -12,14 +12,6 @@ enum ActionPage {
     case newAddress
     case newFolder
     case quickAddress
-    
-    var title: String {
-        switch self {
-        case .newAddress: return "Add Address"
-        case .newFolder: return "New Folder"
-        case .quickAddress: return "Quick Address"
-        }
-    }
 }
 
 struct ActionButtonView: View {
@@ -50,51 +42,38 @@ struct ActionButtonView: View {
             .padding(.horizontal, 5)
             .padding(.vertical, 10)
         } expandedContent: { dismiss in
-            VStack {
-                BuildExpandedHeader()
-                
-                switch selectedActionPage {
-                case .newAddress:
-                    AddAddressView {
-                        dismiss()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            showExpandedContent = false
-                        }
+            switch selectedActionPage {
+            case .newAddress:
+                AddAddressView {
+                    showExpandedContent = false
+                } dismiss: {
+                    dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        showExpandedContent = false
                     }
-                case .newFolder:
-                    IOSNewFolderActionView(accentColor: accentColor) {
-                        dismiss()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            showExpandedContent = false
-                        }
+                }
+            case .newFolder:
+                IOSNewFolderActionView(accentColor: accentColor) {
+                    showExpandedContent = false
+                } dismiss: {
+                    dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        showExpandedContent = false
                     }
-                case .quickAddress:
-                    Text("Quick Address")
+                }
+            case .quickAddress:
+                QuickAddressView(accentColor: accentColor) {
+                    showExpandedContent = false
+                } dismiss: {
+                    dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        showExpandedContent = false
+                    }
                 }
             }
-            .environment(\EnvironmentValues.refresh as! WritableKeyPath<EnvironmentValues, RefreshAction?>, nil)
-            .padding(.top, 15)
         }
+        .environment(\EnvironmentValues.refresh as! WritableKeyPath<EnvironmentValues, RefreshAction?>, nil)
         .sensoryFeedback(.impact, trigger: actionMenuHaptic)
-    }
-    
-    @ViewBuilder
-    private func BuildExpandedHeader() -> some View {
-        HStack {
-            Text(selectedActionPage.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-            Spacer(minLength: 0)
-            Button {
-                actionMenuHaptic.toggle()
-                showExpandedContent = false
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 25)
     }
     
     @ViewBuilder

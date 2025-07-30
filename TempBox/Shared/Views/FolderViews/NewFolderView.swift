@@ -131,10 +131,13 @@ struct IOSNewFolderActionView: View {
     @FocusState private var isTextFieldFocused: Bool
     
     var accentColor: Color
+    var cancel: () -> Void
     var dismiss: () -> Void
     
     var body: some View {
         VStack {
+            BuildHeader(accentColor: accentColor)
+            
             TextField("Folder name", text: $folderName)
                 .textInputAutocapitalization(.words)
                 .focused($isTextFieldFocused)
@@ -147,8 +150,6 @@ struct IOSNewFolderActionView: View {
                         .fill(.thinMaterial)
                 }
             
-            BuildContinueBtn(accentColor: accentColor)
-            
             Spacer()
         }
         .padding(.horizontal, 20)
@@ -157,24 +158,39 @@ struct IOSNewFolderActionView: View {
         }
     }
     
-    
     @ViewBuilder
-    private func BuildContinueBtn(accentColor: Color) -> some View {
-        Button(action: createFolder) {
-            Text("Create")
-            .fontWeight(.semibold)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
-            .foregroundStyle(.white)
-            .background(accentColor, in: .capsule)
+    private func BuildHeader(accentColor: Color) -> some View {
+        HStack(alignment: .center) {
+            Button("Cancel", action: handleCancel)
+                .foregroundStyle(accentColor)
+            
+            Spacer()
+            
+            Text("New Folder")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            Spacer()
+            
+            Button(action: createFolder) {
+                Text("Create")
+                    .fontWeight(.bold)
+                    .foregroundStyle(accentColor)
+            }
+            .buttonStyle(.plain)
+            .disabled(folderName.isEmpty)
         }
-        .padding(.top, 15)
-        .listRowBackground(Color.yellow.opacity(0))
-        .listRowInsets(.none)
-        .listRowSeparator(.hidden)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 3)
+    }
+    
+    private func handleCancel() {
+        isTextFieldFocused = false
+        cancel()
     }
     
     private func createFolder() {
+        isTextFieldFocused = false
         do {
             guard !folderName.isEmpty else { return }
             let newFolder = Folder(id: UUID().uuidString, name: folderName)

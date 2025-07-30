@@ -12,7 +12,12 @@ import SwiftData
 
 struct AddAddressView: View {
 #if os(iOS)
+    var cancel: () -> Void
     var dismiss: () -> Void
+    
+    @FocusState private var addressNameFocus: Bool
+    @FocusState private var addressFocus: Bool
+    @FocusState private var passwordFocus: Bool
 #elseif os(macOS)
     @Environment(\.dismiss) var dismiss
 #endif
@@ -54,7 +59,10 @@ struct AddAddressView: View {
     func IOSAddAddressForm() -> some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
         VStack(spacing: 0) {
-            AuthModeBuilder()
+//            Text("Add Address")
+//                .font(.headline)
+//                .fontWeight(.semibold)
+            BuildHeader(accentColor: accentColor)
             List {
                 AddressNameInputBuilder()
                 
@@ -71,29 +79,25 @@ struct AddAddressView: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .padding(.vertical, 0)
-            
-            BuildContinueBtn(accentColor: accentColor)
         }
     }
     
     @ViewBuilder
     private func IOSCreateBuilder(accentColor: Color) -> some View {
         Section {
-            Picker(selection: $controller.selectedDomain) {
+            TextField("Address", text: $controller.address)
+                .autocapitalization(.none)
+                .focused($addressFocus)
+            
+            Button("Random address", action: controller.generateRandomAddress)
+            .foregroundStyle(accentColor)
+            .help("Generate random address")
+            
+            Picker("Select Domain", selection: $controller.selectedDomain) {
                 ForEach(controller.domains, id: \.self) { domain in
                     Text(domain.domain)
                 }
-            } label: {
-                TextField("Address", text: $controller.address)
-                    .autocapitalization(.none)
             }
-            
-            Button("Random address") {
-                controller.generateRandomAddress()
-            }
-            .foregroundStyle(accentColor)
-            .help("Generate random address")
         }.customListStyle()
         
         Section {
@@ -101,6 +105,7 @@ struct AddAddressView: View {
                 SecureField("Password", text: $controller.password)
                     .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
                     .autocorrectionDisabled(true)
+                    .focused($passwordFocus)
             }
             
             Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
@@ -124,14 +129,48 @@ struct AddAddressView: View {
         Section {
             TextField("Email", text: $controller.address)
                 .keyboardType(.emailAddress)
+                .focused($addressFocus)
             if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
                 SecureField("Password", text: $controller.password)
                     .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
                     .autocorrectionDisabled(true)
+                    .focused($passwordFocus)
             }
         }.customListStyle()
         
         FolderPickerBuilder(accentColor: accentColor)
+    }
+    
+    @ViewBuilder
+    private func BuildHeader(accentColor: Color) -> some View {
+        HStack(alignment: .center) {
+            Button("Cancel", action: handleCancel)
+                .foregroundStyle(accentColor)
+                .frame(width: 60)
+            Spacer(minLength: 0)
+            AuthModeBuilder()
+            Spacer(minLength: 0)
+            Group {
+                if controller.isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Button {
+                        Task {
+                            await handleSubmitIOS()
+                        }
+                    } label: {
+                        Text(controller.submitBtnText)
+                            .fontWeight(.bold)
+                            .foregroundStyle(accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .frame(width: 60)
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 25)
     }
     
     @ViewBuilder
@@ -142,14 +181,14 @@ struct AddAddressView: View {
             }
         }
         .pickerStyle(.segmented)
-        .frame(width: 200)
-        .padding(.bottom, 10)
+        .frame(width: 150)
     }
     
     @ViewBuilder
     private func AddressNameInputBuilder() -> some View {
         Section {
             TextField("Address name (Optional)", text: $controller.addressName)
+                .focused($addressNameFocus)
         } footer: {
             Text("Address name appears on the addresses list screen.")
                 .font(.caption)
@@ -165,10 +204,7 @@ struct AddAddressView: View {
                     .foregroundStyle(.red)
                 Spacer()
                 
-                Button {
-                    controller.showErrorAlert = false
-                    controller.errorMessage = ""
-                } label: {
+                Button(action: controller.hideError) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.caption)
                         .foregroundStyle(.gray)
@@ -194,32 +230,20 @@ struct AddAddressView: View {
         }.customListStyle()
     }
     
-    @ViewBuilder
-    private func BuildContinueBtn(accentColor: Color) -> some View {
-        Button {
-            Task { await handleSubmit() }
-        } label: {
-            Group {
-                if controller.isLoading {
-                    ProgressView()
-                        .controlSize(.regular)
-                        .foregroundStyle(.white)
-                } else {
-                    Text(controller.submitBtnText)
-                }
-            }
-            .fontWeight(.semibold)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
-            .foregroundStyle(.white)
-            .background(accentColor, in: .capsule)
-        }
-        .padding(.top, 10)
-        .padding(.horizontal, 20)
-        .padding(.bottom, DeviceType.isIphone ? 0 : 20)
-        .listRowBackground(Color.yellow.opacity(0))
-        .listRowInsets(.none)
-        .listRowSeparator(.hidden)
+    private func resetFocusState() {
+        addressNameFocus = false
+        addressFocus = false
+        passwordFocus = false
+    }
+    
+    private func handleCancel() {
+        resetFocusState()
+        cancel()
+    }
+    
+    private func handleSubmitIOS() async {
+        resetFocusState()
+        await handleSubmit()
     }
 #endif
     
@@ -350,7 +374,7 @@ struct AddAddressView: View {
     }
     
     @ViewBuilder
-    private func MacOSLoginBuilder() -> some View {
+    private func MacOSLoginBuildexr() -> some View {
         MacCustomSection {
             HStack {
                 Text("Email")
@@ -443,17 +467,16 @@ fileprivate extension View {
     @ViewBuilder
     func customListStyle() -> some View {
         self
-            .listRowBackground(Rectangle().fill(.thinMaterial))
-//            .listRowSpacing(10)
-//            .listSectionSpacing(10)
+            .listRowSpacing(15)
+            .listSectionSpacing(15)
     }
     
     @ViewBuilder
     func yellowListStyle() -> some View {
         self
             .listRowBackground(Color.yellow.opacity(0.2))
-//            .listRowSpacing(10)
-//            .listSectionSpacing(10)
+            .listRowSpacing(15)
+            .listSectionSpacing(15)
     }
 }
 #endif

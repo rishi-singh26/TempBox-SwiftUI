@@ -51,9 +51,15 @@ class AddAddressViewModel: ObservableObject {
     @Published var errorMessage = ""
     @Published var showErrorAlert = false
     func showError(with message: String) {
-        errorMessage = message
         withAnimation {
+            errorMessage = message
             showErrorAlert = true
+        }
+    }
+    func hideError() {
+        withAnimation {
+            errorMessage = ""
+            showErrorAlert = false
         }
     }
     
@@ -65,8 +71,7 @@ class AddAddressViewModel: ObservableObject {
     @Published var selectedAuthMode: AuthTypes = .create {
         didSet {
             address = ""
-            showErrorAlert = false
-            errorMessage = ""
+            hideError()
             if selectedAuthMode == .create {
                 shouldUseRandomPassword ? generateRandomPass() : nil
             } else {
@@ -89,17 +94,16 @@ class AddAddressViewModel: ObservableObject {
                 self.selectedDomain = domains[0]
             }
         } catch {
-            errorMessage = error.localizedDescription
-            showErrorAlert = true
+            showError(with: error.localizedDescription)
         }
     }
     
     func generateRandomAddress() {
-        address = String.generateRandomString(of: 10)
+        address = String.generateUsername()
     }
     
     func generateRandomPass() {
-        password = String.generateRandomString(of: 12, useUpperCase: true, useNumbers: true, useSpecialCharacters: true)
+        password = String.generatePassword(of: 12, useUpperCase: true, useNumbers: true, useSpecialCharacters: true)
     }
     
     func getEmail() -> String {
@@ -108,21 +112,18 @@ class AddAddressViewModel: ObservableObject {
     
     func validateInput() -> Bool {
         if address.isEmpty {
-            self.errorMessage = "Please enter address"
-            self.showErrorAlert = true
+            self.showError(with: "Please enter address")
             return false
         }
         
         if password.isEmpty {
-            self.errorMessage = "Please enter password"
-            self.showErrorAlert = true
+            self.showError(with: "Please enter password")
             return false
         }
 
         // Additional validation for new address creation
         if selectedAuthMode == .create && selectedDomain.id.isEmpty {
-            self.errorMessage = "Please select a domain"
-            self.showErrorAlert = true
+            self.showError(with: "Please select a domain")
             return false
         }
 
