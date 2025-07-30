@@ -53,46 +53,28 @@ struct AddAddressView: View {
     @ViewBuilder
     func IOSAddAddressForm() -> some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
-        List {
+        VStack(spacing: 0) {
             AuthModeBuilder()
-            
-            AddressNameInputBuilder()
-            
-            if controller.showErrorAlert {
-                BuildErrorSection()
-            }
-            
-            switch controller.selectedAuthMode {
-            case .create:
-                IOSCreateBuilder(accentColor: accentColor)
-            case .login:
-                IOSLoginBuilder(accentColor: accentColor)
-            }
-            
-            Button {
-                Task { await handleSubmit() }
-            } label: {
-                Group {
-                    if controller.isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Text(controller.submitBtnText)
-                    }
+            List {
+                AddressNameInputBuilder()
+                
+                if controller.showErrorAlert {
+                    BuildErrorSection()
                 }
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 15)
-                .foregroundStyle(.white)
-                .background(accentColor, in: .capsule)
+                
+                switch controller.selectedAuthMode {
+                case .create:
+                    IOSCreateBuilder(accentColor: accentColor)
+                case .login:
+                    IOSLoginBuilder(accentColor: accentColor)
+                }
             }
-            .padding(.top, 15)
-            .listRowBackground(Color.yellow.opacity(0))
-            .listRowInsets(.none)
-            .listRowSeparator(.hidden)
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .padding(.vertical, 0)
+            
+            BuildContinueBtn(accentColor: accentColor)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
     }
     
     @ViewBuilder
@@ -160,7 +142,8 @@ struct AddAddressView: View {
             }
         }
         .pickerStyle(.segmented)
-        .customListStyle()
+        .frame(width: 200)
+        .padding(.bottom, 10)
     }
     
     @ViewBuilder
@@ -231,7 +214,9 @@ struct AddAddressView: View {
             .foregroundStyle(.white)
             .background(accentColor, in: .capsule)
         }
-        .padding(.top, 15)
+        .padding(.top, 10)
+        .padding(.horizontal, 20)
+        .padding(.bottom, DeviceType.isIphone ? 0 : 20)
         .listRowBackground(Color.yellow.opacity(0))
         .listRowInsets(.none)
         .listRowSeparator(.hidden)
@@ -459,16 +444,16 @@ fileprivate extension View {
     func customListStyle() -> some View {
         self
             .listRowBackground(Rectangle().fill(.thinMaterial))
-            .listRowSpacing(10)
-            .listSectionSpacing(10)
+//            .listRowSpacing(10)
+//            .listSectionSpacing(10)
     }
     
     @ViewBuilder
     func yellowListStyle() -> some View {
         self
             .listRowBackground(Color.yellow.opacity(0.2))
-            .listRowSpacing(10)
-            .listSectionSpacing(10)
+//            .listRowSpacing(10)
+//            .listSectionSpacing(10)
     }
 }
 #endif

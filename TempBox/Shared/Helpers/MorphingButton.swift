@@ -57,10 +57,9 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                             .transition(.blurReplace)
                     }
                 }
-                // limit width to 400 on large screens
-                .frame(maxWidth: DeviceType.isIphone ? (animateContent ? .infinity : 45) : (animateContent ? 400 : 45))
+                .frame(maxWidth: maxWidth)
                 // limit height to 800 on large screens
-//                .frame(maxHeight: DeviceType.isIphone ? (animateContent ? .infinity : 45) : (animateContent && showExpandedContent ? 800 : nil))
+                .frame(maxHeight: DeviceType.isIphone ? nil : (animateContent && showExpandedContent ? 800 : nil))
                 .geometryGroup()
                 .clipShape(.rect(cornerRadius: 30, style: .continuous))
                 .background {
@@ -68,13 +67,9 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                         .fill(.thinMaterial)
                         .ignoresSafeArea(showExpandedContent && DeviceType.isIphone ? .all : [])
                 }
-                .padding(.horizontal, animateContent && (!showExpandedContent || !DeviceType.isIphone) ? 15 : 0)
-                .padding(.bottom, animateContent && (!showExpandedContent || !DeviceType.isIphone) ? 5 : 0)
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity,
-                    alignment: animateContent ? .bottomLeading : .topLeading
-                )
+                .padding(.horizontal, horizontalPadding)
+                .padding(.bottom, bottomPadding)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
                 .offset(
                     x: animateContent ? 0 : viewPosition.minX,
                     y: animateContent ? 0 : viewPosition.minY
@@ -102,7 +97,7 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                         let size = $0.size
                         Rectangle()
                             .fill(.black.opacity(animateContent ? 0.2 : 0))
-                            .onTapGesture(perform: dismissContent)
+                            .onTapGesture(perform: close)
                             .gesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged({ value in
@@ -120,7 +115,7 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                                         }
                                         
                                         if scale > 0.5 {
-                                            dismissContent()
+                                            close()
                                         }
                                     })
                             )
@@ -134,8 +129,47 @@ struct MorphingButton<Label: View, Content: View, ExpandedContent: View>: View {
                     }
                 }
                 .animation(.interpolatingSpring(duration: 0.2, bounce: 0), value: showExpandedContent)
-                .presentationBackground(.clear)
             }
+    }
+    
+    // Computed property for maxWidth
+    var maxWidth: CGFloat {
+        if DeviceType.isIphone {
+            return animateContent ? .infinity : 45
+        } else {
+            if showExpandedContent {
+                return 600
+            } else {
+                return animateContent ? 400 : 45
+            }
+        }
+    }
+    
+    // Computed property for alignment
+    var alignment: Alignment {
+        if showExpandedContent && DeviceType.isIpad {
+            return .center
+        } else {
+            return animateContent ? .bottomLeading : .topLeading
+        }
+    }
+    
+    // Computed property for horizontalPadding
+    var horizontalPadding: CGFloat {
+        return animateContent && (!showExpandedContent || !DeviceType.isIphone) ? 15 : 0
+    }
+
+    // Computed property for bottomPadding
+    var bottomPadding: CGFloat {
+        return animateContent && (!showExpandedContent || !DeviceType.isIphone) ? 5 : 0
+    }
+    
+    private func close() {
+        if showExpandedContent {
+            showExpandedContent = false
+        } else {
+            dismissContent()
+        }
     }
     
     private func dismissContent() {
