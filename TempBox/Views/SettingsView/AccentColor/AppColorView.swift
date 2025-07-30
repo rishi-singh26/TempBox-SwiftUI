@@ -29,7 +29,7 @@ struct AppColorView: View {
                 }
             }
             ColorsListSection(colors: AppController.defaultAccentColors)
-            Section(header: AddColorSectionHeader("Custom Colors", openAddColorSheet)) {
+            Section(header: AddColorSectionHeader("Custom Colors", openAddColorSheet), footer: Text("Custom accent colors will be deleted when app is uninstalled from device")) {
                 ForEach(sortedCustomColors) { accentColor in
                     ColorTile(accentColor: accentColor, hasActions: true)
                 }
@@ -77,7 +77,7 @@ struct AppColorView: View {
             .buttonStyle(.plain)
         
         // Delete Button
-        let deleteButton = Button {
+        let deleteButton = Button(role: .destructive) {
             deleteColor(color: accentColor)
         } label: {
             Label("Delete", systemImage: "trash")

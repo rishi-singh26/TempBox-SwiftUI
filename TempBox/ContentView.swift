@@ -101,19 +101,18 @@ extension ContentView {
                 if let safeAddress = addressesController.selectedAddress {
                     if safeAddress.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
                         UnifiedMessagesView()
-                            .toolbar(content: MacOSUnifiedInboxToolbar)
                     } else {
                         MessagesView()
-                            .toolbar(content: MacOSMessagesToolbar)
                     }
                 } else {
-                    Text("Please select an address")
+                    List { Text("Please select an address") }
                 }
             }
+            .toolbar(content: MacOSMessagesToolbar)
             .navigationSplitViewColumnWidth(min: 320, ideal: 320, max: 400)
         } detail: {
             MessageDetailView()
-                .navigationSplitViewColumnWidth(min: 440, ideal: 440)
+                .navigationSplitViewColumnWidth(min: 440, ideal: 740)
                 .toolbar(content: MacOSMessageDetailToolbar)
         }
     }
@@ -197,10 +196,14 @@ extension ContentView {
                 Label("Address Info", systemImage: "info.circle")
             }
             .help("Address Information")
-            .disabled(addressesController.selectedAddress == nil)
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox)
             Button {
                 Task {
-                    await addressesController.refreshMessages(for: addressesController.selectedAddress!)
+                    if addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                        await addressesController.fetchAddresses()
+                    } else {
+                        await addressesController.refreshMessages(for: addressesController.selectedAddress!)
+                    }
                 }
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise.circle")
@@ -226,21 +229,7 @@ extension ContentView {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
-            .disabled(addressesController.selectedAddress == nil)
-        }
-    }
-    
-    @ToolbarContentBuilder
-    private func MacOSUnifiedInboxToolbar() -> some ToolbarContent {
-        ToolbarItemGroup(placement: .automatic) {
-            Button {
-                Task {
-                    await addressesController.fetchAddresses()
-                }
-            } label: {
-                Label("Refresh", systemImage: "arrow.clockwise.circle")
-            }
-            .help("Refresh messages")
+            .disabled(addressesController.selectedAddress == nil || addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox)
         }
     }
     
@@ -279,6 +268,7 @@ struct NewAddressBtn: View {
                         isHovering = value
                     })
                 }
+                .keyboardShortcut("N", modifiers: .command)
                 .buttonStyle(.plain)
                 
                 Spacer()
@@ -287,6 +277,7 @@ struct NewAddressBtn: View {
                     Image(systemName: "folder.badge.plus")
                         .foregroundStyle(Color.accentColor)
                 }
+                .keyboardShortcut("F", modifiers: .command)
                 .buttonStyle(.plain)
             }
             

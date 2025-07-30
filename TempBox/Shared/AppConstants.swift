@@ -16,6 +16,7 @@ let KTermsOfServiceURL = "https://tempbox.rishisingh.in/terms-of-service.html"
 let KUnifiedInboxId = "unifiedInbox"
 
 let KQuickAddressesFolderKey = "QuickAddressesFolderId"
+let KQuickAddressesFolderIdPrefix = "quickaddresses"
 
 let KAdjectives = [
     "Swift", "Crazy", "Bright", "Happy", "Funky", "Silly",

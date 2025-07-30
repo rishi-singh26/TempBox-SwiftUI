@@ -284,6 +284,7 @@ struct AddAddressView: View {
                 MacCustomSection {
                     FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
                 }
+                .padding(.bottom, controller.selectedAuthMode == .create ? 0 : 20)
                 
                 if controller.selectedAuthMode == .create {
                     HStack {
@@ -374,7 +375,7 @@ struct AddAddressView: View {
     }
     
     @ViewBuilder
-    private func MacOSLoginBuildexr() -> some View {
+    private func MacOSLoginBuilder() -> some View {
         MacCustomSection {
             HStack {
                 Text("Email")

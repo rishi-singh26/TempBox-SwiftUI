@@ -60,55 +60,70 @@ class AddressesController: ObservableObject {
     // MARK: - Data Operations
     /// Fetches all addresses from SwiftData
     func fetchAddresses() async {
+        //print("Starting fetchAddresses")
         isLoading = true
         
         do {
-            // Fetch unarchived and not deleted addresses
             let descriptor = FetchDescriptor<Address>(
                 predicate: #Predicate<Address> { !$0.isDeleted },
                 sortBy: [SortDescriptor(\Address.createdAt, order: .reverse)]
             )
-            addresses = try modelContext.fetch(descriptor)
-            self.clearMessage()
             
-            /// Fetch messages for each address
-            await self.fetchMessagesForAllAddresses()
+            self.addresses = try modelContext.fetch(descriptor)
+            //print("Fetched \(addresses.count) addresses")
+            
+            try await fetchMessagesForAllAddresses()
+            clearMessage()
         } catch {
-            self.show(message: error.localizedDescription)
-            print("Error fetching addresses: \(error.localizedDescription)")
+            show(message: error.localizedDescription)
+            //print("Error fetching addresses: \(error.localizedDescription)")
         }
         
         isLoading = false
     }
     
-    func fetchMessagesForAllAddresses() async {
-        await withTaskGroup(of: Void.self) { group in
-            for address in self.addresses {
-                guard !address.isArchived, let token = address.token, !token.isEmpty else { return }
-                
-                await MainActor.run {
-                    self.updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil, messages: messageStore[address.id]?.messages ?? []))
-                }
-                
-                group.addTask {
-                    do {
-                        let messages = try await MailTMService.fetchMessages(token: token)
-                        await self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messages))
-                        await self.updateMessageIdToAddIdMap(messages, address)
-                    } catch {
-                        let messages = await self.messageStore[address.id]?.messages ?? []
-                        await self.updateMessageStore(
+    private func fetchMessagesForAllAddresses() async throws {
+        //print("Starting fetchMessagesForAllAddresses with \(addresses.count) addresses")
+        
+        // Create concurrent tasks but handle errors individually
+        var tasks = [Task<Void, Error>]()
+        
+        for address in self.addresses {
+            //print("Processing Address", address.address, address.isArchived, address.token?.count ?? "NA")
+            
+            guard !address.isArchived, let token = address.token, !token.isEmpty else {
+                continue
+            }
+            
+            tasks.append(Task {
+                do {
+                    await MainActor.run {
+                        self.updateMessageStore(
                             for: address,
-                            store: MessageStore(isFetching: false, error: error.localizedDescription, messages: messages)
+                            store: MessageStore(isFetching: true, error: nil, messages: self.messageStore[address.id]?.messages ?? [])
                         )
-                        await self.updateMessageIdToAddIdMap(messages, address)
                     }
+                    
+                    let messages = try await MailTMService.fetchMessages(token: token)
+                    self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messages))
+                    self.updateMessageIdToAddIdMap(messages, address)
+                } catch {
+                    //print("Error processing \(address.address): \(error)")
+                }
+            })
+        }
+        
+        // Wait for all tasks to complete using TaskGroup
+        await withTaskGroup(of: Void.self) { group in
+            for task in tasks {
+                group.addTask {
+                    try? await task.value
                 }
             }
         }
     }
     
-    func updateMessageIdToAddIdMap(_ messages: [Message], _ address: Address) {
+    private func updateMessageIdToAddIdMap(_ messages: [Message], _ address: Address) {
         messages.forEach { message in
             self.msgIdToAddId[message.id] = address.id
         }

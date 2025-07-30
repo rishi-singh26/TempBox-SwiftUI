@@ -88,6 +88,7 @@ struct NewFolderView: View {
                         TextField("New Folder Name", text: $folderName)
                             .textFieldStyle(.roundedBorder)
                             .focused($isTextFieldFocused)
+                            .onSubmit(createFolder)
                     }
                 }
                 .toolbar {
@@ -125,6 +126,7 @@ struct NewFolderView: View {
     }
 }
 
+#if os(iOS)
 struct IOSNewFolderActionView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var folderName: String = ""
@@ -202,3 +204,4 @@ struct IOSNewFolderActionView: View {
         }
     }
 }
+#endif

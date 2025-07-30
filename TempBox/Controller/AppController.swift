@@ -41,7 +41,9 @@ class AppController: ObservableObject {
             selectedAccentColorData = AppController.defaultAccentColors.first!
         }
         
+        #if os(iOS)
         self.customColors = Self.loadCustomColorsFromFile()
+        #endif
     }
     
     func addCustomColor(_ color: AccentColorData) {
@@ -121,7 +123,7 @@ extension AppController {
             let data = try Data(contentsOf: url)
             return try decoder.decode([AccentColorData].self, from: data)
         } catch {
-            print("Error loading custom colors from file: \(error)")
+            //print("Error loading custom colors from file: \(error)")
             return []
         }
     }

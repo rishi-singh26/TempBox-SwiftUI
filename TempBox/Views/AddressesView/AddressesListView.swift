@@ -144,6 +144,7 @@ struct AddressesListView: View {
             Label("All Inboxes", systemImage: "tray.2")
             Spacer()
             Image(systemName: "chevron.right")
+                .font(.footnote.bold())
                 .foregroundColor(.secondary)
                 .padding(.leading, 4)
         }
@@ -156,7 +157,7 @@ struct AddressesListView: View {
         } icon: {
             HStack(spacing: 5) {
                 Text(String(folder.addresses?.count ?? 0))
-                Image(systemName: "folder")
+                Image(systemName: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
             }
         }
         .swipeActions {

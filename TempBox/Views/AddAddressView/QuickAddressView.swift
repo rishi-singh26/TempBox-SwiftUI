@@ -5,6 +5,7 @@
 //  Created by Rishi Singh on 30/07/25.
 //
 
+#if os(iOS)
 import SwiftUI
 import SwiftData
 
@@ -156,10 +157,10 @@ struct QuickAddressView: View {
     
     private func getOrCreate() async {
         // Try to fetch folder by fuzzy match
-        if let existingFolder = fetchFolder(withIDLike: "quickaddresses") {
+        if let existingFolder = fetchFolder(withIDLike: KQuickAddressesFolderIdPrefix) {
             quickAddressesFolder = existingFolder
         } else {
-            let newFolderID = "quickaddresses\(UUID().uuidString)"
+            let newFolderID = "\(KQuickAddressesFolderIdPrefix)\(UUID().uuidString)"
             quickAddressesFolder = createFolder(id: newFolderID, name: "Quick Addresses")
         }
 
@@ -194,3 +195,4 @@ struct QuickAddressView: View {
         }
     }
 }
+#endif
