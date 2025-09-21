@@ -71,7 +71,7 @@ struct FolderPickerView: View {
                     Label("No Folder", systemImage: "folder.badge.minus")
                         .tag(nil as Folder?)
                     ForEach(folders) { folder in
-                        Label(folder.name, systemImage: "folder")
+                        Label(folder.name, systemImage: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
                             .tag(folder)
                     }
                 }

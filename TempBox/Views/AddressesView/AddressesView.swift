@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct AddressesView: View {
     @EnvironmentObject private var addressesController: AddressesController
@@ -14,33 +13,11 @@ struct AddressesView: View {
     @EnvironmentObject private var appController: AppController
 
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.modelContext) private var modelContext
-
-    // Query all addresses
-    @Query(filter: #Predicate<Address> { !$0.isArchived }, sort: [SortDescriptor(\Address.createdAt, order: .reverse)])
-    private var allAddresses: [Address]
-    
-    @Query(sort: [SortDescriptor(\Folder.createdAt, order: .reverse)])
-    private var folders: [Folder]
-
-    // MARK: - Filtered Addresses
-    private var filteredAddresses: [Address] {
-        if addressesViewModel.searchText.isEmpty {
-            return allAddresses
-        } else {
-            let query = addressesViewModel.searchText.lowercased()
-            return allAddresses.filter { address in
-                let nameMatches = address.name?.lowercased().contains(query) ?? false
-                let addressMatches = address.address.lowercased().contains(query)
-                return nameMatches || addressMatches
-            }
-        }
-    }
 
     var body: some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
 
-        AddressesListView(folders: folders, allAddresses: filteredAddresses)
+        AddressesListView(searchQuery: addressesViewModel.searchText)
 #if os(iOS)
         // Ensure the toolbar itself only exists on iOS 18+
         .modifier(IOS18BottomToolbarModifier())

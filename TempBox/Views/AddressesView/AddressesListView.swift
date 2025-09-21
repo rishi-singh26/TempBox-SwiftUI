@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct AddressesListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,18 +16,31 @@ struct AddressesListView: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @EnvironmentObject private var appController: AppController
 
-    var folders: [Folder]
-    var allAddresses: [Address]
-
-    // MARK: - Grouping Addresses
-    private var addressesByFolder: [String: [Address]] {
-        Dictionary(grouping: allAddresses.filter { $0.folder != nil }, by: { $0.folder!.id })
+    @Query(sort: [SortDescriptor(\Folder.createdAt, order: .reverse)])
+    private var folders: [Folder]
+    
+    // Dynamic query that includes search filtering so no separate computed filter is needed.
+    @Query var addressesWithoutFolder: [Address]
+    
+    init(searchQuery q: String) {
+        // Configure the query each render to reflect current search text
+        self._addressesWithoutFolder = Query(
+            filter: #Predicate<Address> { addr in
+                // Only non-archived
+                !addr.isArchived &&
+                // Must belong to the passed folder
+                addr.folder?.id == nil &&
+                // Search filter (empty query allows all)
+                (
+                    q.isEmpty ||
+                    addr.name?.localizedStandardContains(q) ?? false ||
+                    addr.address.localizedStandardContains(q)
+                )
+            },
+            sort: [SortDescriptor(\Address.createdAt, order: .reverse)]
+        )
     }
-
-    private var addressesWithoutFolder: [Address] {
-        allAddresses.filter { $0.folder == nil }
-    }
-
+    
     var body: some View {
         #if os(iOS)
         if DeviceType.isIphone {
@@ -50,11 +64,8 @@ struct AddressesListView: View {
             if !folders.isEmpty {
                 Section("Folders", isExpanded: $addressesViewModel.foldersSectionExpanded) {
                     ForEach(folders) { folder in
-                        let folderAddresses = addressesByFolder[folder.id] ?? []
                         DisclosureGroup {
-                            ForEach(folderAddresses) { address in
-                                AddressItemView(address: address)
-                            }
+                            FolderAddressesView(searchQuery: addressesViewModel.searchText, folder: folder)
                         } label: {
                             FolderTile(folder: folder)
                         }
@@ -93,19 +104,14 @@ struct AddressesListView: View {
         
         List(selection: selectionBinding) {
             NavigationLink(value: emptyAddress) {
-                UnifiedInboxLable()
+                UnifiedInboxLabel()
             }
 
             if !folders.isEmpty {
                 Section("Folders", isExpanded: $addressesViewModel.foldersSectionExpanded) {
                     ForEach(folders) { folder in
-                        let folderAddresses = addressesByFolder[folder.id] ?? []
                         DisclosureGroup {
-                            ForEach(folderAddresses) { address in
-                                NavigationLink(value: address) {
-                                    AddressItemView(address: address)
-                                }
-                            }
+                            FolderAddressesView(searchQuery: addressesViewModel.searchText, folder: folder)
                         } label: {
                             FolderTile(folder: folder)
                         }
@@ -134,12 +140,12 @@ struct AddressesListView: View {
             addressesController.showUnifiedInbox = true
             appController.path.append(emptyAddress)
         } label: {
-            UnifiedInboxLable()
+            UnifiedInboxLabel()
         }
     }
     
     @ViewBuilder
-    private func UnifiedInboxLable() -> some View {
+    private func UnifiedInboxLabel() -> some View {
         HStack {
             Label("All Inboxes", systemImage: "tray.2")
             Spacer()
@@ -152,33 +158,64 @@ struct AddressesListView: View {
     
     @ViewBuilder
     private func FolderTile(folder: Folder) -> some View {
-        Label {
-            Text(folder.name)
-        } icon: {
-            HStack(spacing: 5) {
-                Text(String(folder.addresses?.count ?? 0))
-                Image(systemName: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
+        Label(folder.name, systemImage: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
+            .swipeActions {
+                Button(role: .destructive) {
+                    deleteFolder(folder)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
             }
-        }
-        .swipeActions {
-            Button(role: .destructive) {
-                deleteFolder(folder)
-            } label: {
-                Label("Delete", systemImage: "trash")
+            .contextMenu {
+                Button(role: .destructive) {
+                    deleteFolder(folder)
+                } label: {
+                    Label("Delete Folder", systemImage: "trash")
+                }
             }
-        }
-        .contextMenu {
-            Button(role: .destructive) {
-                deleteFolder(folder)
-            } label: {
-                Label("Delete Folder", systemImage: "trash")
-            }
-        }
     }
     
     // MARK: - Private functions
     private func deleteFolder(_ folder: Folder) {
         modelContext.delete(folder)
         try? modelContext.save()
+    }
+}
+
+
+struct FolderAddressesView: View {
+    var searchQuery: String = ""
+    var folder: Folder
+    
+    @Query var addresses: [Address]
+    
+    init(searchQuery: String = "", folder: Folder) {
+        self.searchQuery = searchQuery
+        self.folder = folder
+        
+        let q = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let folderId = folder.id
+        
+        self._addresses = Query(
+            filter: #Predicate<Address> { addr in
+                // Only non-archived
+                !addr.isArchived &&
+                // Must belong to the passed folder
+                addr.folder?.id == folderId &&
+                // Search filter (empty query allows all)
+                (
+                    q.isEmpty ||
+                    addr.name?.localizedStandardContains(q) ?? false ||
+                    addr.address.localizedStandardContains(q)
+                )
+            },
+            sort: [SortDescriptor(\Address.createdAt, order: .reverse)]
+        )
+    }
+    
+    var body: some View {
+        ForEach(addresses) { address in
+            AddressItemView(address: address)
+        }
     }
 }
