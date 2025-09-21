@@ -64,7 +64,6 @@ struct FolderPickerView: View {
                             .foregroundStyle(.gray)
                     }
                 }
-                .buttonStyle(.plain)
             }
             
             Section {

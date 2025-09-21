@@ -54,7 +54,7 @@ extension View {
             .padding(.bottom, 20)
             .frame(minHeight: 600)
 #else
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if DeviceType.isIpad {
             // Makiing it fit on iPadOS 18+ devices
             if #available(iOS 18, *) {
                 self
@@ -68,5 +68,27 @@ extension View {
             self
         }
 #endif
+    }
+    
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+    
+    @ViewBuilder
+    func navigationSubtitleIfAvailable(_ subtitle: String) -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            self.navigationSubtitle(subtitle)
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
     }
 }

@@ -110,7 +110,7 @@ struct AddressItemView: View {
     
     @ViewBuilder
     private func BuildDeleteButton(addTint: Bool = true) -> some View {
-        Button {
+        Button(role: .destructive) {
             addressesViewModel.showDeleteAddressAlert = true
             addressesViewModel.selectedAddForDeletion = address
         } label: {

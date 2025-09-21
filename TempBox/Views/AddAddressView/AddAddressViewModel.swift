@@ -84,8 +84,6 @@ class AddAddressViewModel: ObservableObject {
         selectedAuthMode == .create ? "Create" : "Login"
     }
     
-    init() { }
-    
     func loadDomains() async {
         do {
             let domainResponse = try await MailTMService.fetchDomains()
