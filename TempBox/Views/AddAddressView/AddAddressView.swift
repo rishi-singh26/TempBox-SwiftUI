@@ -19,39 +19,24 @@ struct AddAddressView: View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
         Group {
 #if os(iOS)
-            IOSAddAddressForm()
+            IOSAddAddressForm(accentColor)
 #else
             MacOSAddAddressForm()
 #endif
         }
-        .onChange(of: controller.selectedAuthMode, { _, newValue in
-            if newValue == .create {
-                withAnimation {
-                    controller.address = ""
-                    controller.shouldUseRandomPassword ? controller.generateRandomPass() : nil
-                }
-            } else {
-                withAnimation {
-                    controller.address = ""
-                    controller.password = ""
-                }
-            }
-        })
         .sheet(isPresented: $controller.showNewFolderForm) {
             NewFolderView()
                 .sheetAppearanceSetup(tint: accentColor)
         }
-        .onAppear(perform: {
-            Task {
-                try? await Task.sleep(for: .seconds(0.4))
-                await controller.loadDomains()
-            }
-        })
+        .task {
+            try? await Task.sleep(for: .seconds(0.4))
+            await controller.loadDomains()
+        }
     }
     
 #if os(iOS)
     @ViewBuilder
-    func IOSAddAddressForm() -> some View {
+    private func IOSAddAddressForm(_ accentColor: Color) -> some View {
         NavigationView {
             Form {
                 Section(footer: Text("Address name appears on the addresses list screen.")) {
@@ -70,25 +55,22 @@ struct AddAddressView: View {
             }
             .navigationTitle("Add Address")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", systemImage: "xmark") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .confirmationAction) {
                     if controller.isLoading {
                         ProgressView()
-                            .controlSize(.small)
                     } else {
-                        Button {
+                        Button(controller.submitBtnText, systemImage: "checkmark") {
                             Task {
                                 await handleSubmit()
                             }
-                        } label: {
-                            Text(controller.submitBtnText)
-                                .font(.headline)
                         }
+                        .tint(accentColor)
                     }
                 }
                 ToolbarItem(placement: .principal) {
@@ -172,12 +154,22 @@ struct AddAddressView: View {
 #if os(macOS)
     @ViewBuilder
     private func MacOSAddAddressForm() -> some View {
+        // using this authModeSelectionBinding binding because simply binding the "settingsViewModel.selectedExportType" gave error "Publishing changes from within view updates is not allowed, this will cause undefined behavior."
+        let authModeSelectionBinding = Binding {
+            controller.selectedAuthMode
+        } set: { newVal in
+            Task { @MainActor in
+                withAnimation {
+                    controller.selectedAuthMode = newVal
+                }
+            }
+        }
         VStack {
             HStack {
                 Text("Add Address")
                     .font(.title.bold())
                 Spacer()
-                Picker("", selection: $controller.selectedAuthMode.animation()) {
+                Picker("", selection: authModeSelectionBinding) {
                     ForEach(AuthTypes.allCases) { authType in
                         Text(authType.displayName).tag(authType)
                     }
@@ -197,15 +189,20 @@ struct AddAddressView: View {
                     }
                 }
                 
-                if controller.selectedAuthMode == .create {
-                    MacOSCreateBuilder()
-                } else {
-                    MacOSLoginBuilder()
+                ZStack {
+                    if controller.selectedAuthMode == .create {
+                        MacOSCreateBuilder()
+                            .transition(.blurReplace)
+                    } else {
+                        MacOSLoginBuilder()
+                            .transition(.blurReplace)
+                    }
                 }
                 
                 MacCustomSection {
                     FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
                 }
+                .padding(.bottom, controller.selectedAuthMode == .login ? 20 : 0)
                 
                 if controller.selectedAuthMode == .create {
                     HStack {
@@ -216,8 +213,8 @@ struct AddAddressView: View {
                         Text("The password once set can not be reset or changed.")
                     }
                     .padding(.vertical, 20)
+                    .transition(.opacity)
                 }
-                
             }
         }
         .toolbar {
@@ -314,7 +311,6 @@ struct AddAddressView: View {
                     .textFieldStyle(.roundedBorder)
             }
         }
-        .padding(.bottom, 20)
     }
 #endif
     

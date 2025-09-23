@@ -10,15 +10,17 @@ import SwiftUI
 
 struct AddColorView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
+    
+    @EnvironmentObject private var appController: AppController
     
     @State private var newColorName: String = ""
     @State private var lightColor: Color = .white
     @State private var darkColor: Color = .black
     @State private var useSameColor: Bool = false
-    
-    var onColorSelect: (AccentColorData) -> Void
-    
+        
     var body: some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
         NavigationView {
             Form {
                 TextField("Color name", text: $newColorName)
@@ -38,13 +40,13 @@ struct AddColorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("Cancel", systemImage: "xmark") {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        onColorSelect(AccentColorData(
+                    Button("Save", systemImage: "checkmark") {
+                        addNewCustomColor(AccentColorData(
                             id: UUID().uuidString,
                             name: newColorName,
                             light: lightColor,
@@ -52,13 +54,18 @@ struct AddColorView: View {
                         ))
                         dismiss()
                     }
+                    .tint(accentColor)
                     .disabled(isInValidInput)
                 }
             }
         }
     }
     
-    var isInValidInput: Bool {
+    private func addNewCustomColor(_ newColor: AccentColorData) {
+        appController.addCustomColor(newColor)
+    }
+    
+    private var isInValidInput: Bool {
         if useSameColor {
             return newColorName.isEmpty || lightColor == .white
         } else {
@@ -68,11 +75,6 @@ struct AddColorView: View {
 }
 
 #Preview {
-    AddColorView { newColor in
-        print(newColor.id)
-        print(newColor.name)
-        print(newColor.light.toHex() ?? "")
-        print(newColor.dark.toHex() ?? "")
-    }
+    AddColorView()
 }
 #endif

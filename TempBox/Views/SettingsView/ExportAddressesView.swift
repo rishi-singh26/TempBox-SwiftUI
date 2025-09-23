@@ -97,16 +97,26 @@ struct ExportAddressesView: View {
 #if os(macOS)
     @ViewBuilder
     func MacOSView() -> some View {
+        // using this exportTypeSelectionBinding binding because simply binding the "settingsViewModel.selectedExportType" gave error "Publishing changes from within view updates is not allowed, this will cause undefined behavior."
+        let exportTypeSelectionBinding = Binding {
+            settingsViewModel.selectedExportType
+        } set: { newVal in
+            Task { @MainActor in
+                settingsViewModel.selectedExportType = newVal
+            }
+        }
+
         VStack(alignment: .leading) {
             MacCustomSection {
                 HStack {
                     Text("Export Type")
                     Spacer()
-                    Picker("", selection: $settingsViewModel.selectedExportType) {
+                    Picker("", selection: exportTypeSelectionBinding) {
                         ForEach(ExportTypes.allCases) { exportType in
                             Text(exportType.displayName).tag(exportType)
                         }
                     }
+                    .labelsHidden()
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 250)
                 }

@@ -10,6 +10,9 @@ import SwiftUI
 struct NewFolderView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
+    
+    @EnvironmentObject private var appController: AppController
     
     @State private var folderName: String = ""
     @FocusState private var isTextFieldFocused: Bool
@@ -24,9 +27,10 @@ struct NewFolderView: View {
     }
 
     var body: some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
         Group {
 #if os(iOS)
-            IOSNewFolder()
+            IOSNewFolder(accentColor)
 #elseif os(macOS)
             MacOSNewFolder()
 #endif
@@ -38,7 +42,7 @@ struct NewFolderView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IOSNewFolder() -> some View {
+    func IOSNewFolder(_ accentColor: Color) -> some View {
         NavigationView {
             Form {
                 Section {
@@ -52,20 +56,17 @@ struct NewFolderView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("Cancel", systemImage: "xmark") {
                         dismiss()
                     }
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button {
+                    Button("Create", systemImage: "checkmark") {
                         createFolder()
-                    } label: {
-                        Text("Create")
-                            .font(.headline)
                     }
+                    .tint(accentColor)
                     .disabled(folderName.isEmpty)
-
                 }
             }
         }

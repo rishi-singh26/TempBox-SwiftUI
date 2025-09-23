@@ -85,11 +85,13 @@ struct QuickAddressView: View {
                 }
             }
             .navigationTitle("Quick Address")
-            .toolbar {ToolbarItem(placement: .confirmationAction) {
-                Button("Done", systemImage: "checkmark") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", systemImage: "checkmark") {
+                        dismiss()
+                    }
+                    .tint(accentColor)
                 }
-            }
             }
         }
         .accentColor(accentColor)

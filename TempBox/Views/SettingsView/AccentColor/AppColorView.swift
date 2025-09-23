@@ -40,7 +40,7 @@ struct AppColorView: View {
         .navigationTitle("Accent Color")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddColorSheet) {
-            AddColorView(onColorSelect: addNewCustomColor)
+            AddColorView()
                 .sheetAppearanceSetup(tint: appController.accentColor(colorScheme: colorScheme))
         }
         .alert("Alert!", isPresented: $showTipJarAlert) {
@@ -150,10 +150,6 @@ struct AppColorView: View {
     
     private func openAddColorSheet() {
         showAddColorSheet = true
-    }
-    
-    private func addNewCustomColor(newColor: AccentColorData) {
-        appController.addCustomColor(newColor)
     }
     
     private func editColor(color: AccentColorData) {}

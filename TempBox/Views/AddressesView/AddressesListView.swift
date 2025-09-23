@@ -95,7 +95,8 @@ struct AddressesListView: View {
                 addressesController.showUnifiedInbox ? emptyAddress : addressesController.selectedAddress
             },
             set: { newVal in
-                DispatchQueue.main.async {
+                // AddressesController is @MainActor; update on main actor without DispatchQueue.
+                Task { @MainActor in
                     addressesController.selectedAddress = newVal
                     addressesController.showUnifiedInbox = newVal?.id == KUnifiedInboxId
                 }
@@ -215,7 +216,10 @@ struct FolderAddressesView: View {
     
     var body: some View {
         ForEach(addresses) { address in
-            AddressItemView(address: address)
+            NavigationLink(value: address) {
+                AddressItemView(address: address)
+            }
         }
     }
 }
+

@@ -60,13 +60,15 @@ struct UnifiedMessagesView: View {
         } message: {
             Text("Are you sure you want to delete this message?")
         }
-        .searchable(text: $controller.searchText)
         .navigationTitle("All Inboxes")
+#if os(iOS)
+        .searchable(text: $controller.searchText)
         .refreshable {
             Task {
                 await addressesController.fetchAddresses()
             }
         }
+#endif
     }
     
     @ViewBuilder
