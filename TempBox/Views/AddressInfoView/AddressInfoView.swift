@@ -242,6 +242,7 @@ struct AddressInfoView: View {
         let addressNameBinding = Binding<String> {
             addressName
         } set: { newName in
+            guard !newName.isEmpty else { return }
             addressName = newName
             address.name = newName
         }

@@ -160,14 +160,28 @@ struct AddressesListView: View {
     @ViewBuilder
     private func FolderTile(folder: Folder) -> some View {
         Label(folder.name, systemImage: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
-            .swipeActions {
+            .swipeActions(edge: .trailing) {
                 Button(role: .destructive) {
                     deleteFolder(folder)
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
             }
+            .swipeActions(edge: .leading) {
+                Button {
+                    folderInfo(folder)
+                } label: {
+                    Label("Info", systemImage: "info.square")
+                }
+                .tint(.yellow)
+            }
             .contextMenu {
+                Button {
+                    folderInfo(folder)
+                } label: {
+                    Label("Info", systemImage: "info.square")
+                }
+                Divider()
                 Button(role: .destructive) {
                     deleteFolder(folder)
                 } label: {
@@ -181,10 +195,15 @@ struct AddressesListView: View {
         modelContext.delete(folder)
         try? modelContext.save()
     }
+    
+    private func folderInfo(_ folder: Folder) {
+        addressesViewModel.selectedFolderForInfoSheet = folder
+        addressesViewModel.isFolderInfoSheetOpen = true
+    }
 }
 
 
-struct FolderAddressesView: View {
+private struct FolderAddressesView: View {
     var searchQuery: String = ""
     var folder: Folder
     

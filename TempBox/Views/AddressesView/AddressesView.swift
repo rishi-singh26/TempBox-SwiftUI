@@ -49,6 +49,12 @@ struct AddressesView: View {
                         .sheetAppearanceSetup(tint: accentColor)
                 }
             }
+            .sheet(isPresented: $addressesViewModel.isFolderInfoSheetOpen) {
+                if let selected = addressesViewModel.selectedFolderForInfoSheet {
+                    FolderInfoView(folder: selected)
+                        .sheetAppearanceSetup(tint: accentColor)
+                }
+            }
             .sheet(isPresented: $addressesViewModel.showSettingsSheet) {
                 SettingsView()
                     .sheetAppearanceSetup(tint: accentColor)

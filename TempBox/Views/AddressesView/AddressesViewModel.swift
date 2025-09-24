@@ -27,6 +27,9 @@ class AddressesViewModel: ObservableObject {
     @Published var isAddressInfoSheetOpen = false
     var selectedAddForInfoSheet: Address?
     
+    @Published var isFolderInfoSheetOpen = false
+    var selectedFolderForInfoSheet: Folder?
+    
     @Published var showSettingsSheet = false
     
     func openNewAddressSheet() {
