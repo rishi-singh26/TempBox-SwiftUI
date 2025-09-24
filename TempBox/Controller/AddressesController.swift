@@ -167,6 +167,7 @@ class AddressesController: ObservableObject {
         do {
             let messages = try await MailTMService.fetchMessages(token: token)
             self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messages))
+            self.updateMessageIdToAddIdMap(messages, address)
         } catch {
             self.updateMessageStore(
                 for: address,

@@ -234,9 +234,15 @@ private struct FolderAddressesView: View {
     }
     
     var body: some View {
-        ForEach(addresses) { address in
-            NavigationLink(value: address) {
+        if DeviceType.isIphone {
+            ForEach(addresses) { address in
                 AddressItemView(address: address)
+            }
+        } else {
+            ForEach(addresses) { address in
+                NavigationLink(value: address) {
+                    AddressItemView(address: address)
+                }
             }
         }
     }
