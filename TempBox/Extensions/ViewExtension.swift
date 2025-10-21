@@ -28,9 +28,19 @@ extension View {
     
     @ViewBuilder
     func sheetAppearanceSetup(tint: Color) -> some View {
-        self
-            .accentColor(tint)
-            .presentationCornerRadius(25)
+        // Always apply tint/accent
+        let base = self.accentColor(tint)
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            // Do not apply corner radius on iOS 26+
+            base
+        } else {
+            base.presentationCornerRadius(25)
+        }
+        #else
+        // On other platforms, keep the existing behavior
+        base.presentationCornerRadius(25)
+        #endif
     }
     
     
