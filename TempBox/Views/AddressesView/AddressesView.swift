@@ -22,6 +22,14 @@ struct AddressesView: View {
         // Ensure the toolbar itself only exists on iOS 18+
             .modifier(IOS18BottomToolbarModifier())
             .toolbar(content: SettingsButton)
+            .refreshable {
+                Task {
+                    await addressesController.fetchAddresses()
+                }
+            }
+            .navigationTitle("TempBox")
+            .navigationSubtitleIfAvailable("Powered by mail.tm")
+            .searchable(text: $addressesViewModel.searchText)
             .sheet(isPresented: $addressesViewModel.isQuickAddressSheetOpen) {
                 QuickAddressView()
                     .sheetAppearanceSetup(tint: accentColor)
@@ -34,14 +42,6 @@ struct AddressesView: View {
             .sheet(isPresented: $addressesViewModel.isNewFolderSheetOpen) {
                 NewFolderView()
                     .sheetAppearanceSetup(tint: accentColor)
-            }
-            .navigationTitle("TempBox")
-            .navigationSubtitleIfAvailable("Powered by mail.tm")
-            .searchable(text: $addressesViewModel.searchText)
-            .refreshable {
-                Task {
-                    await addressesController.fetchAddresses()
-                }
             }
             .sheet(isPresented: $addressesViewModel.isAddressInfoSheetOpen) {
                 if let selected = addressesViewModel.selectedAddForInfoSheet {

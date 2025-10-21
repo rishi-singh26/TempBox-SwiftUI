@@ -15,14 +15,6 @@ struct OnboardingCard: Identifiable {
     var subTitle: String
 }
 
-/// Onboarding card result builder
-@resultBuilder
-struct OnboardingCardResultBuilder {
-    static func buildBlock(_ components: OnboardingCard...) -> [OnboardingCard] {
-        components.compactMap{ $0 }
-    }
-}
-
 struct OnboardingView: View {
     var tint: Color
     var onContinue: () -> ()
@@ -45,11 +37,9 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             ScrollView(.vertical) {
                 VStack(alignment: .leading, spacing: 20) {
-                    Image(systemName: "envelope.fill")
-                        .font(.system(size: 50))
+                    Image("PresentableIcon")
+                        .resizable()
                         .frame(width: 100, height: 100)
-                        .foregroundStyle(.white)
-                        .background(tint.gradient, in: .rect(cornerRadius: 25))
                         .frame(height: 180)
                         .frame(maxWidth: .infinity)
                         .blurSlide(animateIcon)
