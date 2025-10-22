@@ -158,15 +158,6 @@ class SettingsViewModel: ObservableObject {
     @Published var showDeleteFolderConf: Bool = false
     
     
-    // MARK: - About page properties
-    @Published var showLinkOpenConfirmation: Bool = false
-    @Published var linkToOpen: String = ""
-    func showLinkConfirmation(url: String) {
-        linkToOpen = url
-        showLinkOpenConfirmation.toggle()
-    }
-    
-    
     // MARK: - Error handelling properties
     @Published var errorMessage: String = ""
     @Published var showErrorAlert: Bool = false
