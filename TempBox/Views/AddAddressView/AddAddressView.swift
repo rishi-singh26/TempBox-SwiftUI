@@ -6,114 +6,122 @@
 //
 
 import SwiftUI
-#if os(iOS)
-import SwiftData
-#endif
 
 struct AddAddressView: View {
-#if os(iOS)
-    var cancel: () -> Void
-    var dismiss: () -> Void
-    
-    @FocusState private var addressNameFocus: Bool
-    @FocusState private var addressFocus: Bool
-    @FocusState private var passwordFocus: Bool
-#elseif os(macOS)
     @Environment(\.dismiss) var dismiss
-#endif
-    
     @Environment(\.colorScheme) var colorScheme
     
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var appController: AppController
     @StateObject var controller = AddAddressViewModel()
     
-#if os(iOS)
-    @Query(sort: [SortDescriptor(\Folder.name, order: .forward)])
-    private var folders: [Folder]
-#endif
-    
     var body: some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
         Group {
 #if os(iOS)
-            IOSAddAddressForm()
+            IOSAddAddressForm(accentColor)
 #else
             MacOSAddAddressForm()
 #endif
         }
-        .onAppear(perform: {
-            Task {
-                try? await Task.sleep(for: .seconds(0.4))
-                await controller.loadDomains()
-            }
-        })
         .sheet(isPresented: $controller.showNewFolderForm) {
             NewFolderView()
                 .sheetAppearanceSetup(tint: accentColor)
+        }
+        .task {
+            try? await Task.sleep(for: .seconds(0.4))
+            await controller.loadDomains()
         }
     }
     
 #if os(iOS)
     @ViewBuilder
-    func IOSAddAddressForm() -> some View {
-        let accentColor = appController.accentColor(colorScheme: colorScheme)
-        VStack(spacing: 0) {
-//            Text("Add Address")
-//                .font(.headline)
-//                .fontWeight(.semibold)
-            BuildHeader(accentColor: accentColor)
-            List {
-                AddressNameInputBuilder()
-                
-                if controller.showErrorAlert {
-                    BuildErrorSection()
+    private func IOSAddAddressForm(_ accentColor: Color) -> some View {
+        NavigationView {
+            Form {
+                Section(footer: Text("Address name appears on the addresses list screen.")) {
+                    TextField("Address name (Optional)", text: $controller.addressName)
                 }
                 
-                switch controller.selectedAuthMode {
-                case .create:
-                    IOSCreateBuilder(accentColor: accentColor)
-                case .login:
-                    IOSLoginBuilder(accentColor: accentColor)
+                Group {
+                    switch controller.selectedAuthMode {
+                    case .create:
+                        IOSCreateBuilder()
+                    case .login:
+                        IOSLoginBuilder()
+                    }
                 }
+                .compositingGroup()
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
+            .navigationTitle("Add Address")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", systemImage: "xmark") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    if controller.isLoading {
+                        ProgressView()
+                    } else {
+                        Button(controller.submitBtnText, systemImage: "checkmark") {
+                            Task {
+                                await handleSubmit()
+                            }
+                        }
+                        .tint(accentColor)
+                    }
+                }
+                ToolbarItem(placement: .principal) {
+                    Picker("Select auth mode", selection: $controller.selectedAuthMode.animation(.bouncy)) {
+                        ForEach(AuthTypes.allCases) { authType in
+                            Text(authType.displayName).tag(authType)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 170)
+                }
+                
+            }
+            .alert(isPresented: $controller.showErrorAlert) {
+                Alert(title: Text("Alert!"), message: Text(controller.errorMessage))
+            }
         }
     }
     
     @ViewBuilder
-    private func IOSCreateBuilder(accentColor: Color) -> some View {
-        Section {
-            TextField("Address", text: $controller.address)
-                .autocapitalization(.none)
-                .focused($addressFocus)
-            
-            Button("Random address", action: controller.generateRandomAddress)
-            .foregroundStyle(accentColor)
-            .help("Generate random address")
-            
-            Picker("Select Domain", selection: $controller.selectedDomain) {
-                ForEach(controller.domains, id: \.self) { domain in
-                    Text(domain.domain)
+    private func IOSCreateBuilder() -> some View {
+        Group {
+            Section {
+                Picker(selection: $controller.selectedDomain) {
+                    ForEach(controller.domains, id: \.self) { domain in
+                        Text(domain.domain)
+                    }
+                } label: {
+                    TextField("Address", text: $controller.address)
+                        .autocapitalization(.none)
                 }
-            }
-        }.customListStyle()
-        
-        Section {
-            if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
-                SecureField("Password", text: $controller.password)
-                    .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
-                    .autocorrectionDisabled(true)
-                    .focused($passwordFocus)
+                Button("Random address") {
+                    controller.generateRandomAddress()
+                }
+                .help("Generate random address")
             }
             
-            Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
-        }.customListStyle()
-        
-        FolderPickerBuilder(accentColor: accentColor)
-        
-        Section {
+            Section {
+                if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
+                    SecureField("Password", text: $controller.password)
+                        .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
+                        .autocorrectionDisabled(true)
+                }
+                
+                Toggle("Use random password", isOn: $controller.shouldUseRandomPassword.animation())
+            }
+            
+            Section {
+                FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
+            }
+            
             HStack {
                 Image(systemName: "info.square.fill")
                     .font(.title2)
@@ -121,141 +129,47 @@ struct AddAddressView: View {
                     .background(RoundedRectangle(cornerRadius: 5).fill(.white))
                 Text("The password once set can not be reset or changed.")
             }
-        }.yellowListStyle()
+            .listRowBackground(Color.yellow.opacity(0.2))
+        }
     }
     
     @ViewBuilder
-    private func IOSLoginBuilder(accentColor: Color) -> some View {
+    private func IOSLoginBuilder() -> some View {
         Section {
             TextField("Email", text: $controller.address)
                 .keyboardType(.emailAddress)
-                .focused($addressFocus)
             if !controller.shouldUseRandomPassword || controller.selectedAuthMode == .login {
                 SecureField("Password", text: $controller.password)
                     .keyboardType(.asciiCapable) // This avoids suggestions bar on the keyboard.
                     .autocorrectionDisabled(true)
-                    .focused($passwordFocus)
             }
-        }.customListStyle()
+        }
         
-        FolderPickerBuilder(accentColor: accentColor)
-    }
-    
-    @ViewBuilder
-    private func BuildHeader(accentColor: Color) -> some View {
-        HStack(alignment: .center) {
-            Button("Cancel", action: handleCancel)
-                .foregroundStyle(accentColor)
-                .frame(width: 60)
-            Spacer(minLength: 0)
-            AuthModeBuilder()
-            Spacer(minLength: 0)
-            Group {
-                if controller.isLoading {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Button {
-                        Task {
-                            await handleSubmitIOS()
-                        }
-                    } label: {
-                        Text(controller.submitBtnText)
-                            .fontWeight(.bold)
-                            .foregroundStyle(accentColor)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .frame(width: 60)
+        Section {
+            FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 25)
-    }
-    
-    @ViewBuilder
-    private func AuthModeBuilder() -> some View {
-        Picker("Select auth mode", selection: $controller.selectedAuthMode.animation(.bouncy)) {
-            ForEach(AuthTypes.allCases) { authType in
-                Text(authType.displayName).tag(authType)
-            }
-        }
-        .pickerStyle(.segmented)
-        .frame(width: 150)
-    }
-    
-    @ViewBuilder
-    private func AddressNameInputBuilder() -> some View {
-        Section {
-            TextField("Address name (Optional)", text: $controller.addressName)
-                .focused($addressNameFocus)
-        } footer: {
-            Text("Address name appears on the addresses list screen.")
-                .font(.caption)
-        }.customListStyle()
-    }
-    
-    @ViewBuilder
-    private func BuildErrorSection() -> some View {
-        Section {
-            HStack {
-                Text(controller.errorMessage)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                Spacer()
-                
-                Button(action: controller.hideError) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.gray)
-                }
-                .buttonStyle(.plain)
-            }
-        }.customListStyle()
-    }
-    
-    @ViewBuilder
-    private func FolderPickerBuilder(accentColor: Color) -> some View {
-        Section {
-            Picker("Select Folder", selection: $controller.selectedFolder) {
-                Text("No Folder")
-                    .tag(nil as Folder?)
-                ForEach(folders) { folder in
-                    Text(folder.name)
-                        .tag(folder)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(accentColor)
-        }.customListStyle()
-    }
-    
-    private func resetFocusState() {
-        addressNameFocus = false
-        addressFocus = false
-        passwordFocus = false
-    }
-    
-    private func handleCancel() {
-        resetFocusState()
-        cancel()
-    }
-    
-    private func handleSubmitIOS() async {
-        resetFocusState()
-        await handleSubmit()
     }
 #endif
     
 #if os(macOS)
     @ViewBuilder
     private func MacOSAddAddressForm() -> some View {
+        // using this authModeSelectionBinding binding because simply binding the "settingsViewModel.selectedExportType" gave error "Publishing changes from within view updates is not allowed, this will cause undefined behavior."
+        let authModeSelectionBinding = Binding {
+            controller.selectedAuthMode
+        } set: { newVal in
+            Task { @MainActor in
+                withAnimation {
+                    controller.selectedAuthMode = newVal
+                }
+            }
+        }
         VStack {
             HStack {
                 Text("Add Address")
                     .font(.title.bold())
                 Spacer()
-                Picker("", selection: $controller.selectedAuthMode.animation()) {
+                Picker("", selection: authModeSelectionBinding) {
                     ForEach(AuthTypes.allCases) { authType in
                         Text(authType.displayName).tag(authType)
                     }
@@ -275,16 +189,20 @@ struct AddAddressView: View {
                     }
                 }
                 
-                if controller.selectedAuthMode == .create {
-                    MacOSCreateBuilder()
-                } else {
-                    MacOSLoginBuilder()
+                ZStack {
+                    if controller.selectedAuthMode == .create {
+                        MacOSCreateBuilder()
+                            .transition(.blurReplace)
+                    } else {
+                        MacOSLoginBuilder()
+                            .transition(.blurReplace)
+                    }
                 }
                 
                 MacCustomSection {
                     FolderPickerView(selectedFolder: $controller.selectedFolder, showAddFolder: $controller.showNewFolderForm)
                 }
-                .padding(.bottom, controller.selectedAuthMode == .create ? 0 : 20)
+                .padding(.bottom, controller.selectedAuthMode == .login ? 20 : 0)
                 
                 if controller.selectedAuthMode == .create {
                     HStack {
@@ -295,8 +213,8 @@ struct AddAddressView: View {
                         Text("The password once set can not be reset or changed.")
                     }
                     .padding(.vertical, 20)
+                    .transition(.opacity)
                 }
-                
             }
         }
         .toolbar {
@@ -393,7 +311,6 @@ struct AddAddressView: View {
                     .textFieldStyle(.roundedBorder)
             }
         }
-        .padding(.bottom, 20)
     }
 #endif
     
@@ -424,7 +341,8 @@ struct AddAddressView: View {
             )
             dismiss()
         } catch {
-            controller.showError(with: error.localizedDescription)
+            controller.errorMessage = error.localizedDescription
+            controller.showErrorAlert = true
         }
     }
     
@@ -446,7 +364,8 @@ struct AddAddressView: View {
             )
             dismiss()
         } catch {
-            controller.showError(with: error.localizedDescription)
+            controller.errorMessage = error.localizedDescription
+            controller.showErrorAlert = true
         }
     }
     
@@ -454,30 +373,12 @@ struct AddAddressView: View {
         // check if the address is a new address
         let (isUnique, isArchived) = addressesController.isAddressUnique(email: controller.getEmail())
         guard isUnique else {
-            controller.showError(with: isArchived
-                                 ? "This address has already been added and is present in the archived addresses section in settings."
-                                 : "This site has already been added.")
+            controller.errorMessage = isArchived
+                ? "This address has already been added and is present in the archived addresses section in settings."
+                : "This site has already been added."
+            controller.showErrorAlert = true
             return false
         }
         return true
     }
 }
-
-#if os(iOS)
-fileprivate extension View {
-    @ViewBuilder
-    func customListStyle() -> some View {
-        self
-            .listRowSpacing(15)
-            .listSectionSpacing(15)
-    }
-    
-    @ViewBuilder
-    func yellowListStyle() -> some View {
-        self
-            .listRowBackground(Color.yellow.opacity(0.2))
-            .listRowSpacing(15)
-            .listSectionSpacing(15)
-    }
-}
-#endif

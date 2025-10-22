@@ -13,7 +13,6 @@ struct SettingsView: View {
     @EnvironmentObject private var appController: AppController
     @EnvironmentObject private var iapManager: IAPManager
     
-    @Environment(\.openURL) var openURL
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     
@@ -49,16 +48,6 @@ struct SettingsView: View {
         }, message: {
             Text("Are you sure you want to delete selected address\(settingsViewModel.selectedArchivedAddresses.count < 2 ? "" : "s")? This action is irreversible. Ones deleted, this address and the associated messages can not be restored.")
         })
-        .alert("Open Link?", isPresented: $settingsViewModel.showLinkOpenConfirmation) {
-            Button("Cancel", role: .cancel) {}
-            Button("Open", role: .destructive) {
-                if let url = URL(string: settingsViewModel.linkToOpen) {
-                    openURL(url)
-                }
-            }
-        } message: {
-            Text(settingsViewModel.linkToOpen)
-        }
         .alert("Alert", isPresented: $settingsViewModel.showErrorAlert) {
             Button("OK", role: .cancel) {}
         } message: {

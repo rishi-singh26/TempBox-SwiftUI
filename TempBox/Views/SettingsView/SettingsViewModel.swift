@@ -50,7 +50,7 @@ class SettingsViewModel: ObservableObject {
     func getV1Addresses(addresses: [Address]) -> [ExportVersionOneAddress] {
         return (v1ImportData?.addresses ?? []).filter { address in
             let idMatches = addresses.first(where: { existingAddress in
-                address.id == existingAddress.id && !existingAddress.isDeleted
+                (address.id == existingAddress.id || address.authenticatedUser.account.address == existingAddress.address) && !existingAddress.isDeleted
             })
             return idMatches == nil
         }
@@ -60,7 +60,7 @@ class SettingsViewModel: ObservableObject {
     func getV2Addresses(addresses: [Address]) -> [ExportVersionTwoAddress] {
         return (v2ImportData?.addresses ?? []).filter { address in
             let idMatches = addresses.first(where: { existingAddress in
-                address.id == existingAddress.id && !existingAddress.isDeleted
+                (address.id == existingAddress.id || address.email == existingAddress.address) && !existingAddress.isDeleted
             })
             return idMatches == nil
         }
@@ -85,7 +85,6 @@ class SettingsViewModel: ObservableObject {
     // MARK: - Export page properties
     @Published var selectedExportAddresses: Set<Address> = []
     @Published var selectedExportType: ExportTypes = .encoded
-    @Published var showExportTypePicker: Bool = false
     
     @Published var textFileDocument = TextFileDocument(text: "Hello World!")
     @Published var isExportingTextFile: Bool = false
@@ -157,15 +156,6 @@ class SettingsViewModel: ObservableObject {
     // MARK: - Archive page properties
     @Published var selectedFolder: Folder? = nil
     @Published var showDeleteFolderConf: Bool = false
-    
-    
-    // MARK: - About page properties
-    @Published var showLinkOpenConfirmation: Bool = false
-    @Published var linkToOpen: String = ""
-    func showLinkConfirmation(url: String) {
-        linkToOpen = url
-        showLinkOpenConfirmation.toggle()
-    }
     
     
     // MARK: - Error handelling properties

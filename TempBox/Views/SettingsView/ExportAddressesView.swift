@@ -11,10 +11,7 @@ import SwiftData
 struct ExportAddressesView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @EnvironmentObject private var addressesController: AddressesController
-    @EnvironmentObject private var appController: AppController
-    
-    @Environment(\.colorScheme) private var colorScheme
-    
+        
     @State private var showExportAlert: Bool = false
     
     @Query(filter: #Predicate<Address> { !$0.isArchived }, sort: [SortDescriptor(\Address.createdAt, order: .reverse)])
@@ -42,7 +39,6 @@ struct ExportAddressesView: View {
 #if os(iOS)
     @ViewBuilder
     func IOSView() -> some View {
-        let accentColor = appController.accentColor(colorScheme: colorScheme)
         List(addresses, id: \.self, selection: $settingsViewModel.selectedExportAddresses) { address in
             HStack {
                 VStack(alignment: .leading) {
@@ -60,12 +56,20 @@ struct ExportAddressesView: View {
         }
         .environment(\.editMode, .constant(.active))
         .toolbar {
-            Button {
-                settingsViewModel.showExportTypePicker = true
+            Menu {
+                Text("Choose Export Type")
+                    .disabled(true)
+                    .font(.caption)
+                Divider()
+                ForEach(ExportTypes.allCases) { type in
+                    Button {
+                        settingsViewModel.selectedExportType = type
+                    } label: {
+                        Label(type.displayName, systemImage: type.symbol)
+                    }
+                }
             } label: {
-                Text(settingsViewModel.selectedExportType.displayName)
-                    .contentTransition(.numericText())
-                    .frame(minWidth: 80)
+                Label(settingsViewModel.selectedExportType.displayName, systemImage: settingsViewModel.selectedExportType.symbol)
             }
         }
         .toolbar(content: {
@@ -87,101 +91,32 @@ struct ExportAddressesView: View {
         .background(content: {
             ExporterView()
         })
-        .systemTrayView($settingsViewModel.showExportTypePicker) {
-            ExportTypePicker(accentColor: accentColor)
-        }
-    }
-    
-    @ViewBuilder
-    private func ExportTypePicker(accentColor: Color) -> some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 12) {
-                HStack {
-                    Text("Choose Export Type")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                    
-                    Spacer(minLength: 0)
-                    
-                    Button {
-                        settingsViewModel.showExportTypePicker = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(Color.gray, Color.primary.opacity(0.1))
-                    }
-                }
-                .padding(.bottom, 25)
-                
-                VStack(alignment: .leading) {
-                    Text(settingsViewModel.selectedExportType.description)
-                        .multilineTextAlignment(.leading)
-                        .transition(.blurReplace)
-                        .padding(20)
-                }
-                .frame(maxWidth: .infinity)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 25))
-                .padding(.bottom, 25)
-                
-                ForEach(ExportTypes.allCases) { exportType in
-                    let isSelected: Bool = exportType == settingsViewModel.selectedExportType
-                    
-                    HStack(spacing: 10) {
-//                        Label(exportType.displayName, systemImage: exportType.symbol)
-                        Image(systemName: exportType.symbol)
-                            .frame(width: 40)
-                        
-                        Text(exportType.displayName)
-                        
-                        Spacer()
-                        
-                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle.fill")
-                            .font(.title3)
-                            .contentTransition(.symbolEffect)
-                            .foregroundStyle(isSelected ? accentColor : Color.gray.opacity(0.2))
-                    }
-                    .padding(.vertical, 6)
-                    .contentShape(.rect)
-                    .onTapGesture {
-                        if !isSelected {
-                            withAnimation(.bouncy) {
-                                settingsViewModel.selectedExportType = exportType
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Continue button
-            Button {
-                settingsViewModel.showExportTypePicker = false
-            } label: {
-                Text("Continue")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
-                    .foregroundStyle(.white)
-                    .background(accentColor, in: .capsule)
-            }
-            .padding(.top, 15)
-        }
-        .padding(20)
     }
 #endif
     
 #if os(macOS)
     @ViewBuilder
     func MacOSView() -> some View {
+        // using this exportTypeSelectionBinding binding because simply binding the "settingsViewModel.selectedExportType" gave error "Publishing changes from within view updates is not allowed, this will cause undefined behavior."
+        let exportTypeSelectionBinding = Binding {
+            settingsViewModel.selectedExportType
+        } set: { newVal in
+            Task { @MainActor in
+                settingsViewModel.selectedExportType = newVal
+            }
+        }
+
         VStack(alignment: .leading) {
             MacCustomSection {
                 HStack {
                     Text("Export Type")
                     Spacer()
-                    Picker("", selection: $settingsViewModel.selectedExportType) {
+                    Picker("", selection: exportTypeSelectionBinding) {
                         ForEach(ExportTypes.allCases) { exportType in
                             Text(exportType.displayName).tag(exportType)
                         }
                     }
+                    .labelsHidden()
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 250)
                 }

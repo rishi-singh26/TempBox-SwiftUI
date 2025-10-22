@@ -57,10 +57,8 @@ class AddAddressViewModel: ObservableObject {
         }
     }
     func hideError() {
-        withAnimation {
-            errorMessage = ""
-            showErrorAlert = false
-        }
+        errorMessage = ""
+        showErrorAlert = false
     }
     
     // MARK: Create Address properties
@@ -70,12 +68,14 @@ class AddAddressViewModel: ObservableObject {
     // MARK: - Add address or Login
     @Published var selectedAuthMode: AuthTypes = .create {
         didSet {
-            address = ""
-            hideError()
-            if selectedAuthMode == .create {
-                shouldUseRandomPassword ? generateRandomPass() : nil
-            } else {
-                password = ""
+            Task { @MainActor in
+                address = ""
+                hideError()
+                if selectedAuthMode == .create {
+                    shouldUseRandomPassword ? generateRandomPass() : nil
+                } else {
+                    password = ""
+                }
             }
         }
     }
@@ -83,8 +83,6 @@ class AddAddressViewModel: ObservableObject {
     var submitBtnText: String {
         selectedAuthMode == .create ? "Create" : "Login"
     }
-    
-    init() { }
     
     func loadDomains() async {
         do {

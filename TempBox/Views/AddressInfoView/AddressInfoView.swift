@@ -110,20 +110,17 @@ struct AddressInfoView: View {
             .navigationTitle(addressNameBinding)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", systemImage: "xmark") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
                     ShareLink(item: """
                               Login using the details below in TempBox application or at https://mail.tm website.
                               Email: \(address.address)
                               Password: \(address.password)
                               """)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Done")
-                            .font(.headline)
-                    }
                 }
             }
         }
@@ -245,6 +242,7 @@ struct AddressInfoView: View {
         let addressNameBinding = Binding<String> {
             addressName
         } set: { newName in
+            guard !newName.isEmpty else { return }
             addressName = newName
             address.name = newName
         }

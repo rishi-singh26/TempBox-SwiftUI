@@ -27,44 +27,52 @@ struct ImportAddressesView: View {
     @ViewBuilder
     func IOSView() -> some View {
         Group {
-            if settingsViewModel.importDataVersion == ExportVersionOne.staticVersion {
-                List(
-                    settingsViewModel.getV1Addresses(addresses: addresses),
-                    id: \.self,
-                    selection: $settingsViewModel.selectedV1Addresses
-                ) { address in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(address.addressName.isEmpty ? address.authenticatedUser.account.address : address.addressName)
-                            Text(address.addressName.isEmpty ? "" : address.authenticatedUser.account.address)
-                                .font(.caption.bold())
-                            if let safeErrMess = settingsViewModel.errorDict[address.id] {
-                                Text(safeErrMess)
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.red)
+            if settingsViewModel.importDataVersion != nil {
+                if settingsViewModel.importDataVersion == ExportVersionOne.staticVersion {
+                    let v1Addresses = settingsViewModel.getV1Addresses(addresses: addresses)
+                    if v1Addresses.isEmpty {} else {
+                        List(
+                            v1Addresses,
+                            id: \.self,
+                            selection: $settingsViewModel.selectedV1Addresses
+                        ) { address in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(address.addressName.isEmpty ? address.authenticatedUser.account.address : address.addressName)
+                                    Text(address.addressName.isEmpty ? "" : address.authenticatedUser.account.address)
+                                        .font(.caption.bold())
+                                    if let safeErrMess = settingsViewModel.errorDict[address.id] {
+                                        Text(safeErrMess)
+                                            .font(.caption.bold())
+                                            .foregroundStyle(.red)
+                                    }
+                                }
+                                Spacer()
                             }
                         }
-                        Spacer()
                     }
-                }
-            } else if settingsViewModel.importDataVersion == ExportVersionTwo.staticVersion {
-                List(
-                    settingsViewModel.getV2Addresses(addresses: addresses),
-                    id: \.self,
-                    selection: $settingsViewModel.selectedV2Addresses
-                ) { address in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(address.ifNameElseAddress)
-                            Text(address.ifNameThenAddress)
-                                .font(.caption.bold())
-                            if let safeErrMess = settingsViewModel.errorDict[address.id] {
-                                Text(safeErrMess)
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.red)
+                } else if settingsViewModel.importDataVersion == ExportVersionTwo.staticVersion {
+                    let v2Addresses = settingsViewModel.getV2Addresses(addresses: addresses)
+                    if v2Addresses.isEmpty {} else {
+                        List(
+                            settingsViewModel.getV2Addresses(addresses: addresses),
+                            id: \.self,
+                            selection: $settingsViewModel.selectedV2Addresses
+                        ) { address in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(address.ifNameElseAddress)
+                                    Text(address.ifNameThenAddress)
+                                        .font(.caption.bold())
+                                    if let safeErrMess = settingsViewModel.errorDict[address.id] {
+                                        Text(safeErrMess)
+                                            .font(.caption.bold())
+                                            .foregroundStyle(.red)
+                                    }
+                                }
+                                Spacer()
                             }
                         }
-                        Spacer()
                     }
                 }
             } else {
@@ -255,9 +263,13 @@ struct ImportAddressesView: View {
             
             await withTaskGroup(of: (String, String?)?.self) { group in
                 for address in addresses {
-                    group.addTask {
-                        let (status, message) = await addressesController.loginAndSaveAddress(address: address)
-                        return status ? nil : (address.id, message)
+                    let existingAddressIndex = self.addresses.firstIndex(where: { ($0.id == address.id || $0.address == address.authenticatedUser.account.address) && !$0.isArchived })
+                    
+                    if existingAddressIndex == nil { // dont allow duplicate address addition
+                        group.addTask {
+                            let (status, message) = await addressesController.loginAndSaveAddress(address: address)
+                            return status ? nil : (address.id, message)
+                        }
                     }
                 }
                 
@@ -280,9 +292,13 @@ struct ImportAddressesView: View {
             
             await withTaskGroup(of: (String, String?)?.self) { group in
                 for address in addresses {
-                    group.addTask {
-                        let (status, message) = await addressesController.loginAndSaveAddress(address: address)
-                        return status ? nil : (address.id, message)
+                    let existingAddressIndex = self.addresses.firstIndex(where: { ($0.id == address.id || $0.address == address.email) && !$0.isArchived })
+                    
+                    if existingAddressIndex == nil { // dont allow duplicate address addition
+                        group.addTask {
+                            let (status, message) = await addressesController.loginAndSaveAddress(address: address)
+                            return status ? nil : (address.id, message)
+                        }
                     }
                 }
                 

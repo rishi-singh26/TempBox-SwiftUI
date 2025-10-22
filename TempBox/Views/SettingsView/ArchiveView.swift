@@ -52,11 +52,11 @@ struct ArchiveView: View {
         .environment(\.editMode, .constant(.active))
         .toolbar(content: {
             ToolbarItemGroup(placement: .bottomBar) {
-                Button("Unselect All") {
-                    settingsViewModel.selectedArchivedAddresses = []
-                }
-                Button("Select All") {
-                    settingsViewModel.selectedArchivedAddresses = Set(archivedAddresses)
+                Button(settingsViewModel.selectedArchivedAddresses.count == archivedAddresses.count ? "Unselect All" : "Select All") {
+                    settingsViewModel.selectedArchivedAddresses =
+                    settingsViewModel.selectedArchivedAddresses.count == archivedAddresses.count
+                    ? []
+                    : Set(archivedAddresses)
                 }
                 Spacer()
                 Button("Restore") {

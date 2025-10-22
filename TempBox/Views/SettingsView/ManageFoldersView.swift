@@ -33,7 +33,7 @@ struct ManageFoldersView: View {
                     DisclosureGroup {
                         IOSAddressesList(folder: folder)
                     } label: {
-                        Label(folder.name, systemImage: "folder")
+                        Label(folder.name, systemImage: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
                             .swipeActions {
                                 Button(role: .destructive) {
                                     deleteFolder(folder)
@@ -96,7 +96,7 @@ struct ManageFoldersView: View {
     
     private func FolderTile(folder: Folder) -> some View {
         HStack {
-            Label(folder.name, systemImage: "folder")
+            Label(folder.name, systemImage: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
             Spacer()
             Button {
                 deleteFolder(folder)

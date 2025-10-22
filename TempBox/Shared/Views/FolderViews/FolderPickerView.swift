@@ -30,13 +30,13 @@ struct FolderPickerView: View {
 #elseif os(macOS)
         HStack {
             Picker("Select Folder", selection: $selectedFolder) {
-                Text("No Folder")
-                    .tag(nil as Folder?)
+                Text("No Folder").tag(nil as Folder?)
                 ForEach(folders) { folder in
-                    Text(folder.name)
-                        .tag(folder)
+                    Text(folder.name).tag(folder)
                 }
             }
+            
+            Spacer()
             
             Button {
                 showAddFolder = true
@@ -44,8 +44,8 @@ struct FolderPickerView: View {
                 Image(systemName: "folder.badge.plus")
             }
             .help("Create new folder")
-
         }
+        .frame(maxWidth: .infinity)
 #endif
     }
     
@@ -64,7 +64,6 @@ struct FolderPickerView: View {
                             .foregroundStyle(.gray)
                     }
                 }
-                .buttonStyle(.plain)
             }
             
             Section {
@@ -72,7 +71,7 @@ struct FolderPickerView: View {
                     Label("No Folder", systemImage: "folder.badge.minus")
                         .tag(nil as Folder?)
                     ForEach(folders) { folder in
-                        Label(folder.name, systemImage: "folder")
+                        Label(folder.name, systemImage: folder.id.contains(KQuickAddressesFolderIdPrefix) ? "bolt.square" : "folder")
                             .tag(folder)
                     }
                 }

@@ -10,6 +10,7 @@ import StoreKit
 
 struct AboutView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    @Environment(\.openURL) var openURL
     
     var body: some View {
         #if os(macOS)
@@ -45,7 +46,7 @@ struct AboutView: View {
             MacCustomSection {
                 VStack(alignment: .leading) {
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://letterbird.co/tempbox")
+                        openURL(url: "https://letterbird.co/tempbox")
                     } label: {
                         CustomLabel(leadingImageName: "text.bubble", trailingImageName: "arrow.up.right", title: "Help & Feedback")
                     }
@@ -74,7 +75,7 @@ struct AboutView: View {
             MacCustomSection {
                 VStack(alignment: .leading) {
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: KPrivactPolicyURL)
+                        openURL(url: KPrivactPolicyURL)
                     } label: {
                         CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Privacy Policy")
                     }
@@ -82,7 +83,7 @@ struct AboutView: View {
                     .help("Open TempBox privacy policy in web browser")
                     Divider()
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: KTermsOfServiceURL)
+                        openURL(url: KTermsOfServiceURL)
                     } label: {
                         CustomLabel(leadingImageName: "list.bullet.rectangle.portrait", trailingImageName: "arrow.up.right", title: "Terms of Service")
                     }
@@ -95,7 +96,7 @@ struct AboutView: View {
             MacCustomSection {
                 VStack(alignment: .leading) {
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
+                        openURL(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
                     } label: {
                         CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
                     }
@@ -103,7 +104,7 @@ struct AboutView: View {
                     .help("Open TempBox source code in safari")
                     Divider()
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
+                        openURL(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
                     } label: {
                         CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
                     }
@@ -117,7 +118,7 @@ struct AboutView: View {
             MacCustomSection {
                 VStack {
                     Button {
-                        settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in")
+                        openURL(url: "https://tempbox.rishisingh.in")
                     } label: {
                         CustomLabel(leadingImageName: "network", trailingImageName: "arrow.up.right", title: "https://tempbox.rishisingh.in")
                     }
@@ -156,10 +157,11 @@ struct AboutView: View {
             
             Section {
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://letterbird.co/tempbox")
+                    openURL(url: "https://letterbird.co/tempbox")
                 } label: {
                     CustomLabel(leadingImageName: "text.bubble", trailingImageName: "arrow.up.right", title: "Help & Feedback")
                 }
+                
                 .help("Open help and feedback form in web browser")
                 Button {
                     getRating()
@@ -177,13 +179,13 @@ struct AboutView: View {
             
             Section {
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: KPrivactPolicyURL)
+                    openURL(url: KPrivactPolicyURL)
                 } label: {
                     CustomLabel(leadingImageName: "lock.shield", trailingImageName: "arrow.up.right", title: "Privacy Policy")
                 }
                 .help("Open TempBox privacy policy in web browser")
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: KTermsOfServiceURL)
+                    openURL(url: KTermsOfServiceURL)
                 } label: {
                     CustomLabel(leadingImageName: "list.bullet.rectangle.portrait", trailingImageName: "arrow.up.right", title: "Terms of Service")
                 }
@@ -192,13 +194,13 @@ struct AboutView: View {
             
             Section {
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
+                    openURL(url: "https://github.com/rishi-singh26/TempBox-SwiftUI")
                 } label: {
                     CustomLabel(leadingImageName: "lock.open.display", trailingImageName: "arrow.up.right", title: "Source Code - Github")
                 }
                 .help("Open TempBox source code in safari")
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
+                    openURL(url: "https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/LICENSE")
                 } label: {
                     CustomLabel(leadingImageName: "checkmark.seal.text.page", trailingImageName: "arrow.up.right", title: "MIT License")
                 }
@@ -208,7 +210,7 @@ struct AboutView: View {
 //            Section("Copyright © 2025 Rishi Singh. All Rights Reserved.") {
             Section {
                 Button {
-                    settingsViewModel.showLinkConfirmation(url: "https://tempbox.rishisingh.in")
+                    openURL(url: "https://tempbox.rishisingh.in")
                 } label: {
                     CustomLabel(leadingImageName: "network", trailingImageName: "arrow.up.right", title: "https://tempbox.rishisingh.in")
                 }
@@ -221,7 +223,7 @@ struct AboutView: View {
     }
 #endif
     
-    func openAppStoreReviewPage() {
+    private func openAppStoreReviewPage() {
         let urlStr = "https://itunes.apple.com/app/id\(AppController.appId)?action=write-review"
         
         if let url = URL(string: urlStr) {
@@ -229,7 +231,7 @@ struct AboutView: View {
         }
     }
     
-    func getRating() {
+    private func getRating() {
 #if os(iOS)
         if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
             AppStore.requestReview(in: scene)
@@ -242,6 +244,12 @@ struct AboutView: View {
         // watchOS doesn't support SKStoreReviewController
         print("SKStoreReviewController not supported on watchOS")
 #endif
+    }
+    
+    private func openURL(url: String) {
+        if let url = URL(string: url) {
+            openURL(url)
+        }
     }
 }
 

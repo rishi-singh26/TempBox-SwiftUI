@@ -11,6 +11,7 @@ import SwiftData
 
 struct QuickAddressView: View {
     @EnvironmentObject private var addressesController: AddressesController
+    @EnvironmentObject private var appController: AppController
     
     @State private var isLoading: Bool = true
     @State private var quickAddressesFolder: Folder?
@@ -22,15 +23,14 @@ struct QuickAddressView: View {
     @State private var addressError: String? = nil
     
     @Environment(\.modelContext) private var modelContext
-    
-    var accentColor: Color
-    var cancel: () -> Void
-    var dismiss: () -> Void
-    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) var colorScheme
+        
     var body: some View {
-        VStack {
-            BuildExpandedHeader()
-            List {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
+        
+        NavigationView {
+            Form {
                 if let account = account, let password = password {
                     Section(footer: MarkdownLinkText(markdownText: "If you wish to use this address on Web browser, You can copy the credentials to use on [mail.tm](https://www.mail.tm) official website. Please note, the password cannot be reset or changed.")) {
                         HStack {
@@ -45,12 +45,12 @@ struct QuickAddressView: View {
                         }
                         HStack {
                             Text(password)
-                             .blur(radius: isPasswordBlurred ? 5 : 0)
-                             .onTapGesture {
-                                 withAnimation {
-                                     isPasswordBlurred.toggle()
-                                 }
-                             }
+                                .blur(radius: isPasswordBlurred ? 5 : 0)
+                                .onTapGesture {
+                                    withAnimation {
+                                        isPasswordBlurred.toggle()
+                                    }
+                                }
                             Spacer()
                             Button {
                                 password.copyToClipboard()
@@ -84,36 +84,20 @@ struct QuickAddressView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
+            .navigationTitle("Quick Address")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", systemImage: "checkmark") {
+                        dismiss()
+                    }
+                    .tint(accentColor)
+                }
+            }
         }
         .accentColor(accentColor)
         .onAppear {
             Task { await getOrCreate() }
         }
-    }
-    
-    @ViewBuilder
-    private func BuildExpandedHeader() -> some View {
-        HStack {
-            Button(action: cancel) {
-                Text("Cancel")
-                    .foregroundStyle(accentColor)
-            }
-            Spacer(minLength: 0)
-            Text("Quick Address")
-                .font(.headline)
-                .fontWeight(.semibold)
-            Spacer(minLength: 0)
-            Button(action: dismiss) {
-                Text("Done")
-                    .fontWeight(.bold)
-                    .foregroundStyle(accentColor)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 20)
     }
     
     private func createAddress() async {

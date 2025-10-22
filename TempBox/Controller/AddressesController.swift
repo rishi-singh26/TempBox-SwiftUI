@@ -167,6 +167,7 @@ class AddressesController: ObservableObject {
         do {
             let messages = try await MailTMService.fetchMessages(token: token)
             self.updateMessageStore(for: address, store: MessageStore(isFetching: false, error: nil, messages: messages))
+            self.updateMessageIdToAddIdMap(messages, address)
         } catch {
             self.updateMessageStore(
                 for: address,
@@ -435,9 +436,10 @@ class AddressesController: ObservableObject {
 //        }
 //    }
     
-    /// Toggles the disabled status of an address
+    /// Toggles the archived status of an address
     func toggleAddressStatus(_ address: Address) async {
         address.isArchived.toggle()
+        address.folder = nil // Remove address from any folder, the folder might get deleted after the address has been archived
         address.updatedAt = Date.now
         saveChanges()
         await fetchAddresses()

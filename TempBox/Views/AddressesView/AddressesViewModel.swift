@@ -16,6 +16,7 @@ class AddressesViewModel: ObservableObject {
     @Published var searchText = ""
     @Published var isNewAddressSheetOpen = false
     @Published var isNewFolderSheetOpen = false
+    @Published var isQuickAddressSheetOpen = false
     
     @Published var showDeleteAddressAlert = false
     @Published var selectedAddForDeletion: Address?
@@ -26,6 +27,9 @@ class AddressesViewModel: ObservableObject {
     @Published var isAddressInfoSheetOpen = false
     var selectedAddForInfoSheet: Address?
     
+    @Published var isFolderInfoSheetOpen = false
+    var selectedFolderForInfoSheet: Folder?
+    
     @Published var showSettingsSheet = false
     
     func openNewAddressSheet() {
@@ -33,5 +37,8 @@ class AddressesViewModel: ObservableObject {
     }
     func openNewFolderSheet() {
         isNewFolderSheetOpen = true
+    }
+    func openQuickAddressSheet() {
+        isQuickAddressSheetOpen = true
     }
 }

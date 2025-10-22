@@ -117,7 +117,7 @@ struct AddressItemView: View {
             Label("Delete", systemImage: "trash")
         }
         .help("Permanently delete address")
-        .tint(addTint ? .red : nil)
+        .tint(.red)
     }
     
     @ViewBuilder
