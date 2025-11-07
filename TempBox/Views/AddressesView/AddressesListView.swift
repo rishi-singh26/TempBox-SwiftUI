@@ -54,6 +54,7 @@ struct AddressesListView: View {
     }
 
     // MARK: - UI Builders
+#if os(iOS)
     @ViewBuilder
     private func iPhoneList() -> some View {
         let emptyAddress = Address.empty(id: KUnifiedInboxId)
@@ -84,8 +85,8 @@ struct AddressesListView: View {
                 .headerProminence(.increased)
             }
         }
-        .listStyle(.sidebar)
     }
+#endif
     
     @ViewBuilder
     private func IPadAndMacList() -> some View {
@@ -132,6 +133,7 @@ struct AddressesListView: View {
                 .headerProminence(.increased)
             }
         }
+        .listStyle(.sidebar)
     }
 
     @ViewBuilder
@@ -148,7 +150,12 @@ struct AddressesListView: View {
     @ViewBuilder
     private func UnifiedInboxLabel() -> some View {
         HStack {
-            Label("All Inboxes", systemImage: "tray.2")
+            Label {
+                Text("All Inboxes")
+                    .foregroundStyle(colorScheme == .dark ? .white : .black)
+            } icon: {
+                Image(systemName: "tray.2")
+            }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.footnote.bold())

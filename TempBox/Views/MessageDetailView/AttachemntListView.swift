@@ -10,10 +10,14 @@ import SwiftUI
 struct AttachemntListView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var mdController: MessageDetailViewModel
+    @EnvironmentObject private var appController: AppController
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
     
     var address: Address
     var message: Message
     var body: some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
         Group {
             if let selectedMessage = addressesController.selectedCompleteMessage, selectedMessage.id == message.id, let token = address.token {
 #if os(iOS)
@@ -35,6 +39,14 @@ struct AttachemntListView: View {
                 List {
                     Text("No Attachment Available")
                 }
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done", systemImage: "checkmark") {
+                    dismiss()
+                }
+                .tint(accentColor)
             }
         }
         .onDisappear {
@@ -150,7 +162,6 @@ struct AttachmentTileMacOS: View {
 #if os(iOS)
 struct IOSView: View {
     @EnvironmentObject private var mdController: MessageDetailViewModel
-    @Environment(\.dismiss) var dismiss
     
     var message: Message
     
@@ -168,16 +179,6 @@ struct IOSView: View {
                 }
             }
             .navigationTitle("Attachments")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Done")
-                            .font(.headline)
-                    }
-                }
-            }
         }
     }
 }

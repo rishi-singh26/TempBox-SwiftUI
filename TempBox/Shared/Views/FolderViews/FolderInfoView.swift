@@ -39,6 +39,7 @@ struct FolderInfoView: View {
         IOSFolderInfoBuilder(accentColor)
 #elseif os(macOS)
         MacFolderInfoBuilder()
+            .frame(minWidth: 300, minHeight: 500)
 #endif
     }
     
@@ -95,7 +96,12 @@ struct FolderInfoView: View {
             }
         } label: {
             HStack {
-                Label(address.ifNameElseAddress, systemImage: "tray")
+                Label {
+                    Text(address.ifNameElseAddress)
+                        .foregroundStyle(colorScheme == .dark ? .white : .black)
+                } icon: {
+                    Image(systemName: "tray")
+                }
                 Spacer()
                 Image(systemName: iconName)
                     .foregroundStyle(color)
@@ -155,6 +161,13 @@ struct FolderInfoView: View {
                 }
             }
             .padding(.bottom)
+        }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
         }
     }
     

@@ -68,13 +68,13 @@ struct MessagesView: View {
             }
         }
         .navigationTitle(address.ifNameElseAddress.extractUsername())
+        .searchable(text: $controller.searchText)
 #if os(iOS)
         .refreshable {
             Task {
                 await addressesController.refreshMessages(for: address)
             }
         }
-        .searchable(text: $controller.searchText)
         .toolbar(content: {
             if !addressesController.showUnifiedInbox {
                 ToolbarItem {
