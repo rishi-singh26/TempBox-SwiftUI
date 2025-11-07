@@ -13,6 +13,8 @@ struct AddressItemView: View {
     @EnvironmentObject private var addressesViewModel: AddressesViewModel
     @EnvironmentObject private var appController: AppController
     
+    @Environment(\.colorScheme) private var colorScheme
+    
     private var isMessagesFetching: Bool {
         addressesController.messageStore[address.id]?.isFetching ?? false
     }
@@ -63,7 +65,12 @@ struct AddressItemView: View {
     @ViewBuilder
     private func AddressTileBuilder() -> some View {
         HStack {
-            Label(address.ifNameElseAddress.extractUsername(), systemImage: "tray")
+            Label {
+                Text(address.ifNameElseAddress.extractUsername())
+                    .foregroundStyle(colorScheme == .dark ? .white : .black)
+            } icon: {
+                Image(systemName: "tray")
+            }
             Spacer()
             if !address.isArchived && !address.isDeleted {
                 if isMessagesFetching {

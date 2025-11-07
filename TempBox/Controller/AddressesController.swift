@@ -17,7 +17,7 @@ class AddressesController: ObservableObject {
     // Published properties for UI updates
     private var addresses: [Address] = []
     @Published var isLoading: Bool = false
-    @Published var messageStore: [String: MessageStore] = [:]
+    @Published var messageStore: [String: MessageStore] = [:] // [AddressID: MessageStore]
     private var msgIdToAddId: [String: String] = [:] // [MessageID: AddressId], contains the addr
     // For showing error or success message to user
     @Published var message: String?

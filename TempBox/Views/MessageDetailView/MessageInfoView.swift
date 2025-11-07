@@ -8,20 +8,26 @@
 import SwiftUI
 
 struct MessageInfoView: View {
+    @EnvironmentObject private var appController: AppController
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
     
     var message: Message
     var body: some View {
+        let accentColor = appController.accentColor(colorScheme: colorScheme)
+        
+        Group {
 #if os(iOS)
-        IOSView()
+            IOSView(accentColor)
 #elseif os(macOS)
-        MacOSView()
+            MacOSView()
 #endif
+        }
     }
     
 #if os(iOS)
     @ViewBuilder
-    func IOSView() -> some View {
+    func IOSView(_ accentColor: Color) -> some View {
         NavigationView {
             List {
                 Text("Sender Name: \(message.fromName)")
@@ -33,13 +39,11 @@ struct MessageInfoView: View {
             }
             .navigationTitle("Message Info")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", systemImage: "checkmark") {
                         dismiss()
-                    } label: {
-                        Text("Done")
-                            .font(.headline)
                     }
+                    .tint(accentColor)
                 }
             }
         }
@@ -49,31 +53,31 @@ struct MessageInfoView: View {
 #if os(macOS)
     @ViewBuilder
     func MacOSView() -> some View {
-        VStack {
-            HStack {
-                Text("Message Info")
-                    .font(.title.bold())
-                Spacer()
-                Button("Done", role: .cancel) {
+        VStack(alignment: .leading) {
+            Text("Message Info")
+                .font(.title.bold())
+                .padding([.horizontal, .top])
+            
+            MacCustomSection {
+                Text("Sender Name: \(message.fromName)")
+                Divider()
+                Text("Sender Email: \(message.fromAddress)")
+                Divider()
+                Button("Copy Sender Email") {
+                    message.fromAddress.copyToClipboard()
+                }
+                Divider()
+                Text("Received At: \(message.createdAtFormatted)")
+            }
+            .padding(.bottom)
+            .navigationTitle("Message Info")
+        }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") {
                     dismiss()
                 }
             }
-            .padding([.horizontal, .top])
-            ScrollView {
-                MacCustomSection {
-                    Text("Sender Name: \(message.fromName)")
-                    Divider()
-                    Text("Sender Email: \(message.fromAddress)")
-                    Divider()
-                    Button("Copy Sender Email") {
-                        message.fromAddress.copyToClipboard()
-                    }
-                    Divider()
-                    Text("Received At: \(message.createdAtFormatted)")
-                }
-                .padding(.bottom)
-            }
-            .navigationTitle("Message Info")
         }
     }
 #endif
