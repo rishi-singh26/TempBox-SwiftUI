@@ -52,7 +52,7 @@ class MessageDetailViewModel: ObservableObject {
                 group.addTask {
                     do {
                         let downloaded = try await MailTMService.downloadAttachment(
-                            messageId: message.id,
+                            messageId: message.remoteId,
                             attachment: attachment,
                             token: token
                         )

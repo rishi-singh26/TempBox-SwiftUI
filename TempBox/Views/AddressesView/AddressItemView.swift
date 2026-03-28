@@ -24,7 +24,7 @@ struct AddressItemView: View {
     }
     
     private var unreadMessagesCount: Int {
-        addressesController.messageStore[address.id]?.unreadMessagesCount ?? 0
+        (address.messages ?? []).filter { !$0.seen }.count
     }
     
     var body: some View {
@@ -106,7 +106,7 @@ struct AddressItemView: View {
     private func BuildRefreshButton(addTint: Bool = true) -> some View {
         Button {
             Task {
-                await addressesController.refreshMessages(for: address)
+                await addressesController.fetchMessages(for: address)
             }
         } label: {
             Label("Refresh", systemImage: "arrow.clockwise.circle")

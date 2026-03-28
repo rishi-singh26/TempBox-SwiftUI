@@ -6,16 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct UnifiedMessagesView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var controller: MessagesViewModel
     
-    private var allMessages: [Message] {
-        addressesController.messageStore.values
-            .flatMap { $0.messages }
-            .sorted { $0.createdAt > $1.createdAt }
-    }
+    @Query(sort: [SortDescriptor(\Message.createdAt, order: .reverse)])
+    private var allMessages: [Message]
     
     private var filteredMessages: [Message] {
         if allMessages.isEmpty {
@@ -50,10 +48,9 @@ struct UnifiedMessagesView: View {
             }
             Button("Delete", role: .destructive) {
                 Task {
-                    guard let messForDeletion = controller.selectedMessForDeletion, let addForMessDel = controller.selectedAddForMessDeletion else { return }
-                    await addressesController.deleteMessage(message: messForDeletion, address: addForMessDel)
+                    guard let messForDeletion = controller.selectedMessForDeletion else { return }
+                    await addressesController.deleteMessage(message: messForDeletion)
                     controller.selectedMessForDeletion = nil
-                    controller.selectedAddForMessDeletion = nil
                     addressesController.selectedMessage = nil
                 }
             }
@@ -84,17 +81,13 @@ struct UnifiedMessagesView: View {
         Group {
 #if os(iOS)
             List(filteredMessages) { message in
-                if let address = addressesController.getAddress(withMsgID: message.id) {
-                    MessageItemView(message: message, address: address)
-                }
+                MessageItemView(message: message)
             }
 #elseif os(macOS)
             List(filteredMessages, selection: selectionBinding) { message in
-                if let address = addressesController.getAddress(withMsgID: message.id) {
-                    NavigationLink(value: message) {
-                        MessageItemView(message: message, address: address)
-                            .environmentObject(controller)
-                    }
+                NavigationLink(value: message) {
+                    MessageItemView(message: message)
+                        .environmentObject(controller)
                 }
             }
 #endif

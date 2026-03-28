@@ -10,11 +10,10 @@ import SwiftUI
 struct MessageDetailView: View {
     @EnvironmentObject private var addressesController: AddressesController
     @EnvironmentObject private var messageDetailController: MessageDetailViewModel
-    @EnvironmentObject var appController: AppController
-    @EnvironmentObject private var webViewController: WebViewController
+    @EnvironmentObject private var appController: AppController
     
     @Environment(\.colorScheme) var colorScheme
-        
+    
     var body: some View {
         if let safeAddress = addressesController.selectedAddress, let safeMessage = addressesController.selectedMessage {
             MessageViewBuilder(message: safeMessage, address: safeAddress)
@@ -31,15 +30,10 @@ struct MessageDetailView: View {
     private func MessageViewBuilder(message: Message, address: Address) -> some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
         VStack(alignment: .leading, spacing: 0) {
-            MessageHeaderView(message: message)
-            Text(message.subject)
-                .font(.title3.bold())
-                .padding(.vertical, 4)
-                .foregroundStyle(Color(hex: emailColorScheme == .light ? "#000000" : "#ffffff"))
-            if let selectedMessage = addressesController.selectedCompleteMessage,
-               selectedMessage.id == message.id,
-               let html = selectedMessage.html?.first {
-                WebView(html: html, appearance: emailColorScheme, controller: webViewController)
+            if let selectedMessage = addressesController.selectedMessage,
+               selectedMessage.html != nil,
+               selectedMessage.id == message.id {
+                MessageDetailWebView(message: message)
             }
             else {
                 Spacer()
@@ -64,11 +58,14 @@ struct MessageDetailView: View {
                 .sheetAppearanceSetup(tint: accentColor)
         })
 #if os(iOS)
+        .navigationTitle(message.subject)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(content: {
             ToolbarItemGroup {
-                if let selectedMessage = addressesController.selectedCompleteMessage,
-                   selectedMessage.id == message.id, selectedMessage.hasAttachments {
+                if let selectedMessage = addressesController.selectedMessage,
+                   selectedMessage.id == message.id,
+                   selectedMessage.hasAttachments,
+                   (selectedMessage.attachments?.isEmpty ?? true) == false {
                     Button("Show attachments", systemImage: "paperclip") {
                         messageDetailController.showAttachmentsSheet = true
                     }
@@ -99,6 +96,7 @@ struct MessageDetailView: View {
                 }
             }
         })
+        .preferredColorScheme(emailColorScheme)
 #endif
     }
     

@@ -126,17 +126,14 @@ extension ContentView {
     private func MacOSMessageDetailToolbar() -> some ToolbarContent {
         ToolbarItemGroup {
             Button {
-                if let message = addressesController.getMessageFromStore(addressesController.selectedAddress?.id ?? "", addressesController.selectedMessage?.id ?? "") {
+                if let message = addressesController.selectedMessage {
                     Task {
-                        await addressesController.updateMessageSeenStatus(
-                            messageData: message,
-                            address: addressesController.selectedAddress!,
-                        )
+                        await addressesController.updateMessageSeenStatus(messageData: message)
                     }
                 }
             } label: {
                 // Get seen status from messages store
-                if let message = addressesController.getMessageFromStore(addressesController.selectedAddress?.id ?? "", addressesController.selectedMessage?.id ?? "") {
+                if let message = addressesController.selectedMessage {
                     Label(message.seen ? "Mark as unread" : "Mark as read", systemImage: message.seen ? "envelope.badge" : "envelope.open")
                 } else {
                     Label("Mark as read/unread", systemImage: "envelope.badge")
@@ -147,7 +144,6 @@ extension ContentView {
             Button(role: .destructive) {
                 messagesViewModel.showDeleteMessageAlert = true
                 messagesViewModel.selectedMessForDeletion = addressesController.selectedMessage!
-                messagesViewModel.selectedAddForMessDeletion = addressesController.selectedAddress!
             } label: {
                 Label("Delete message", systemImage: "trash")
             }
@@ -177,7 +173,7 @@ extension ContentView {
                 Image(systemName: "ellipsis.circle")
             }
             .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
-            if let selectedMessage = addressesController.selectedCompleteMessage, selectedMessage.hasAttachments {
+            if let selectedMessage = addressesController.selectedMessage, selectedMessage.hasAttachments {
                 Button("Show attachments", systemImage: "paperclip") {
                     messageDetailController.showAttachmentsSheet = true
                 }
@@ -202,7 +198,7 @@ extension ContentView {
                     if addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
                         await addressesController.fetchAddresses()
                     } else {
-                        await addressesController.refreshMessages(for: addressesController.selectedAddress!)
+                        await addressesController.fetchMessages(for: addressesController.selectedAddress!)
                     }
                 }
             } label: {

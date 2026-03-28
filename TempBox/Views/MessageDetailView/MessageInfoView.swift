@@ -30,7 +30,7 @@ struct MessageInfoView: View {
     func IOSView(_ accentColor: Color) -> some View {
         NavigationView {
             List {
-                Text("Sender Name: \(message.fromName)")
+                Text("Sender Name: \(message.fromName ?? "")")
                 Text("Sender Email: \(message.fromAddress)")
                 Button("Copy Sender Email") {
                     message.fromAddress.copyToClipboard()
@@ -59,7 +59,7 @@ struct MessageInfoView: View {
                 .padding([.horizontal, .top])
             
             MacCustomSection {
-                Text("Sender Name: \(message.fromName)")
+                Text("Sender Name: \(message.fromName ?? "")")
                 Divider()
                 Text("Sender Email: \(message.fromAddress)")
                 Divider()

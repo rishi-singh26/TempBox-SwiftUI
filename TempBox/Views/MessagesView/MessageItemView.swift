@@ -15,17 +15,12 @@ struct MessageItemView: View {
     @EnvironmentObject private var appController: AppController
     
     let message: Message
-    let address: Address
-    
-    private var messageFromStore: Message? {
-        addressesController.getMessageFromStore(address.id, message.id)
-    }
     
     private var messageHeader: String {
-        if let name = messageFromStore?.from.name, !name.isEmpty {
+        if let name = message.fromName, !name.isEmpty {
             return name
         } else {
-            return messageFromStore?.from.address ?? ""
+            return message.fromAddress
         }
     }
     
@@ -33,9 +28,10 @@ struct MessageItemView: View {
         Group {
 #if os(iOS)
             Button {
-                Task {
-                    await addressesController.updateMessageSelection(message: message)
-                }
+                addressesController.selectedMessage = message
+//                Task {
+//                    await addressesController.updateMessageSelection(message: message)
+//                }
                 appController.path.append(message)
             } label: {
                 MessageTileBuilder()
@@ -60,7 +56,7 @@ struct MessageItemView: View {
     private func MessageTileBuilder() -> some View {
         HStack(alignment: .firstTextBaseline) {
             Circle()
-                .fill(appController.accentColor(colorScheme: colorScheme).opacity(messageFromStore?.seen == true ? 0 : 1))
+                .fill(appController.accentColor(colorScheme: colorScheme).opacity(message.seen == true ? 0 : 1))
                 .frame(width: 12)
                 .padding(0)
             VStack(alignment: .leading) {
@@ -95,13 +91,13 @@ struct MessageItemView: View {
     private func BuildStatusButton(addTint: Bool = true) -> some View {
         let unreadMessage = addTint ? "Unread" : "Mark as unread"
         let readMessage = addTint ? "Read" : "Mark as read"
-        let isSeen = messageFromStore?.seen ?? false
+        let isSeen = message.seen
         Button {
             Task {
-                await addressesController.updateMessageSeenStatus(messageData: message, address: address)
+                await addressesController.updateMessageSeenStatus(messageData: message)
             }
         } label: {
-            Label(messageFromStore?.seen == true ? unreadMessage : readMessage, systemImage: isSeen ? "envelope.badge.fill" : "envelope.open.fill")
+            Label(isSeen ? unreadMessage : readMessage, systemImage: isSeen ? "envelope.badge.fill" : "envelope.open.fill")
         }
         .help("Toggle message read status")
         .tint(addTint ? .blue : nil)
@@ -112,7 +108,6 @@ struct MessageItemView: View {
         Button {
             controller.showDeleteMessageAlert = true
             controller.selectedMessForDeletion = message
-            controller.selectedAddForMessDeletion = address
         } label: {
             Label("Delete", systemImage: "trash")
         }

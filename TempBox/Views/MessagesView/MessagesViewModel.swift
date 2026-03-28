@@ -14,6 +14,5 @@ class MessagesViewModel: ObservableObject {
     @Published var searchText = ""
     
     @Published var showDeleteMessageAlert = false
-    @Published var selectedAddForMessDeletion: Address?
     @Published var selectedMessForDeletion: Message?
 }

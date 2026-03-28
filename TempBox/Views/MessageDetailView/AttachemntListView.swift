@@ -19,7 +19,10 @@ struct AttachemntListView: View {
     var body: some View {
         let accentColor = appController.accentColor(colorScheme: colorScheme)
         Group {
-            if let selectedMessage = addressesController.selectedCompleteMessage, selectedMessage.id == message.id, let token = address.token {
+            if let selectedMessage = addressesController.selectedMessage,
+               selectedMessage.html != nil,
+               selectedMessage.id == message.id,
+               let token = address.token {
 #if os(iOS)
                 IOSView(message: selectedMessage)
                     .onAppear {

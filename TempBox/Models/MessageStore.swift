@@ -10,9 +10,4 @@ import Foundation
 struct MessageStore {
     var isFetching: Bool = false
     var error: String?
-    var messages: [Message]
-    
-    var unreadMessagesCount: Int {
-        return messages.filter { !$0.seen }.count
-    }
 }

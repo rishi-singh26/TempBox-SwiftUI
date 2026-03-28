@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Message: Codable, Identifiable {
+struct APIMessage: Codable, Identifiable {
     let id: String
     let accountId: String
     let msgid: String
@@ -34,83 +34,15 @@ struct Message: Codable, Identifiable {
     let updatedAt: String
 }
 
-extension Message: Hashable {
+extension APIMessage: Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 }
 
-extension Message: Equatable {
-    static func == (lhs: Message, rhs: Message) -> Bool {
+extension APIMessage: Equatable {
+    static func == (lhs: APIMessage, rhs: APIMessage) -> Bool {
         lhs.id == rhs.id
-    }
-}
-
-extension Message {
-    var createdAtFormatted: String { createdAt.validateAndToDate()?.formatRelativeString() ?? "" }
-
-    var updatedAtDate: String { updatedAt.validateAndToDate()?.formatRelativeString() ?? "" }
-
-    var fromAddress: String { "\(from.name != nil ? "\(from.name!) " : "")<\(from.address)>" }
-
-    var fromName: String { from.name ?? "" }
-    
-    var safeAttachments: [Attachment] {
-        hasAttachments ? attachments ?? [] : []
-    }
-
-    var toAddress: String {
-        to.map {
-            if let name = $0.name, !name.isEmpty {
-                return "\(name) <\($0.address)>"
-            } else {
-                return "<\($0.address)>"
-            }
-        }.joined(separator: ", ")
-    }
-
-    var formattedDate: String {
-        // Format the date string
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-        guard let date = dateFormatter.date(from: createdAt) else {
-            return createdAt
-        }
-        
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-        return dateFormatter.string(from: date)
-    }
-}
-
-extension Message {
-    func copyWith(seen: Bool) -> Message {
-        Message(
-            id: self.id,
-            accountId: self.accountId,
-            msgid: self.msgid,
-            from: self.from,
-            to: self.to,
-            cc: self.cc,
-            bcc: self.bcc,
-            subject: self.subject,
-            intro: self.intro,
-            text: self.text,
-            html: self.html,
-            seen: seen,
-            flagged: self.flagged,
-            isDeleted: self.isDeleted,
-            verifications: self.verifications,
-            retention: self.retention,
-            retentionDate: self.retentionDate,
-            hasAttachments: self.hasAttachments,
-            attachments: self.attachments,
-            size: self.size,
-            downloadUrl: self.downloadUrl,
-            sourceUrl: self.sourceUrl,
-            createdAt: self.createdAt,
-            updatedAt: self.updatedAt
-        )
     }
 }
 
@@ -169,9 +101,7 @@ struct AttachmentDownload {
     let contentType: String
     let messageId: String
     let attachmentId: String
-}
-
-extension AttachmentDownload {
+    
     var fileExtension: String {
         return (filename as NSString).pathExtension.lowercased()
     }

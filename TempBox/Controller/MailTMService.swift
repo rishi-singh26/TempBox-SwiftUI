@@ -163,20 +163,20 @@ class MailTMService {
     
     // MARK: - Message Methods
     
-    static func fetchMessages(token: String, page: Int = 1) async throws -> [Message] {
+    static func fetchMessages(token: String, page: Int = 1) async throws -> [APIMessage] {
         guard let request = createRequest(endpoint: "/messages?page=\(page)", token: token) else {
             throw MailTMError.invalidURL
         }
         
-        return try await performRequest(request, responseType: [Message].self).0
+        return try await performRequest(request, responseType: [APIMessage].self).0
     }
     
-    static func fetchMessage(id: String, token: String) async throws -> Message {
+    static func fetchMessage(id: String, token: String) async throws -> APIMessage {
         guard let request = createRequest(endpoint: "/messages/\(id)", token: token) else {
             throw MailTMError.invalidURL
         }
         
-        return try await performRequest(request, responseType: Message.self).0
+        return try await performRequest(request, responseType: APIMessage.self).0
     }
     
     static func updateMessageSeenStatus(id: String, token: String, seen: Bool) async throws -> MarkAsReadResponse {
@@ -197,12 +197,12 @@ class MailTMService {
         _ = try await performRequest(request, responseType: EmptyResponse.self)
     }
     
-    static func fetchMessageSource(id: String, token: String) async throws -> (Message, Data) {
+    static func fetchMessageSource(id: String, token: String) async throws -> (APIMessage, Data) {
         guard let request = createRequest(endpoint: "/sources/\(id)", token: token) else {
             throw MailTMError.invalidURL
         }
         
-        return try await performRequest(request, responseType: Message.self)
+        return try await performRequest(request, responseType: APIMessage.self)
     }
     
     static func fetchMessageSource(id: String, token: String) async throws -> Data {

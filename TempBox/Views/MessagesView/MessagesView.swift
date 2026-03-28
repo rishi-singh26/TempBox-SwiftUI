@@ -15,7 +15,7 @@ struct MessagesView: View {
     private var filteredMessages: [Message] {
         guard let address = addressesController.selectedAddress else { return [] }
         
-        let allMessages = addressesController.messageStore[address.id]?.messages ?? []
+        let allMessages = address.messages ?? []
         if allMessages.isEmpty {
             return allMessages
         }
@@ -56,9 +56,8 @@ struct MessagesView: View {
                         Button("Delete", role: .destructive) {
                             Task {
                                 guard let messForDeletion = controller.selectedMessForDeletion else { return }
-                                await addressesController.deleteMessage(message: messForDeletion, address: address)
+                                await addressesController.deleteMessage(message: messForDeletion)
                                 controller.selectedMessForDeletion = nil
-                                controller.selectedAddForMessDeletion = nil
                                 addressesController.selectedMessage = nil
                             }
                         }
@@ -72,7 +71,7 @@ struct MessagesView: View {
 #if os(iOS)
         .refreshable {
             Task {
-                await addressesController.refreshMessages(for: address)
+                await addressesController.fetchMessages(for: address)
             }
         }
         .toolbar(content: {
@@ -101,12 +100,12 @@ struct MessagesView: View {
         Group {
 #if os(iOS)
             List(filteredMessages) { message in
-                MessageItemView(message: message, address: address)
+                MessageItemView(message: message)
             }
 #elseif os(macOS)
             List(filteredMessages, selection: selectionBinding) { message in
                 NavigationLink(value: message) {
-                    MessageItemView(message: message, address: address)
+                    MessageItemView(message: message)
                         .environmentObject(controller)
                 }
             }
