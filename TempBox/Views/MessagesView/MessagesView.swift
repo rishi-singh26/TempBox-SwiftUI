@@ -56,9 +56,9 @@ struct MessagesView: View {
                         Button("Delete", role: .destructive) {
                             Task {
                                 guard let messForDeletion = controller.selectedMessForDeletion else { return }
-                                await addressesController.deleteMessage(message: messForDeletion)
-                                controller.selectedMessForDeletion = nil
                                 addressesController.selectedMessage = nil
+//                                controller.selectedMessForDeletion = nil
+                                await addressesController.deleteMessage(message: messForDeletion)
                             }
                         }
                     } message: {

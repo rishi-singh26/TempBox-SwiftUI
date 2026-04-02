@@ -170,14 +170,17 @@ struct MessageDetailWebView: View {
                 \(message.createdAtFormatted)
             </div>
         </div>
-        <h2 style="
+        <h3 style="
+            font-size: 20px !important;
+            font-weight: bold !important;
             background: \(backgroundColor);
             color: \(textColor);
             margin: 0 !important;
+            padding: 0 10px !important;
             padding:5px;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
             \(message.subject)
-        </h2>
+        </h3>
         """
     }
     

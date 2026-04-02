@@ -56,7 +56,8 @@ class MailTMService {
             case 200...299:
                 do {
                     let decoder = JSONDecoder()
-                    return (try decoder.decode(T.self, from: data), data)
+                    let decodableData = data.isEmpty ? "{}".data(using: .utf8)! : data
+                    return (try decoder.decode(T.self, from: decodableData), data)
                 } catch {
                     throw MailTMError.decodingError(error)
                 }
