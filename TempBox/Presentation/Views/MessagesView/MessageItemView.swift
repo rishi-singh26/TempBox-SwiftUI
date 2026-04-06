@@ -51,37 +51,14 @@ struct MessageItemView: View {
 
     @ViewBuilder
     private func MessageTileBuilder() -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Circle()
-                .fill(appStore.accentColor(colorScheme: colorScheme).opacity(message.seen == true ? 0 : 1))
-                .frame(width: 12)
-                .padding(0)
-            VStack(alignment: .leading) {
-                HStack {
-                    Text(messageHeader)
-                        .font(.headline)
-                        .fontWeight(.bold)
-                        .lineSpacing(1)
-                    Spacer()
-                    HStack {
-                        Text(message.createdAtFormatted)
-                            .foregroundColor(.secondary)
-                        if message.hasAttachments {
-                            Image(systemName: "paperclip")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 15, height: 15)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                Text(message.subject)
-                    .lineLimit(1, reservesSpace: true)
-                Text(message.intro ?? "")
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-            }
-        }
+        MessateTile(
+            circleColor: appStore.accentColor(colorScheme: colorScheme).opacity(message.seen == true ? 0 : 1),
+            isRemovedFromRemote: message.isRemovedFromRemote,
+            hasAttachments: message.hasAttachments,
+            header: messageHeader,
+            dateStr: message.createdAtFormatted,
+            title: message.subject,
+            subTitle: message.intro ?? "")
     }
 
     @ViewBuilder
@@ -111,4 +88,84 @@ struct MessageItemView: View {
         .help("Permanently delete message")
         .tint(addTint ? .red : nil)
     }
+}
+
+private struct MessateTile: View {
+    var circleColor: Color
+    var isRemovedFromRemote: Bool
+    var hasAttachments: Bool
+    var header: String
+    var dateStr: String
+    var title: String
+    var subTitle: String
+    
+    var body: some View {
+        HStack(alignment: .center) {
+            VStack {
+                Circle()
+                    .fill(circleColor)
+                    .frame(width: 12)
+                
+                Spacer()
+                
+                if isRemovedFromRemote {
+                    Image(systemName: "icloud.slash")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 12, height: 12)
+                        .foregroundColor(circleColor)
+                }
+            }
+            .padding(.top, 6)
+            .padding(.bottom, 4)
+            
+            VStack(alignment: .leading) {
+                HStack {
+                    Text(header)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .lineSpacing(1)
+                    Spacer()
+                    HStack {
+                        Text(dateStr)
+                            .foregroundColor(.secondary)
+                        if hasAttachments {
+                            Image(systemName: "paperclip")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 12, height: 12)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                Text(title)
+                    .lineLimit(1, reservesSpace: true)
+                Text(subTitle)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+        }
+    }
+}
+
+#Preview {
+    List {
+        MessateTile(
+            circleColor: .blue,
+            isRemovedFromRemote: true,
+            hasAttachments: true,
+            header: "Header",
+            dateStr: "12th Apr 2026",
+            title: "Message Subject",
+            subTitle: "Message intorduction")
+        MessateTile(
+            circleColor: .blue,
+            isRemovedFromRemote: true,
+            hasAttachments: true,
+            header: "Header",
+            dateStr: "12th Apr 2026",
+            title: "This is a logn Message Subject for testing alignemnt on mobile",
+            subTitle: "This is a very long Message intorduction. This will be used for testing alignment of the into text on a message tile")
+    }
+    .listStyle(.plain)
 }

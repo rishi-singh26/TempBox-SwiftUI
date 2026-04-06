@@ -68,6 +68,7 @@ final class MessageService: MessageServiceProtocol {
     // MARK: - Update
 
     func updateSeenStatus(_ message: Message) async {
+        guard !message.isRemovedFromRemote else { return }
         guard let token = message.address?.token, !token.isEmpty else { return }
         do {
             _ = try await networkService.updateMessageSeenStatus(

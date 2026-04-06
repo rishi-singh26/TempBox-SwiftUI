@@ -22,7 +22,7 @@ class MessageDetailViewModel {
     var showShareAttachmentSheet = false
 
     var showSaveAttachmentSheet = false
-    /// Used on macOS only when user selects save option from the attachments list
+    /// Used on macOS only, will be set when user selects save option from the attachments list
     var selectedAttachmentForExport: AttachmentDownload? = nil
 
     var downloadedAttachments: [String: AttachmentDownload] = [:]   // attachmentId: downloadedFile

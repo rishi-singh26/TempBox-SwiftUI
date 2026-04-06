@@ -15,11 +15,13 @@ final class MessageRepository: MessageRepositoryProtocol {
         self.modelContext = modelContext
     }
 
-    /// Upserts API messages into SwiftData for the given address.
-    /// Matches existing messages by remoteId, updates seen status on existing ones,
-    /// inserts new ones. Returns the resulting Message array.
+    /// Matches existing messages by `remoteId`, updates their mutable fields,
+    /// inserts new ones, and retains local messages missing from the latest API payload
+    /// by marking them as `isRemovedFromRemote = true`.
+    /// Returns all active and remotely removed messages for the address.
     func upsert(_ apiMessages: [APIMessage], for address: Address) -> [Message] {
         let currentMessages = address.messages ?? []
+        let apiMessageIds = Set(apiMessages.map(\.id))
         var result: [Message] = []
 
         for apiMsg in apiMessages {
@@ -27,11 +29,16 @@ final class MessageRepository: MessageRepositoryProtocol {
                 existing.seen = apiMsg.seen
                 result.append(existing)
             } else {
-                let msg = Message(api: apiMsg)
+                let msg = Message(from: apiMsg)
                 msg.address = address
                 modelContext.insert(msg)
                 result.append(msg)
             }
+        }
+        
+        // Update the `isRemovedFromRemote` flag for messages that are not present in the apiMessages array
+        for existing in currentMessages where !apiMessageIds.contains(existing.remoteId) {
+            existing.isRemovedFromRemote = true
         }
 
         return result

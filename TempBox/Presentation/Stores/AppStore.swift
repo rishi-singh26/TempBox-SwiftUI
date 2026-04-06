@@ -100,9 +100,9 @@ extension AppStore {
 
     static let defaultAccentColors: [AccentColorData] = [
         AccentColorData(id: "1", name: "Classic Red", light: Color(hex: appAccentColorHex), dark: Color(hex: appAccentColorDarkHex)),
-        AccentColorData(id: "2", name: "Black & White", light: Color(hex: "111111"), dark: Color(hex: "fdfdfd")),
-        AccentColorData(id: "4", name: "Dark Green", light: Color(hex: "0d6b75"), dark: Color(hex: "18848f")),
-        AccentColorData(id: "5", name: "Bright Orange", light: Color(hex: "fa4300"), dark: Color(hex: "fc5b21")),
+        AccentColorData(id: "2", name: "Black & White", light: Color(hex: "111111"), dark: Color(hex: "fdfdfd")), // Black / White
+        AccentColorData(id: "4", name: "Dark Green", light: Color(hex: "0d6b75"), dark: Color(hex: "18848f")), // Dark green
+        AccentColorData(id: "5", name: "Bright Orange", light: Color(hex: "fa4300"), dark: Color(hex: "fc5b21")), // Bright orange
     ]
 }
 
@@ -148,6 +148,31 @@ extension AppStore {
 
 extension AppStore {
     func fetchAccentColorOptionsFromGitHub() {
+        // Example URL: Replace with actual endpoint
+//        guard let url = URL(string: "https://raw.githubusercontent.com/yourname/yourrepo/main/colors.json") else {
+//            print("Invalid URL")
+//            return
+//        }
+//        
+//        URLSession.shared.dataTask(with: url) { data, response, error in
+//            if let error = error {
+//                print("Fetch error: \(error.localizedDescription)")
+//                return
+//            }
+//            guard let data = data else { return }
+//            
+//            do {
+//                // Update decoder depending on your JSON format
+//                let decodedColors = try JSONDecoder().decode([AccentColorData].self, from: data)
+//                DispatchQueue.main.async {
+//                    // You may want to merge, replace, or selectively update
+//                    print("Fetched \(decodedColors.count) accent colors.")
+//                    // self.allAccentColors = decodedColors + AppController.builtInColors
+//                }
+//            } catch {
+//                print("JSON decode error: \(error)")
+//            }
+//        }.resume()
         // Stub — replace with real endpoint when available
         print("AppStore.fetchAccentColorOptionsFromGitHub: not yet implemented")
     }
