@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Keep your replies extremely concise and focus on conveying the key information. No unnecessary fluff, no ling code snippets. 
+Keep your replies extremely concise and focus on conveying the key information. No unnecessary fluff, no long code snippets. 
 
 ## Project Overview
 
@@ -16,7 +16,7 @@ TempBox is a disposable email generator app for iOS, macOS, and iPadOS that uses
 This is an Xcode project — there are no CLI build scripts or test runners. Development is done via Xcode.
 
 - **Build:** Open `TempBox.xcodeproj` in Xcode and build with ⌘B
-- **Run Tests:** ⌘U in Xcode, or target `TempBoxTests` / `TempBoxUITests`
+- **Run Tests:** ⌘U in Xcode, or target `TempBoxTests` / `TempBoxUITests` — note these targets currently contain only stub/empty test cases, no real coverage exists
 - **StoreKit Testing:** Use `TempBox.storekit` configuration for local IAP testing
 
 ## Architecture
@@ -37,30 +37,34 @@ mail.tm REST API
 
 | Controller | Role |
 |---|---|
-| `AddressesController` | Core: fetches/syncs addresses and messages, manages SwiftData |
+| `AddressesController` | Core: fetches/syncs addresses and messages, manages SwiftData upserts |
 | `AppController` | Global UI state: accent color, onboarding, navigation path |
 | `MailTMService` | All HTTP calls to mail.tm API (auth, accounts, messages, attachments) |
 | `IAPManager` | StoreKit 2 in-app purchases for premium features |
+| `RemoteDataManager` | Fetches GitHub-hosted remote config (update notices, icon preview data) |
 
-`AddressesController` is the heaviest file — it coordinates between `MailTMService` and SwiftData, handles upsert logic, and drives message fetch cycles.
+`AddressesController` is the heaviest file — it coordinates between `MailTMService` and SwiftData, handles upsert logic, and drives message fetch cycles. All controllers are `@MainActor` and use `async/await` throughout.
 
 ### SwiftData Models
 
-- `Address` — persisted email address, versioned schema (`AddressMigrationPlan`)
-- Messages are stored as SwiftData entities related to `Address`
-- `AddressMigrationPlan.swift` manages schema migrations — add new versions here when changing model fields
+- `Address` — persisted email account; schema is at **V4** (`AddressMigrationPlan` has 3 migration stages: V1→V2, V2→V3, V3→V4)
+- `Message` — email entity with a many-to-one relationship to `Address` (cascade delete)
+- `Folder` — organizational container with a one-to-many relationship to `Address` (nullify on delete)
+- Add new schema versions to `AddressMigrationPlan.swift` when changing model fields
 
 ### Navigation
 
-- **iPhone:** `NavigationStack` in `ContentView`
-- **iPad/Mac:** `NavigationSplitView` in `ContentView`
+- **iPhone:** `NavigationStack` in `ContentView`; `DeviceType` enum distinguishes iPhone vs iPad routing
+- **iPad:** `NavigationSplitView` (.doubleColumn)
+- **Mac:** `NavigationSplitView` (3-column)
 - Platform-specific UI uses `#if os(iOS)` / `#if os(macOS)` throughout
+- A special `Address` with `id == KUnifiedInboxId` represents the unified inbox view (all addresses aggregated)
 
 ### View Organization
 
 Each major screen has its own folder under `Views/` containing the view, its `ViewModel`, and sub-views (e.g. `MessagesView/MessagesView.swift`, `MessagesView/MessagesViewModel.swift`).
 
-Shared UI components live in `Shared/Views/`. Reusable utilities (file I/O, base64, export formats) live in `Services/`.
+Shared UI components live in `Shared/Views/`. Reusable utilities (file I/O, base64, export formats) live in `Services/`. `Extensions/` augments standard types: `StringExtensions` generates random usernames/passwords, `ColorExtension` provides `Color(hex:)`/`toHex()`, `DateExtensions` handles ISO8601 parsing.
 
 ### Import/Export & Legacy Migration
 
@@ -68,7 +72,7 @@ Shared UI components live in `Shared/Views/`. Reusable utilities (file I/O, base
 
 ### Background Email Service
 
-`Background/` contains `BackgroundEmailService.swift` and `LiveEmailPoller.swift`. This feature is currently partially implemented (some code is commented out). The entitlements and background task identifiers are already configured.
+Background email service is planned but **not yet implemented** — no source files exist for it yet, though the entitlements and background task identifiers are already configured in the project.
 
 ### Premium Features (IAP)
 

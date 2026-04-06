@@ -11,18 +11,22 @@ import SwiftData
 @main
 struct TempBoxApp: App {
     var sharedModelContainer: ModelContainer
-    
+
     @Environment(\.openWindow) var openWindow
-    @StateObject private var addressesController: AddressesController
-    @StateObject private var addressViewModel = AddressesViewModel()
-    @StateObject private var settingsViewModel = SettingsViewModel()
-    @StateObject private var appController = AppController.shared
-    @StateObject private var messageDetailController = MessageDetailViewModel()
-    @StateObject private var messagesViewModel = MessagesViewModel()
+
+    // Migrated to @Observable → @State
+    @State private var addressStore: AddressStore
+    @State private var appStore = AppStore()
+    @State private var addressesViewModel = AddressesViewModel()
+    @State private var settingsViewModel = SettingsViewModel()
+    @State private var messagesViewModel = MessagesViewModel()
+    @State private var messageDetailViewModel = MessageDetailViewModel()
+
+    // NOT migrated — remain @StateObject / @EnvironmentObject
     @StateObject private var iapManager = IAPManager()
     @StateObject private var webViewController = WebViewController()
     @StateObject private var remoteDataManager = RemoteDataManager()
-    
+
     init() {
         let container: ModelContainer
         do {
@@ -35,20 +39,31 @@ struct TempBoxApp: App {
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
-        
+
         self.sharedModelContainer = container
-        _addressesController = StateObject(wrappedValue: AddressesController(modelContext: container.mainContext))
+
+        // Build the dependency graph
+        let ctx = container.mainContext
+        let networkService = MailTMNetworkService()
+        let addressRepo = AddressRepository(modelContext: ctx)
+        let messageRepo = MessageRepository(modelContext: ctx)
+        let addressService = AddressService(repository: addressRepo, networkService: networkService)
+        let messageService = MessageService(repository: messageRepo, networkService: networkService)
+
+        _addressStore = State(initialValue: AddressStore(addressService: addressService, messageService: messageService))
     }
 
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(addressesController)
-                .environmentObject(addressViewModel)
-                .environmentObject(settingsViewModel)
-                .environmentObject(appController)
-                .environmentObject(messageDetailController)
-                .environmentObject(messagesViewModel)
+                // Migrated
+                .environment(addressStore)
+                .environment(appStore)
+                .environment(addressesViewModel)
+                .environment(settingsViewModel)
+                .environment(messagesViewModel)
+                .environment(messageDetailViewModel)
+                // Not migrated
                 .environmentObject(iapManager)
                 .environmentObject(webViewController)
                 .environmentObject(remoteDataManager)
@@ -67,14 +82,14 @@ struct TempBoxApp: App {
             }
         }
 #endif
-        
+
 #if os(macOS)
         Window("Settings", id: "settings") {
             SettingsView()
-                .environmentObject(addressesController)
-                .environmentObject(addressViewModel)
-                .environmentObject(settingsViewModel)
-                .environmentObject(appController)
+                .environment(addressStore)
+                .environment(appStore)
+                .environment(addressesViewModel)
+                .environment(settingsViewModel)
                 .environmentObject(remoteDataManager)
                 .environmentObject(iapManager)
         }
@@ -88,13 +103,13 @@ struct TempBoxApp: App {
 
 struct RootView: View {
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject private var appController: AppController
+    @Environment(AppStore.self) private var appStore
     @EnvironmentObject private var iapManager: IAPManager
     @EnvironmentObject private var remoteDataManager: RemoteDataManager
-    
+
     var body: some View {
         ContentView()
-            .accentColor(appController.accentColor(colorScheme: colorScheme))
+            .accentColor(appStore.accentColor(colorScheme: colorScheme))
             .onAppear(perform: iapManager.initialize)
             .onAppear(perform: remoteDataManager.getRemoteData)
     }
