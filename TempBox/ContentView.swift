@@ -10,18 +10,20 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.openWindow) var openWindow
-    @EnvironmentObject private var addressesController: AddressesController
-    @EnvironmentObject private var addressesViewModel: AddressesViewModel
-    @EnvironmentObject private var settingsViewModel: SettingsViewModel
-    @EnvironmentObject private var messageDetailController: MessageDetailViewModel
-    @EnvironmentObject private var messagesViewModel: MessagesViewModel
-    @EnvironmentObject private var appController: AppController
+    @Environment(AddressStore.self) private var addressStore
+    @Environment(AddressesViewModel.self) private var addressesViewModel
+    @Environment(SettingsViewModel.self) private var settingsViewModel
+    @Environment(MessagesViewModel.self) private var messagesViewModel
+    @Environment(MessageDetailViewModel.self) private var messageDetailController
+    @Environment(AppStore.self) private var appStore
     @EnvironmentObject private var webViewController: WebViewController
-    
-    /// Ones data from flutter has been migrated successfully to swftdata, set this to true
+
+    /// Once data from Flutter has been migrated successfully to SwiftData, set this to true
     @AppStorage("didMigrateData") private var didMigrateData: Bool = false
-    
+
     var body: some View {
+        @Bindable var appStore = appStore
+
         Group {
 #if os(iOS)
             Group {
@@ -36,11 +38,11 @@ struct ContentView: View {
             MacNavigationBuilder()
 #endif
         }
-        .sheet(isPresented: $appController.showOnboarding, content: {
-            OnboardingView(tint: .accentColor, onContinue: appController.hideOnboardingSheet)
+        .sheet(isPresented: $appStore.showOnboarding, content: {
+            OnboardingView(tint: .accentColor, onContinue: appStore.hideOnboardingSheet)
         })
         .onAppear {
-            Task(operation: appController.prfomrOnbordingCheck)
+            Task(operation: appStore.prfomrOnbordingCheck)
         }
     }
 }
@@ -50,10 +52,12 @@ extension ContentView {
 #if os(iOS)
     @ViewBuilder
     private func IPhoneNavigtionBuilder() -> some View {
-        NavigationStack(path: $appController.path) {
+        @Bindable var appStore = appStore
+
+        NavigationStack(path: $appStore.path) {
             AddressesView()
                 .navigationDestination(for: Address.self) { address in
-                    if address.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                    if address.id == KUnifiedInboxId || addressStore.showUnifiedInbox {
                         UnifiedMessagesView()
                     } else {
                         MessagesView()
@@ -64,15 +68,19 @@ extension ContentView {
                 }
         }
     }
-    
+
     @ViewBuilder
     private func IPadNavigationBuilder() -> some View {
+        @Bindable var appStore = appStore
+
         NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
             AddressesView()
         } detail: {
-            NavigationStack(path: $appController.path) {
+            NavigationStack(path: $appStore.path) {
                 Group {
-                    if let safeAddress = addressesController.selectedAddress, safeAddress.id == KUnifiedInboxId, addressesController.showUnifiedInbox {
+                    if let safeAddress = addressStore.selectedAddress,
+                       safeAddress.id == KUnifiedInboxId,
+                       addressStore.showUnifiedInbox {
                         UnifiedMessagesView()
                     } else {
                         MessagesView()
@@ -84,10 +92,14 @@ extension ContentView {
             }
         }
     }
-    
+
 #elseif os(macOS)
     @ViewBuilder
     private func MacNavigationBuilder() -> some View {
+        @Bindable var appStore = appStore
+        @Bindable var messagesViewModel = messagesViewModel
+        @Bindable var messageDetailController = messageDetailController
+
         NavigationSplitView {
             VStack(spacing: 0) {
                 AddressesView()
@@ -98,8 +110,8 @@ extension ContentView {
             .toolbar(content: MacOSAddressesToolbar)
         } content: {
             Group {
-                if let safeAddress = addressesController.selectedAddress {
-                    if safeAddress.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
+                if let safeAddress = addressStore.selectedAddress {
+                    if safeAddress.id == KUnifiedInboxId || addressStore.showUnifiedInbox {
                         UnifiedMessagesView()
                     } else {
                         MessagesView()
@@ -124,33 +136,37 @@ extension ContentView {
 extension ContentView {
     @ToolbarContentBuilder
     private func MacOSMessageDetailToolbar() -> some ToolbarContent {
+        @Bindable var appStore = appStore
+        @Bindable var messageDetailController = messageDetailController
+
         ToolbarItemGroup {
             Button {
-                if let message = addressesController.selectedMessage {
+                if let message = addressStore.selectedMessage {
                     Task {
-                        await addressesController.updateMessageSeenStatus(messageData: message)
+                        await addressStore.updateMessageSeenStatus(messageData: message)
                     }
                 }
             } label: {
-                // Get seen status from messages store
-                if let message = addressesController.selectedMessage {
+                if let message = addressStore.selectedMessage {
                     Label(message.seen ? "Mark as unread" : "Mark as read", systemImage: message.seen ? "envelope.badge" : "envelope.open")
                 } else {
                     Label("Mark as read/unread", systemImage: "envelope.badge")
                 }
             }
             .help("Mark as read/unread")
-            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
+            .disabled(addressStore.selectedAddress == nil || addressStore.selectedMessage == nil)
+
             Button(role: .destructive) {
                 messagesViewModel.showDeleteMessageAlert = true
-                messagesViewModel.selectedMessForDeletion = addressesController.selectedMessage!
+                messagesViewModel.selectedMessForDeletion = addressStore.selectedMessage!
             } label: {
                 Label("Delete message", systemImage: "trash")
             }
             .help("Delete message")
-            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
+            .disabled(addressStore.selectedAddress == nil || addressStore.selectedMessage == nil)
+
             Menu {
-                Picker("Email appearance", selection: $appController.webViewAppearence) {
+                Picker("Email appearance", selection: $appStore.webViewAppearence) {
                     Label(WebViewColorScheme.light.displayName, systemImage: "sun.max")
                         .tag(WebViewColorScheme.light.rawValue)
                     Label(WebViewColorScheme.dark.displayName, systemImage: "moon.stars")
@@ -172,8 +188,9 @@ extension ContentView {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
-            .disabled(addressesController.selectedAddress == nil || addressesController.selectedMessage == nil)
-            if let selectedMessage = addressesController.selectedMessage, selectedMessage.hasAttachments {
+            .disabled(addressStore.selectedAddress == nil || addressStore.selectedMessage == nil)
+
+            if let selectedMessage = addressStore.selectedMessage, selectedMessage.hasAttachments {
                 Button("Show attachments", systemImage: "paperclip") {
                     messageDetailController.showAttachmentsSheet = true
                 }
@@ -181,35 +198,37 @@ extension ContentView {
             }
         }
     }
-    
+
     @ToolbarContentBuilder
     private func MacOSMessagesToolbar() -> some ToolbarContent {
         ToolbarItemGroup(placement: .automatic) {
             Button {
-                addressesViewModel.selectedAddForInfoSheet = addressesController.selectedAddress!
+                addressesViewModel.selectedAddForInfoSheet = addressStore.selectedAddress!
                 addressesViewModel.isAddressInfoSheetOpen = true
             } label: {
                 Label("Address Info", systemImage: "info.circle")
             }
             .help("Address Information")
-            .disabled(addressesController.selectedAddress == nil || addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox)
+            .disabled(addressStore.selectedAddress == nil || addressStore.selectedAddress?.id == KUnifiedInboxId || addressStore.showUnifiedInbox)
+
             Button {
                 Task {
-                    if addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox {
-                        await addressesController.fetchAddresses()
+                    if addressStore.selectedAddress?.id == KUnifiedInboxId || addressStore.showUnifiedInbox {
+                        await addressStore.fetchAddresses()
                     } else {
-                        await addressesController.fetchMessages(for: addressesController.selectedAddress!)
+                        await addressStore.fetchMessages(for: addressStore.selectedAddress!)
                     }
                 }
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise.circle")
             }
             .help("Refresh messages")
-            .disabled(addressesController.selectedAddress == nil)
+            .disabled(addressStore.selectedAddress == nil)
+
             Menu {
                 Button {
                     Task {
-                        await addressesController.toggleAddressStatus(addressesController.selectedAddress!)
+                        await addressStore.toggleArchiveStatus(addressStore.selectedAddress!)
                     }
                 } label: {
                     Label("Archive Address", systemImage: "archivebox")
@@ -217,7 +236,7 @@ extension ContentView {
                 .help("Archive address")
                 Button(role: .destructive) {
                     addressesViewModel.showDeleteAddressAlert = true
-                    addressesViewModel.selectedAddForDeletion = addressesController.selectedAddress!
+                    addressesViewModel.selectedAddForDeletion = addressStore.selectedAddress!
                 } label: {
                     Label("Delete Address", systemImage: "trash")
                 }
@@ -225,10 +244,10 @@ extension ContentView {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
-            .disabled(addressesController.selectedAddress == nil || addressesController.selectedAddress?.id == KUnifiedInboxId || addressesController.showUnifiedInbox)
+            .disabled(addressStore.selectedAddress == nil || addressStore.selectedAddress?.id == KUnifiedInboxId || addressStore.showUnifiedInbox)
         }
     }
-    
+
     @ToolbarContentBuilder
     private func MacOSAddressesToolbar() -> some ToolbarContent {
         ToolbarItem {
@@ -243,11 +262,13 @@ extension ContentView {
 }
 
 struct NewAddressBtn: View {
-    @EnvironmentObject private var addressesViewModel: AddressesViewModel
-    
+    @Environment(AddressesViewModel.self) private var addressesViewModel
+
     @State private var isHovering: Bool = false
-    
+
     var body: some View {
+        @Bindable var addressesViewModel = addressesViewModel
+
         VStack(alignment: .center, spacing: 10) {
             HStack {
                 Button(action: addressesViewModel.openNewAddressSheet) {
@@ -266,9 +287,9 @@ struct NewAddressBtn: View {
                 }
                 .keyboardShortcut("N", modifiers: .command)
                 .buttonStyle(.plain)
-                
+
                 Spacer()
-                
+
                 Button(action: addressesViewModel.openNewFolderSheet) {
                     Image(systemName: "folder.badge.plus")
                         .foregroundStyle(Color.accentColor)
@@ -276,7 +297,7 @@ struct NewAddressBtn: View {
                 .keyboardShortcut("F", modifiers: .command)
                 .buttonStyle(.plain)
             }
-            
+
             MarkdownLinkText(markdownText: "Powered by [mail.tm](https://www.mail.tm)")
                 .font(.caption2)
         }
@@ -289,16 +310,11 @@ struct NewAddressBtn: View {
 // MARK: - Import data from old app version
 #if os(iOS)
 extension ContentView {
-    /// This on appear will read the applicatio support directory for `TempBoxExportMAJOR.txt` file.
-    /// If found, it will read the contents for that file, verify that the contents are in base64, decode base64 to json, then json to ExportVersionOne
-    /// After that it will save that data to swift data
-    /// This is needed to migrate from the flutter version fo the application to the SwiftUI version
-    /// This code will be removed one year after first relese of the SwiftUI version which is planned on 9th may, 2025. So in May 2026, this code will be removed
     private func handleDataImport() {
         guard !didMigrateData else { return }
-        
+
         let fileName = "TempBoxExportMAJOR.txt"
-        
+
         do {
             let fileManager = FileManager.default
             let appSupportURL = try fileManager.url(
@@ -307,9 +323,9 @@ extension ContentView {
                 appropriateFor: nil,
                 create: true
             )
-            
+
             let fileURL = appSupportURL.appendingPathComponent(fileName)
-            
+
             if fileManager.fileExists(atPath: fileURL.path) {
                 let data = try Data(contentsOf: fileURL)
                 if let content = String(data: data, encoding: .utf8) {
@@ -317,8 +333,7 @@ extension ContentView {
                     let (v1Data, _, message) = ImportExportService.decodeDataForImport(from: content)
                     print(v1Data ?? "Version one data not available", message)
                     Task {
-                        await importAddresses(v1Data: v1Data) { _ in
-                        }
+                        await importAddresses(v1Data: v1Data) { _ in }
                     }
                 } else {
                     didMigrateData = true
@@ -328,41 +343,40 @@ extension ContentView {
                 didMigrateData = true
                 print("File does not exist.")
             }
-            
+
         } catch {
             didMigrateData = true
             print("Error: \(error.localizedDescription)")
         }
     }
-    
-    /// This method will save the address to swiftdata
+
     private func importAddresses(v1Data: ExportVersionOne?, completion: @escaping ([String: String]) -> Void) async {
         let addresses = (v1Data?.addresses ?? []).filter { address in
-            addressesController.isAddressUnique(email: address.authenticatedUser.account.address).0
+            addressStore.isAddressUnique(email: address.authenticatedUser.account.address).0
         }
         if addresses.isEmpty {
             didMigrateData = true
             completion([:])
             return
         }
-        
+
         var errorMap: [String: String] = [:]
-        
+
         await withTaskGroup(of: (String, String?)?.self) { group in
             for address in addresses {
                 group.addTask {
-                    let (status, message) = await addressesController.loginAndSaveAddress(address: address)
+                    let (status, message) = await addressStore.loginAndSave(v1Address: address)
                     return status ? nil : (address.id, message)
                 }
             }
-            
+
             for await result in group {
                 if let (id, message) = result {
                     errorMap[id] = message
                 }
             }
         }
-        
+
         settingsViewModel.selectedV1Addresses.removeAll()
         didMigrateData = true
         completion(errorMap)
