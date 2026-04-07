@@ -21,9 +21,12 @@ final class AppStore {
         didSet { saveCustomColorsToFile() }
     }
 
+    // MARK: - UserDefaults
+    private let defaults: UserDefaults
+
     // MARK: - WebView appearance (replaces @AppStorage("webViewAppearence"))
     var webViewAppearence: String {
-        didSet { UserDefaults.standard.set(webViewAppearence, forKey: "webViewAppearence") }
+        didSet { defaults.set(webViewAppearence, forKey: "webViewAppearence") }
     }
     var webViewColorScheme: WebViewColorScheme {
         WebViewColorScheme(rawValue: webViewAppearence) ?? .system
@@ -35,10 +38,11 @@ final class AppStore {
 
     // MARK: - Init
 
-    init() {
-        webViewAppearence = UserDefaults.standard.string(forKey: "webViewAppearence") ?? WebViewColorScheme.system.rawValue
-        seenOnBoardingView = UserDefaults.standard.bool(forKey: "seenOnBoardingView")
-        if let saved = Self.loadAccentColorData() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        webViewAppearence = defaults.string(forKey: "webViewAppearence") ?? WebViewColorScheme.system.rawValue
+        seenOnBoardingView = defaults.bool(forKey: "seenOnBoardingView")
+        if let saved = Self.loadAccentColorData(from: defaults) {
             selectedAccentColorData = saved
         } else {
             selectedAccentColorData = AppStore.defaultAccentColors.first!
@@ -83,7 +87,7 @@ final class AppStore {
 
     func hideOnboardingSheet() {
         seenOnBoardingView = true
-        UserDefaults.standard.set(true, forKey: "seenOnBoardingView")
+        defaults.set(true, forKey: "seenOnBoardingView")
         showOnboarding = false
     }
 }
@@ -111,12 +115,12 @@ extension AppStore {
 extension AppStore {
     private func saveAccentColorData(_ data: AccentColorData) {
         if let encoded = try? JSONEncoder().encode(data) {
-            UserDefaults.standard.set(encoded, forKey: AppStore.accentColorDataKey)
+            defaults.set(encoded, forKey: AppStore.accentColorDataKey)
         }
     }
 
-    private static func loadAccentColorData() -> AccentColorData? {
-        guard let savedData = UserDefaults.standard.data(forKey: AppStore.accentColorDataKey) else { return nil }
+    private static func loadAccentColorData(from defaults: UserDefaults = .standard) -> AccentColorData? {
+        guard let savedData = defaults.data(forKey: AppStore.accentColorDataKey) else { return nil }
         return try? JSONDecoder().decode(AccentColorData.self, from: savedData)
     }
 

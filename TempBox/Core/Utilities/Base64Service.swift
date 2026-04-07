@@ -42,6 +42,7 @@ class Base64Service {
     
     /// Validate if the input is a valid Base64 String
     static func isBase64EncodedString(_ input: String) -> Bool {
+        guard !input.isEmpty else { return false }
         // Step 1: Attempt to decode from Base64
         guard let decodedData = Data(base64Encoded: input) else {
             return false

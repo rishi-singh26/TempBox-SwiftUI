@@ -10,8 +10,12 @@ import Foundation
 // NOT @MainActor — HTTP work runs on URLSession threads
 final class MailTMNetworkService: MailTMNetworkServiceProtocol {
     private let baseURL = "https://api.mail.tm"
-    private let session = URLSession.shared
+    private let session: URLSession
     public static let shared = MailTMNetworkService()
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
 
     // MARK: - Private Methods
 
@@ -191,7 +195,7 @@ final class MailTMNetworkService: MailTMNetworkServiceProtocol {
                 throw MailTMError.invalidURL
             }
 
-            let (data, response): (Data, URLResponse) = try await URLSession.shared.data(for: request)
+            let (data, response): (Data, URLResponse) = try await session.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw MailTMError.notFound
