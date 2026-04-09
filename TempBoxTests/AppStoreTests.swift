@@ -181,6 +181,35 @@ final class AppStoreTests: XCTestCase {
         XCTAssertTrue(defaults.bool(forKey: "seenOnBoardingView"),
                       "seenOnBoardingView should be persisted to defaults")
     }
+    
+    // MARK: - Disclaimer
+
+    @MainActor
+    func testPrfomrDisclaimerCheck_seenDisclaimerFalse_setsShowDisclaimerTrue() async {
+        defaults.set(false, forKey: "seenDisclaimerView")
+        let sut = makeSUT()
+        await sut.performDisclaimerCheck()
+        XCTAssertTrue(sut.showDisclaimer)
+    }
+
+    @MainActor
+    func testPrfomrDisclaimerCheck_seenDisclaimerFalse_doesNotShowDisclaimer() async {
+        defaults.set(true, forKey: "seenDisclaimerView")
+        let sut = makeSUT()
+        await sut.performDisclaimerCheck()
+        XCTAssertFalse(sut.showDisclaimer)
+    }
+
+    @MainActor
+    func testHideDisclaimerSheet_setsSeenInDefaultsAndHidesSheet() {
+        defaults.set(false, forKey: "seenDisclaimerView")
+        let sut = makeSUT()
+        sut.showDisclaimer = true
+        sut.hideDisclaimerSheet()
+        XCTAssertFalse(sut.showDisclaimer)
+        XCTAssertTrue(defaults.bool(forKey: "seenDisclaimerView"),
+                      "seenDisclaimerView should be persisted to defaults")
+    }
 
     @MainActor
     func testHideOnboardingSheet_subsequentCheck_doesNotShowOnboarding() async {
