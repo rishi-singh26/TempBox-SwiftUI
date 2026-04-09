@@ -38,8 +38,13 @@ struct ContentView: View {
             MacNavigationBuilder()
 #endif
         }
-        .sheet(isPresented: $appStore.showOnboarding, content: {
+        .sheet(isPresented: $appStore.showOnboarding, onDismiss: {
+            Task(operation: appStore.performDisclaimerCheck)
+        }, content: {
             OnboardingView(tint: .accentColor, onContinue: appStore.hideOnboardingSheet)
+        })
+        .sheet(isPresented: $appStore.showDisclaimer, content: {
+            DisclaimerView(tint: .accentColor, onAccept: appStore.hideDisclaimerSheet)
         })
         .onAppear {
             Task(operation: appStore.prfomrOnbordingCheck)
