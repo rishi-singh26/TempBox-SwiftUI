@@ -2,7 +2,7 @@
 
 <img
   width="200"
-  src="https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/TempBox/Assets.xcassets/AppIcon.appiconset/TempBoxMac-Red-6.png"
+  src="https://github.com/rishi-singh26/TempBox-SwiftUI/blob/main/TempBox/Assets.xcassets/PresentableIcon.imageset/TempBox.png"
   alt="TempBox App Icon"
   align="left"/>
 
