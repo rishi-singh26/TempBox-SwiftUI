@@ -10,6 +10,9 @@ import StoreKit
 
 @Observable
 final class AppStore {
+    let WebViewAppearenceKey = "webViewAppearence"
+    let SeenOnBoardingViewKey = "seenOnBoardingView2.0.7"
+    let SeenDisclaimerViewKey = "seenDisclaimerView2.0.7"
     // MARK: - Navigation (iPhone only)
     var path = NavigationPath()
 
@@ -24,24 +27,26 @@ final class AppStore {
     // MARK: - UserDefaults
     private let defaults: UserDefaults
 
-    // MARK: - WebView appearance (replaces @AppStorage("webViewAppearence"))
     var webViewAppearence: String {
-        didSet { defaults.set(webViewAppearence, forKey: "webViewAppearence") }
+        didSet { defaults.set(webViewAppearence, forKey: WebViewAppearenceKey) }
     }
     var webViewColorScheme: WebViewColorScheme {
         WebViewColorScheme(rawValue: webViewAppearence) ?? .system
     }
 
-    // MARK: - Onboarding (replaces @AppStorage("seenOnBoardingView"))
     private var seenOnBoardingView: Bool
     var showOnboarding: Bool = false
+    
+    private var seenDisclaimerView: Bool
+    var showDisclaimer: Bool = false
 
     // MARK: - Init
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        webViewAppearence = defaults.string(forKey: "webViewAppearence") ?? WebViewColorScheme.system.rawValue
-        seenOnBoardingView = defaults.bool(forKey: "seenOnBoardingView")
+        webViewAppearence = defaults.string(forKey: WebViewAppearenceKey) ?? WebViewColorScheme.system.rawValue
+        seenOnBoardingView = defaults.bool(forKey: SeenOnBoardingViewKey)
+        seenDisclaimerView = defaults.bool(forKey: SeenDisclaimerViewKey)
         if let saved = Self.loadAccentColorData(from: defaults) {
             selectedAccentColorData = saved
         } else {
@@ -75,20 +80,37 @@ final class AppStore {
     }
 
     // MARK: - Onboarding
-
     func prfomrOnbordingCheck() async {
         try? await Task.sleep(for: .seconds(0.2))
         if !self.seenOnBoardingView {
             await MainActor.run {
                 self.showOnboarding = true
             }
+        } else {
+            Task(operation: self.performDisclaimerCheck)
         }
     }
 
     func hideOnboardingSheet() {
         seenOnBoardingView = true
-        defaults.set(true, forKey: "seenOnBoardingView")
+        defaults.set(true, forKey: SeenOnBoardingViewKey)
         showOnboarding = false
+    }
+    
+    // MARK: - Disclaimer
+    func performDisclaimerCheck() async {
+        try? await Task.sleep(for: .seconds(0.2))
+        if !self.seenDisclaimerView {
+            await MainActor.run {
+                self.showDisclaimer = true
+            }
+        }
+    }
+
+    func hideDisclaimerSheet() {
+        seenDisclaimerView = true
+        defaults.set(true, forKey: SeenDisclaimerViewKey)
+        showDisclaimer = false
     }
 }
 

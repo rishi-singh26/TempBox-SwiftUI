@@ -54,29 +54,7 @@ struct OnboardingView: View {
             .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize)
             
-            VStack(spacing: 0, content: {
-                Text("By using TempBox, you agree to\n**[Privacy Policy](https://tempbox.rishisingh.in/privacy-policy.html)** and **[Terms of Service](https://tempbox.rishisingh.in/terms-of-service.html)**")
-                    .font(.footnote)
-                    .foregroundStyle(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding(.vertical, 15)
-                
-                // Continue btn
-                Button(action: onContinue) {
-                    Text("Continue")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-#if os(macOS)
-                        .padding(.vertical, 8)
-#else
-                        .padding(.vertical, 4)
-#endif
-                }
-                .tint(tint)
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-            })
-            .blurSlide(animateFooter)
+            BottomButtonBuilder()
         }
         // Limiting the width
         .frame(maxWidth: 330)
@@ -140,6 +118,48 @@ struct OnboardingView: View {
         }
     }
     
+    @ViewBuilder
+    private func BottomButtonBuilder() -> some View {
+        VStack(spacing: 0, content: {
+            Text("By using TempBox, you agree to\n**[Privacy Policy](https://tempbox.rishisingh.in/privacy-policy.html)** and **[Terms of Service](https://tempbox.rishisingh.in/terms-of-service.html)**")
+                .font(.footnote)
+                .foregroundStyle(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.vertical, 15)
+            
+            if #available(iOS 26.0, macOS 26.0, *) {
+                Button(action: onContinue) {
+                    Text("Continue")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+#if os(macOS)
+                        .padding(.vertical, 8)
+#else
+                        .padding(.vertical, 4)
+#endif
+                }
+                .tint(tint)
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+            } else {
+                Button(action: onContinue) {
+                    Text("Continue")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+#if os(macOS)
+                        .padding(.vertical, 8)
+#else
+                        .padding(.vertical, 4)
+#endif
+                }
+                .tint(tint)
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+            }
+        })
+        .blurSlide(animateFooter)
+    }
+    
     private func delayedAnimation(_ delay: Double, action: @escaping () -> ()) async {
         try? await Task.sleep(for: .seconds(delay))
         
@@ -156,18 +176,30 @@ struct OnboardingView: View {
             title: "Generate Email Addresses",
             subTitle: "Quickly create email addresses, as many as you need."
         ),
-        
+        OnboardingCard(
+            symbol: "internaldrive",
+            title: "Messages Saved Locally",
+            subTitle: "Once fetched, your email messages are stored on your device. They remain accessible even after they are removed from mail.tm's servers."
+        ),
         OnboardingCard(
             symbol: "tray.2",
             title: "Unified Inbox",
             subTitle: "All your emails, from every address, in one place."
         ),
-        
         OnboardingCard(
             symbol: "arrow.up.arrow.down.square",
             title: "Import/Export",
             subTitle: "Easily import or export email addresses whenever you need."
-        ),
+        )
     ]
     let footerMessage = "By using TempBox, you agree to [Privacy Policy](https://tempbox.rishisingh.in/privacy-policy.html) and [Terms of Service](https://tempbox.rishisingh.in/terms-of-service.html)"
+}
+
+#Preview {
+    Color.clear
+        .sheet(isPresented: .constant(true)) {
+            OnboardingView(tint: .accent) {
+                // onContinue
+            }
+        }
 }

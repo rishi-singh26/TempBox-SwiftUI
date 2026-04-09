@@ -68,7 +68,12 @@ final class MessageService: MessageServiceProtocol {
     // MARK: - Update
 
     func updateSeenStatus(_ message: Message) async {
-        guard !message.isRemovedFromRemote else { return }
+        // Check if message has already been removed from mail.tm server
+        guard !message.isRemovedFromRemote else {
+            // If it has been removed from Mail.tm server, updated the message's seen in SwiftData
+            message.seen = !message.seen
+            return
+        }
         guard let token = message.address?.token, !token.isEmpty else { return }
         do {
             _ = try await networkService.updateMessageSeenStatus(
