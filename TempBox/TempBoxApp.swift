@@ -108,7 +108,7 @@ struct RootView: View {
     @EnvironmentObject private var remoteDataManager: RemoteDataManager
 
     var body: some View {
-        ContentView()
+        AppUpdateCheckView()
             .accentColor(appStore.accentColor(colorScheme: colorScheme))
             .onAppear(perform: iapManager.initialize)
             .onAppear(perform: remoteDataManager.getRemoteData)
