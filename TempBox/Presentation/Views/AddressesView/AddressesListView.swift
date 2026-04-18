@@ -74,7 +74,7 @@ struct AddressesListView: View {
             }
 
             if !addressesWithoutFolder.isEmpty {
-                Section("Addresses", isExpanded: $addressesViewModel.noFoldersSectionExpanded) {
+                Section(folders.isEmpty ? "" : "Addresses", isExpanded: $addressesViewModel.noFoldersSectionExpanded) {
                     ForEach(addressesWithoutFolder) { address in
                         AddressItemView(address: address)
                     }
@@ -120,7 +120,7 @@ struct AddressesListView: View {
             }
 
             if !addressesWithoutFolder.isEmpty {
-                Section("Addresses", isExpanded: $addressesViewModel.noFoldersSectionExpanded) {
+                Section(folders.isEmpty ? "" : "Addresses", isExpanded: $addressesViewModel.noFoldersSectionExpanded) {
                     ForEach(addressesWithoutFolder) { address in
                         NavigationLink(value: address) {
                             AddressItemView(address: address)

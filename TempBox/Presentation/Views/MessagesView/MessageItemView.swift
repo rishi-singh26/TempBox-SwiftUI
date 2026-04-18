@@ -104,7 +104,7 @@ private struct MessateTile: View {
             VStack {
                 Circle()
                     .fill(circleColor)
-                    .frame(width: 12)
+                    .frame(width: 10)
                 
                 Spacer()
                 
@@ -113,7 +113,7 @@ private struct MessateTile: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 12, height: 12)
-                        .foregroundColor(circleColor)
+                        .foregroundColor(.accentColor)
                 }
             }
             .padding(.top, 6)

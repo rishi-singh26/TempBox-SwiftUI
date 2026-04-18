@@ -24,7 +24,7 @@ struct AboutView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSAboutViewBuilder() -> some View {
+    private func MacOSAboutViewBuilder() -> some View {
         List {
             MacCustomSection {
                 HStack {
@@ -140,7 +140,7 @@ struct AboutView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IosAboutViewBuilder() -> some View {
+    private func IosAboutViewBuilder() -> some View {
         List {
             HStack {
                 Image("PresentableIcon")

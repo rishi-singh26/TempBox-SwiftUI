@@ -38,7 +38,7 @@ struct ExportAddressesView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IOSView() -> some View {
+    private func IOSView() -> some View {
         @Bindable var settingsViewModel = settingsViewModel
         List(addresses, id: \.self, selection: $settingsViewModel.selectedExportAddresses) { address in
             HStack {
@@ -97,7 +97,7 @@ struct ExportAddressesView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSView() -> some View {
+    private func MacOSView() -> some View {
         @Bindable var settingsViewModel = settingsViewModel
         // using this exportTypeSelectionBinding binding because simply binding the "settingsViewModel.selectedExportType" gave error "Publishing changes from within view updates is not allowed, this will cause undefined behavior."
         let exportTypeSelectionBinding = Binding {
@@ -138,7 +138,7 @@ struct ExportAddressesView: View {
     }
     
     @ViewBuilder
-    func AddressView() -> some View {
+    private func AddressView() -> some View {
         List {
             ForEach(addresses) { address in
                 HStack {
@@ -168,7 +168,7 @@ struct ExportAddressesView: View {
     }
     
     @ViewBuilder
-    func SelectionButtons() -> some View {
+    private func SelectionButtons() -> some View {
         HStack {
             Spacer()
             Button("Unselect All", role: .cancel) {
@@ -187,7 +187,7 @@ struct ExportAddressesView: View {
 #endif
     
     @ViewBuilder
-    func ExporterView() -> some View {
+    private func ExporterView() -> some View {
         @Bindable var settingsViewModel = settingsViewModel
         Group {
             if settingsViewModel.selectedExportType == .encoded {

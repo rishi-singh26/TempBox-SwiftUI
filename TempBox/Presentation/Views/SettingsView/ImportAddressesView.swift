@@ -26,7 +26,7 @@ struct ImportAddressesView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IOSView() -> some View {
+    private func IOSView() -> some View {
         @Bindable var settingsViewModel = settingsViewModel
         Group {
             if settingsViewModel.importDataVersion != nil {
@@ -132,7 +132,7 @@ struct ImportAddressesView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSView() -> some View {
+    private func MacOSView() -> some View {
         @Bindable var settingsViewModel = settingsViewModel
         VStack(alignment: .leading) {
             MacCustomSection {
@@ -169,7 +169,7 @@ struct ImportAddressesView: View {
     }
     
     @ViewBuilder
-    func AddressView() -> some View {
+    private func AddressView() -> some View {
         @Bindable var settingsViewModel = settingsViewModel
         Group {
             if settingsViewModel.importDataVersion == ExportVersionOne.staticVersion {
@@ -235,7 +235,7 @@ struct ImportAddressesView: View {
     }
     
     @ViewBuilder
-    func SelectionButtons() -> some View {
+    private func SelectionButtons() -> some View {
         HStack {
             Spacer()
             Button("Unselect All", role: .cancel) {
@@ -257,7 +257,7 @@ struct ImportAddressesView: View {
     }
 #endif
     
-    func importAddresses(completion: @escaping ([String: String]) -> Void) async {
+    private func importAddresses(completion: @escaping ([String: String]) -> Void) async {
         var errorMap: [String: String] = [:]
         
         if settingsViewModel.importDataVersion == ExportVersionOne.staticVersion {

@@ -26,7 +26,7 @@ struct ArchiveView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IOSView() -> some View {
+    private func IOSView() -> some View {
         @Bindable var settingsViewModel = settingsViewModel
         Group {
             if !archivedAddresses.isEmpty {
@@ -80,7 +80,7 @@ struct ArchiveView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSView() -> some View {
+    private func MacOSView() -> some View {
         VStack(alignment: .leading) {
             MacCustomSection {
                 VStack {
@@ -94,7 +94,7 @@ struct ArchiveView: View {
     }
     
     @ViewBuilder
-    func AddressView() -> some View {
+    private func AddressView() -> some View {
         List {
             ForEach(archivedAddresses) { address in
                 HStack {
@@ -124,7 +124,7 @@ struct ArchiveView: View {
     }
     
     @ViewBuilder
-    func SelectionButtons() -> some View {
+    private func SelectionButtons() -> some View {
         HStack {
             Spacer()
             Button("Unselect All", role: .cancel) {
@@ -149,7 +149,7 @@ struct ArchiveView: View {
     }
 #endif
     
-    func restoreAddresses() async {
+    private func restoreAddresses() async {
         var errorMap: [String: String] = [:]
         if settingsViewModel.selectedArchivedAddresses.isEmpty {
             settingsViewModel.showAlert(with: "Select addresses to restore.")
