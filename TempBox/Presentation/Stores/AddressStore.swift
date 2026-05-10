@@ -108,24 +108,24 @@ final class AddressStore {
 
     func addAddress(account: Account, token: String, password: String, name: String, folder: Folder?) async {
         await addressService.addAddress(account: account, token: token, password: password, name: name, folder: folder)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func loginAndSave(v1Address: ExportVersionOneAddress) async -> (Bool, String) {
         let result = await addressService.loginAndSave(v1Address: v1Address)
-        if result.0 { await fetchAddresses() }
+        // if result.0 { await fetchAddresses() }
         return result
     }
 
     func loginAndSave(v2Address: ExportVersionTwoAddress) async -> (Bool, String) {
         let result = await addressService.loginAndSave(v2Address: v2Address)
-        if result.0 { await fetchAddresses() }
+        // if result.0 { await fetchAddresses() }
         return result
     }
 
     func loginAndRestore(_ address: Address) async -> (Bool, String) {
         let result = await addressService.loginAndRestore(address)
-        if result.0 { await fetchAddresses() }
+        // if result.0 { await fetchAddresses() }
         return result
     }
 
@@ -135,22 +135,22 @@ final class AddressStore {
 
     func deleteAddress(_ address: Address) async {
         addressService.deleteAddress(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func deleteAddressFromServer(_ address: Address) async {
         await addressService.deleteAddressFromServer(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func permanentlyDelete(_ address: Address) async {
         addressService.permanentlyDelete(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func toggleArchiveStatus(_ address: Address) async {
         await addressService.toggleArchiveStatus(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     // MARK: - Message Mutations
