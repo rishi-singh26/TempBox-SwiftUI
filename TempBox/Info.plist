@@ -5,14 +5,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>fetch</string>
-		<string>processing</string>
 	</array>
-    <key>BGTaskSchedulerPermittedIdentifiers</key>
-    <array>
-        <string>com.rishi.TempMail.fetchEmails</string>
-    </array>
-    <key>NSUserNotificationsUsageDescription</key>
-    <string>TempBox uses notifications to alert you when new emails arrive.</string>
 </dict>
 </plist>
