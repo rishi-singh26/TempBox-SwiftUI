@@ -487,8 +487,32 @@ final class MailTMNetworkServiceTests: XCTestCase {
 
     // MARK: - Network error propagation
 
-    func testNetworkError_wrappedAsMailTMNetworkError() async {
+    func testNetworkError_notConnectedToInternet_throwsNoNetworkConnection() async {
         MockURLProtocol.requestHandler = { _ in throw URLError(.notConnectedToInternet) }
+        do {
+            _ = try await sut.fetchDomains()
+            XCTFail("Expected error")
+        } catch let error as MailTMError {
+            if case .noNetworkConnection = error { /* pass */ } else {
+                XCTFail("Expected .noNetworkConnection, got \(error)")
+            }
+        } catch { XCTFail("Unexpected: \(error)") }
+    }
+
+    func testNetworkError_networkConnectionLost_throwsNoNetworkConnection() async {
+        MockURLProtocol.requestHandler = { _ in throw URLError(.networkConnectionLost) }
+        do {
+            _ = try await sut.fetchDomains()
+            XCTFail("Expected error")
+        } catch let error as MailTMError {
+            if case .noNetworkConnection = error { /* pass */ } else {
+                XCTFail("Expected .noNetworkConnection, got \(error)")
+            }
+        } catch { XCTFail("Unexpected: \(error)") }
+    }
+
+    func testNetworkError_otherURLError_wrappedAsNetworkError() async {
+        MockURLProtocol.requestHandler = { _ in throw URLError(.timedOut) }
         do {
             _ = try await sut.fetchDomains()
             XCTFail("Expected error")
@@ -506,7 +530,7 @@ final class MailTMNetworkServiceTests: XCTestCase {
             .invalidURL, .noData, .decodingError(URLError(.badURL)),
             .networkError(URLError(.timedOut)), .httpError(418, "teapot"),
             .authenticationRequired, .rateLimitExceeded, .invalidRequest,
-            .notFound, .serverError, .addressAlredyInUse,
+            .notFound, .serverError, .addressAlredyInUse, .noNetworkConnection,
         ]
         for error in errors {
             XCTAssertNotNil(error.errorDescription)
