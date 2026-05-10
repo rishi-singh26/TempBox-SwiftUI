@@ -7,12 +7,17 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
+#if os(iOS)
+import BackgroundTasks
+#endif
 
 @main
 struct TempBoxApp: App {
     var sharedModelContainer: ModelContainer
 
     @Environment(\.openWindow) var openWindow
+    @Environment(\.scenePhase) private var scenePhase
 
     // Migrated to @Observable → @State
     @State private var addressStore: AddressStore
@@ -43,6 +48,13 @@ struct TempBoxApp: App {
 
         self.sharedModelContainer = container
 
+        // Set notification delegate before the first notification can arrive
+        UNUserNotificationCenter.current().delegate = NotificationService.shared
+
+        #if os(iOS)
+        BackgroundEmailService.register(modelContainer: container)
+        #endif
+
         // Build the dependency graph
         let monitor = NetworkMonitor()
         _networkMonitor = StateObject(wrappedValue: monitor)
@@ -54,6 +66,32 @@ struct TempBoxApp: App {
         let messageService = MessageService(repository: messageRepo, networkService: networkService)
 
         _addressStore = State(initialValue: AddressStore(addressService: addressService, messageService: messageService, networkMonitor: monitor))
+    }
+
+    // MARK: - Lifecycle
+
+    private func handleScenePhaseChange(_ phase: ScenePhase) {
+        switch phase {
+        case .active:
+            Task {
+                let settings = await UNUserNotificationCenter.current().notificationSettings()
+                guard settings.authorizationStatus == .authorized
+                        || settings.authorizationStatus == .provisional else { return }
+                LiveEmailPoller.shared.start(modelContext: sharedModelContainer.mainContext)
+            }
+        case .background:
+            LiveEmailPoller.shared.stop()
+            #if os(iOS)
+            Task {
+                let settings = await UNUserNotificationCenter.current().notificationSettings()
+                guard settings.authorizationStatus == .authorized
+                        || settings.authorizationStatus == .provisional else { return }
+                BackgroundEmailService.scheduleBackgroundFetch()
+            }
+            #endif
+        default:
+            break
+        }
     }
 
     var body: some Scene {
@@ -72,6 +110,12 @@ struct TempBoxApp: App {
                 .environmentObject(iapManager)
                 .environmentObject(webViewController)
                 .environmentObject(remoteDataManager)
+                .task {
+                    await NotificationService.shared.requestPermission()
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    handleScenePhaseChange(newPhase)
+                }
         }
         .modelContainer(sharedModelContainer)
 #if os(macOS)

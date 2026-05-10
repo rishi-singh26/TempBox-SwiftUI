@@ -24,6 +24,11 @@ class NetworkMonitor: ObservableObject {
     init() {
         startMonitoring()
     }
+
+    /// Test-only initializer — sets a fixed connection state without starting real NWPathMonitor.
+    init(fixedIsConnected: Bool?) {
+        self.isConnected = fixedIsConnected
+    }
     
     private func startMonitoring() {
         monitor.pathUpdateHandler = { path in
