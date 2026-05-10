@@ -1,0 +1,47 @@
+//
+//  NetworkMonitorCheckView.swift
+//  TempBox
+//
+//  Created by Rishi Singh on 23/04/26.
+//
+
+import SwiftUI
+import SwiftData
+
+struct NetworkMonitorCheckView: View {
+    @Environment(\.isNetworkConnected) private var isConnected
+
+    var body: some View {
+        AppUpdateCheckView()
+            .sheet(isPresented: .constant(!(isConnected ?? true))) {
+                NetworkMonitorView()
+                    .presentationDetents([.height(310)])
+            }
+    }
+}
+
+#Preview {
+    let schema = Schema([Address.self, Folder.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+    let ctx = container.mainContext
+    let networkService = MailTMNetworkService()
+    let addressRepo = AddressRepository(modelContext: ctx)
+    let messageRepo = MessageRepository(modelContext: ctx)
+    let addressService = AddressService(repository: addressRepo, networkService: networkService)
+    let messageService = MessageService(repository: messageRepo, networkService: networkService)
+
+    NetworkMonitorCheckView()
+        .environment(AddressStore(addressService: addressService, messageService: messageService))
+        .environment(AppStore())
+        .environment(AddressesViewModel())
+        .environment(SettingsViewModel())
+        .environment(MessagesViewModel())
+        .environment(MessageDetailViewModel())
+        .environmentObject(WebViewController())
+        .environmentObject(IAPManager())
+        .environmentObject(RemoteDataManager())
+        .environmentObject(NetworkMonitor())
+        .environment(\.isNetworkConnected, false)
+        .modelContainer(container)
+}

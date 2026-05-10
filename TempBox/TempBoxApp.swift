@@ -26,6 +26,7 @@ struct TempBoxApp: App {
     @StateObject private var iapManager = IAPManager()
     @StateObject private var webViewController = WebViewController()
     @StateObject private var remoteDataManager = RemoteDataManager()
+    @StateObject private var networkMonitor = NetworkMonitor()
 
     init() {
         let container: ModelContainer
@@ -63,6 +64,8 @@ struct TempBoxApp: App {
                 .environment(settingsViewModel)
                 .environment(messagesViewModel)
                 .environment(messageDetailViewModel)
+                .environment(\.isNetworkConnected, networkMonitor.isConnected)
+                .environment(\.connectionType, networkMonitor.connectionType)
                 // Not migrated
                 .environmentObject(iapManager)
                 .environmentObject(webViewController)
@@ -108,7 +111,7 @@ struct RootView: View {
     @EnvironmentObject private var remoteDataManager: RemoteDataManager
 
     var body: some View {
-        AppUpdateCheckView()
+        NetworkMonitorCheckView()
             .accentColor(appStore.accentColor(colorScheme: colorScheme))
             .onAppear(perform: iapManager.initialize)
             .onAppear(perform: remoteDataManager.getRemoteData)
