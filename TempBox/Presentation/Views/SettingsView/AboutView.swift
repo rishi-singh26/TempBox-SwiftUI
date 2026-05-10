@@ -13,13 +13,20 @@ typealias AppstoreApp = StoreKit.AppStore
 struct AboutView: View {
     @Environment(SettingsViewModel.self) private var settingsViewModel
     @Environment(\.openURL) var openURL
-    
+
+    @State private var showDisclaimer: Bool = false
+
     var body: some View {
-        #if os(macOS)
-        MacOSAboutViewBuilder()
-        #else
-        IosAboutViewBuilder()
-        #endif
+        Group {
+            #if os(macOS)
+            MacOSAboutViewBuilder()
+            #else
+            IosAboutViewBuilder()
+            #endif
+        }
+        .sheet(isPresented: $showDisclaimer) {
+            DisclaimerView(tint: .accentColor, onAccept: { showDisclaimer = false })
+        }
     }
     
 #if os(macOS)
@@ -76,6 +83,14 @@ struct AboutView: View {
             
             MacCustomSection {
                 VStack(alignment: .leading) {
+                    Button {
+                        showDisclaimer = true
+                    } label: {
+                        CustomLabel(leadingImageName: "exclamationmark.triangle", title: "Important Notice")
+                    }
+                    .buttonStyle(.link)
+                    .help("View important notice about TempBox")
+                    Divider()
                     Button {
                         openURL(url: KPrivactPolicyURL)
                     } label: {
@@ -180,6 +195,12 @@ struct AboutView: View {
             }
             
             Section {
+                Button {
+                    showDisclaimer = true
+                } label: {
+                    CustomLabel(leadingImageName: "exclamationmark.triangle", title: "Important Notice")
+                }
+                .help("View important notice about TempBox")
                 Button {
                     openURL(url: KPrivactPolicyURL)
                 } label: {
