@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 @Observable
 @MainActor
@@ -36,18 +37,30 @@ final class AddressStore {
     private var addresses: [Address] = []
     private let addressService: any AddressServiceProtocol
     private let messageService: any MessageServiceProtocol
+    private let networkMonitor: NetworkMonitor
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Init
 
-    init(addressService: any AddressServiceProtocol, messageService: any MessageServiceProtocol) {
+    init(addressService: any AddressServiceProtocol, messageService: any MessageServiceProtocol, networkMonitor: NetworkMonitor) {
         self.addressService = addressService
         self.messageService = messageService
+        self.networkMonitor = networkMonitor
         Task { await fetchAddresses() }
+        networkMonitor.$isConnected
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isConnected in
+                guard isConnected == true else { return }
+                Task { await self?.fetchAddresses() }
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Address Fetch
 
     func fetchAddresses() async {
+        guard networkMonitor.isConnected == true else { return }
         isLoading = true
         addresses = addressService.fetchAll()
         await fetchMessagesForAllAddresses()
@@ -67,6 +80,7 @@ final class AddressStore {
     // MARK: - Message Fetch
 
     func fetchMessages(for address: Address) async {
+        guard networkMonitor.isConnected == true else { return }
         guard let token = address.token, !token.isEmpty else { return }
         _ = token
         updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil))

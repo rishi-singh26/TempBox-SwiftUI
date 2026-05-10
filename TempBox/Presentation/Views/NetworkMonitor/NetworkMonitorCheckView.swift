@@ -30,9 +30,10 @@ struct NetworkMonitorCheckView: View {
     let messageRepo = MessageRepository(modelContext: ctx)
     let addressService = AddressService(repository: addressRepo, networkService: networkService)
     let messageService = MessageService(repository: messageRepo, networkService: networkService)
+    let addressStore = AddressStore(addressService: addressService, messageService: messageService, networkMonitor: NetworkMonitor())
 
     NetworkMonitorCheckView()
-        .environment(AddressStore(addressService: addressService, messageService: messageService))
+        .environment(addressStore)
         .environment(AppStore())
         .environment(AddressesViewModel())
         .environment(SettingsViewModel())

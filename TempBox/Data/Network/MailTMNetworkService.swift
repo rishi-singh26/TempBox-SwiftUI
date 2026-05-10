@@ -82,6 +82,10 @@ final class MailTMNetworkService: MailTMNetworkServiceProtocol {
         } catch {
             if error is MailTMError {
                 throw error
+            } else if let urlError = error as? URLError,
+                      urlError.code == .notConnectedToInternet ||
+                      urlError.code == .networkConnectionLost {
+                throw MailTMError.noNetworkConnection
             } else {
                 throw MailTMError.networkError(error)
             }
@@ -298,7 +302,8 @@ enum MailTMError: Error, LocalizedError {
     case notFound
     case serverError
     case addressAlredyInUse
-    
+    case noNetworkConnection
+
     var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -323,6 +328,8 @@ enum MailTMError: Error, LocalizedError {
             return "Server error"
         case .addressAlredyInUse:
             return "This address is already in use, you can login to this address."
+        case .noNetworkConnection:
+            return "No internet connection. Please check your network settings."
         }
     }
 }

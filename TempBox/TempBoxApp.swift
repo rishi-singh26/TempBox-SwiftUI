@@ -26,7 +26,7 @@ struct TempBoxApp: App {
     @StateObject private var iapManager = IAPManager()
     @StateObject private var webViewController = WebViewController()
     @StateObject private var remoteDataManager = RemoteDataManager()
-    @StateObject private var networkMonitor = NetworkMonitor()
+    @StateObject private var networkMonitor: NetworkMonitor
 
     init() {
         let container: ModelContainer
@@ -44,6 +44,8 @@ struct TempBoxApp: App {
         self.sharedModelContainer = container
 
         // Build the dependency graph
+        let monitor = NetworkMonitor()
+        _networkMonitor = StateObject(wrappedValue: monitor)
         let ctx = container.mainContext
         let networkService = MailTMNetworkService()
         let addressRepo = AddressRepository(modelContext: ctx)
@@ -51,7 +53,7 @@ struct TempBoxApp: App {
         let addressService = AddressService(repository: addressRepo, networkService: networkService)
         let messageService = MessageService(repository: messageRepo, networkService: networkService)
 
-        _addressStore = State(initialValue: AddressStore(addressService: addressService, messageService: messageService))
+        _addressStore = State(initialValue: AddressStore(addressService: addressService, messageService: messageService, networkMonitor: monitor))
     }
 
     var body: some Scene {
