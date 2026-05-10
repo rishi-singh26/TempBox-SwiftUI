@@ -10,9 +10,23 @@ import SwiftUI
 struct NetworkMonitorView: View {
     @Environment(\.isNetworkConnected) private var isConnected
     @Environment(\.connectionType) private var connectionType
-    
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         VStack(spacing: 20) {
+            #if os(macOS)
+            HStack {
+                Spacer()
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing)
+            }
+            .padding(.bottom, -10)
+            #endif
             Image(systemName: "wifi.exclamationmark")
                 .font(.system(size: 80, weight: .semibold))
                 .foregroundStyle(Color.accentColor)
@@ -28,7 +42,7 @@ struct NetworkMonitorView: View {
             
             Text("Waiting for internet connection...")
                 .font(.caption)
-                .foregroundStyle(.background)
+                .foregroundStyle(.white)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity)
                 .background(Color.accentColor)

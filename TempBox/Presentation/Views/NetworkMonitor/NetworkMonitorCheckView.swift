@@ -10,12 +10,25 @@ import SwiftData
 
 struct NetworkMonitorCheckView: View {
     @Environment(\.isNetworkConnected) private var isConnected
+    @State private var userDismissed: Bool = false
+
+    private var sheetBinding: Binding<Bool> {
+        Binding(
+            get: { !(isConnected ?? true) && !userDismissed },
+            set: { if !$0 { userDismissed = true } }
+        )
+    }
 
     var body: some View {
         AppUpdateCheckView()
-            .sheet(isPresented: .constant(!(isConnected ?? true))) {
+            .sheet(isPresented: sheetBinding) {
                 NetworkMonitorView()
                     .presentationDetents([.height(310)])
+            }
+            .onChange(of: isConnected) { _, newValue in
+                if newValue == false {
+                    userDismissed = false
+                }
             }
     }
 }
