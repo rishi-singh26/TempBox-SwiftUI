@@ -26,7 +26,7 @@ struct ManageFoldersView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IOSView() -> some View {
+    private func IOSView() -> some View {
         List {
             if !folders.isEmpty {
                 ForEach(folders, id: \.self) { folder in
@@ -73,7 +73,7 @@ struct ManageFoldersView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSView() -> some View {
+    private func MacOSView() -> some View {
         List {
             if !folders.isEmpty {
                 ForEach(folders, id: \.self) { (folder: Folder) in

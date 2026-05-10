@@ -1092,9 +1092,9 @@ typealias Folder = AddressSchemaV41.Folder
 typealias Message = AddressSchemaV41.Message
 
 extension Message {
-    static func flatten(emailAddresses: [EmailAddress]?) -> String? {
+    private static func flatten(emailAddresses: [EmailAddress]?) -> String? {
         guard let emailAddresses, !emailAddresses.isEmpty else { return nil }
-        
+
         return emailAddresses
             .map { address in
                 let name = address.name ?? ""
@@ -1102,9 +1102,7 @@ extension Message {
             }
             .joined(separator: ":::")
     }
-}
 
-extension Message {
     convenience init(from apiMessage: APIMessage) {
         self.init(
             id: UUID(), // or UUID(uuidString: api.id) if backend supports it

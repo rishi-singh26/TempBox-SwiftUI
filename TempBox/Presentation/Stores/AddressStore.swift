@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 @Observable
 @MainActor
@@ -36,18 +37,30 @@ final class AddressStore {
     private var addresses: [Address] = []
     private let addressService: any AddressServiceProtocol
     private let messageService: any MessageServiceProtocol
+    private let networkMonitor: NetworkMonitor
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Init
 
-    init(addressService: any AddressServiceProtocol, messageService: any MessageServiceProtocol) {
+    init(addressService: any AddressServiceProtocol, messageService: any MessageServiceProtocol, networkMonitor: NetworkMonitor) {
         self.addressService = addressService
         self.messageService = messageService
+        self.networkMonitor = networkMonitor
         Task { await fetchAddresses() }
+        networkMonitor.$isConnected
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isConnected in
+                guard isConnected == true else { return }
+                Task { await self?.fetchAddresses() }
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Address Fetch
 
     func fetchAddresses() async {
+        guard networkMonitor.isConnected == true else { return }
         isLoading = true
         addresses = addressService.fetchAll()
         await fetchMessagesForAllAddresses()
@@ -67,6 +80,7 @@ final class AddressStore {
     // MARK: - Message Fetch
 
     func fetchMessages(for address: Address) async {
+        guard networkMonitor.isConnected == true else { return }
         guard let token = address.token, !token.isEmpty else { return }
         _ = token
         updateMessageStore(for: address, store: MessageStore(isFetching: true, error: nil))
@@ -94,24 +108,24 @@ final class AddressStore {
 
     func addAddress(account: Account, token: String, password: String, name: String, folder: Folder?) async {
         await addressService.addAddress(account: account, token: token, password: password, name: name, folder: folder)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func loginAndSave(v1Address: ExportVersionOneAddress) async -> (Bool, String) {
         let result = await addressService.loginAndSave(v1Address: v1Address)
-        if result.0 { await fetchAddresses() }
+        // if result.0 { await fetchAddresses() }
         return result
     }
 
     func loginAndSave(v2Address: ExportVersionTwoAddress) async -> (Bool, String) {
         let result = await addressService.loginAndSave(v2Address: v2Address)
-        if result.0 { await fetchAddresses() }
+        // if result.0 { await fetchAddresses() }
         return result
     }
 
     func loginAndRestore(_ address: Address) async -> (Bool, String) {
         let result = await addressService.loginAndRestore(address)
-        if result.0 { await fetchAddresses() }
+        // if result.0 { await fetchAddresses() }
         return result
     }
 
@@ -121,22 +135,22 @@ final class AddressStore {
 
     func deleteAddress(_ address: Address) async {
         addressService.deleteAddress(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func deleteAddressFromServer(_ address: Address) async {
         await addressService.deleteAddressFromServer(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func permanentlyDelete(_ address: Address) async {
         addressService.permanentlyDelete(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     func toggleArchiveStatus(_ address: Address) async {
         await addressService.toggleArchiveStatus(address)
-        await fetchAddresses()
+        // await fetchAddresses()
     }
 
     // MARK: - Message Mutations

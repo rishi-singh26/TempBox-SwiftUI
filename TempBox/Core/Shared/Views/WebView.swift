@@ -174,7 +174,7 @@ struct WebView: PlatformViewRepresentable {
 #endif
         }
         
-        func saveAsPDF() async throws -> Data? {
+        fileprivate func saveAsPDF() async throws -> Data? {
             guard let webView = webView else {
                 throw PDFError.webViewNotAvailable
             }

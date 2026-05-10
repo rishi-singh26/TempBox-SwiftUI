@@ -113,11 +113,6 @@ struct SettingsView: View {
                     Text("Tip Jar")
                 } icon: {
                     Text(Locale.current.currencySymbol ?? "$")
-                        .padding(7)
-                        .background(settingsViewModel.selectedSetting == .tipJarPage ? Color.primary.opacity(0.2) : Color.accentColor.opacity(0.2))
-                        .foregroundColor(settingsViewModel.selectedSetting == .tipJarPage ? Color.primary : Color.accentColor)
-                        .clipShape(Circle())
-                        .frame(height: 20)
                 }
             }
             NavigationLink(value: SettingPage.aboutPage) {

@@ -140,67 +140,6 @@ final class ImportExportServiceTests: XCTestCase {
         XCTAssertFalse(message.isEmpty)
     }
 
-    // MARK: - decodeVersionOneData
-
-    func testDecodeVersionOneData_validData_succeeds() {
-        let data = v1JSONString.data(using: .utf8)!
-        let (result, message) = ImportExportService.decodeVersionOneData(from: data)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(message, "Success")
-    }
-
-    func testDecodeVersionOneData_wrongVersion_fails() {
-        let json = """
-        {"version":"2.0.0","exportDate":"2024-01-01T00:00:00Z","addresses":[]}
-        """.data(using: .utf8)!
-        let (result, message) = ImportExportService.decodeVersionOneData(from: json)
-        XCTAssertNil(result)
-        XCTAssertFalse(message.isEmpty)
-    }
-
-    func testDecodeVersionOneData_emptyData_fails() {
-        let (result, message) = ImportExportService.decodeVersionOneData(from: Data())
-        XCTAssertNil(result)
-        XCTAssertFalse(message.isEmpty)
-    }
-
-    func testDecodeVersionOneData_addressCount() {
-        let data = v1JSONString.data(using: .utf8)!
-        let (result, _) = ImportExportService.decodeVersionOneData(from: data)
-        XCTAssertEqual(result?.addresses.count, 1)
-    }
-
-    // MARK: - decodeVersionTwoData
-
-    func testDecodeVersionTwoData_validData_succeeds() {
-        let data = v2JSONString.data(using: .utf8)!
-        let (result, message) = ImportExportService.decodeVersionTwoData(from: data)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(message, "Success")
-    }
-
-    func testDecodeVersionTwoData_wrongVersion_fails() {
-        let json = """
-        {"version":"1.0.0","exportDate":"2024-01-01T00:00:00Z","addresses":[]}
-        """.data(using: .utf8)!
-        let (result, message) = ImportExportService.decodeVersionTwoData(from: json)
-        XCTAssertNil(result)
-        XCTAssertFalse(message.isEmpty)
-    }
-
-    func testDecodeVersionTwoData_emptyData_fails() {
-        let (result, message) = ImportExportService.decodeVersionTwoData(from: Data())
-        XCTAssertNil(result)
-        XCTAssertFalse(message.isEmpty)
-    }
-
-    func testDecodeVersionTwoData_addressFields() {
-        let data = v2JSONString.data(using: .utf8)!
-        let (result, _) = ImportExportService.decodeVersionTwoData(from: data)
-        XCTAssertEqual(result?.addresses.first?.id, "addr-002")
-        XCTAssertEqual(result?.addresses.first?.password, "securePass!1")
-    }
-
     // MARK: - Round-trip via ExportVersionTwo
 
     func testRoundTrip_exportThenImport_preservesData() throws {

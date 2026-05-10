@@ -24,10 +24,12 @@ final class AddressStoreTests: XCTestCase {
         try await super.tearDown()
     }
 
-    /// Creates an AddressStore and immediately calls fetchAddresses()
-    /// so tests have deterministic state without relying on the init Task.
-    private func makeSUT() -> AddressStore {
-        AddressStore(addressService: addressService, messageService: messageService)
+    private func makeSUT(isConnected: Bool? = true) -> AddressStore {
+        AddressStore(
+            addressService: addressService,
+            messageService: messageService,
+            networkMonitor: NetworkMonitor(fixedIsConnected: isConnected)
+        )
     }
 
     // MARK: - fetchAddresses
@@ -163,51 +165,49 @@ final class AddressStoreTests: XCTestCase {
 
     // MARK: - addAddress
 
-    func testAddAddress_delegatesToServiceAndRefetches() async {
+    func testAddAddress_delegatesToService() async {
         let sut = makeSUT()
         let account = MockMailTMNetworkService.sampleAccount()
         await sut.addAddress(account: account, token: "tok", password: "pass", name: "Test", folder: nil)
         XCTAssertEqual(addressService.addAddressCallCount, 1)
-        XCTAssertGreaterThanOrEqual(addressService.fetchAllCallCount, 1)
     }
 
     // MARK: - loginAndSave V1
 
-    func testLoginAndSaveV1_success_refetchesAddresses() async {
+    func testLoginAndSaveV1_success_delegatesToService() async {
         addressService.loginAndSaveV1Result = (true, "Success")
         let sut = makeSUT()
         let v1 = makeV1ExportAddress()
         let (success, _) = await sut.loginAndSave(v1Address: v1)
         XCTAssertTrue(success)
-        XCTAssertGreaterThanOrEqual(addressService.fetchAllCallCount, 2)
+        XCTAssertEqual(addressService.loginAndSaveV1CallCount, 1)
     }
 
-    func testLoginAndSaveV1_failure_doesNotRefetch() async {
+    func testLoginAndSaveV1_failure_returnsFailure() async {
         addressService.loginAndSaveV1Result = (false, "Auth failed")
         let sut = makeSUT()
-        let fetchCountBefore = addressService.fetchAllCallCount
-        _ = await sut.loginAndSave(v1Address: makeV1ExportAddress())
-        XCTAssertEqual(addressService.fetchAllCallCount, fetchCountBefore)
+        let (success, message) = await sut.loginAndSave(v1Address: makeV1ExportAddress())
+        XCTAssertFalse(success)
+        XCTAssertEqual(message, "Auth failed")
     }
 
     // MARK: - loginAndSave V2
 
-    func testLoginAndSaveV2_success_refetchesAddresses() async {
+    func testLoginAndSaveV2_success_delegatesToService() async {
         addressService.loginAndSaveV2Result = (true, "Success")
         let sut = makeSUT()
         let (success, _) = await sut.loginAndSave(v2Address: makeV2ExportAddress())
         XCTAssertTrue(success)
-        XCTAssertGreaterThanOrEqual(addressService.fetchAllCallCount, 2)
+        XCTAssertEqual(addressService.loginAndSaveV2CallCount, 1)
     }
 
     // MARK: - deleteAddress
 
-    func testDeleteAddress_delegatesToServiceAndRefetches() async {
+    func testDeleteAddress_delegatesToService() async {
         let sut = makeSUT()
         let addr = makeAddress(id: "del-addr")
         await sut.deleteAddress(addr)
         XCTAssertEqual(addressService.deleteAddressCallCount, 1)
-        XCTAssertGreaterThanOrEqual(addressService.fetchAllCallCount, 1)
     }
 
     // MARK: - deleteAddressFromServer

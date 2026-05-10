@@ -35,7 +35,7 @@ class ImportExportService {
         }
     }
     
-    static func decodeVersionOneData(from data: Data) -> (ExportVersionOne?, String) {
+    private static func decodeVersionOneData(from data: Data) -> (ExportVersionOne?, String) {
         do {
             let decodedData = try JSONDecoder().decode(ExportVersionOne.self, from: data)
             return (decodedData, "Success")
@@ -44,7 +44,7 @@ class ImportExportService {
         }
     }
     
-    static func decodeVersionTwoData(from data: Data) -> (ExportVersionTwo?, String) {
+    private static func decodeVersionTwoData(from data: Data) -> (ExportVersionTwo?, String) {
         do {
             let decodedData = try JSONDecoder().decode(ExportVersionTwo.self, from: data)
             return (decodedData, "Success")

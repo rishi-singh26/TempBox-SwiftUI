@@ -27,7 +27,7 @@ struct MessageInfoView: View {
     
 #if os(iOS)
     @ViewBuilder
-    func IOSView(_ accentColor: Color) -> some View {
+    private func IOSView(_ accentColor: Color) -> some View {
         NavigationView {
             List {
                 Text("Sender Name: \(message.fromName ?? "")")
@@ -52,7 +52,7 @@ struct MessageInfoView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSView() -> some View {
+    private func MacOSView() -> some View {
         VStack(alignment: .leading) {
             Text("Message Info")
                 .font(.title.bold())

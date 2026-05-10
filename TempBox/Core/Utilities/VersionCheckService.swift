@@ -51,7 +51,7 @@ class VersionCheckService {
         }
     }
 
-    var bundleId: String? {
+    private var bundleId: String? {
         Bundle.main.bundleIdentifier
     }
 

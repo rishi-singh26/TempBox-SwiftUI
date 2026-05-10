@@ -43,7 +43,7 @@ struct AddressInfoView: View {
     
     #if os(iOS)
     @ViewBuilder
-    func IOSAddressInfo() -> some View {
+    private func IOSAddressInfo() -> some View {
         let (addressNameBinding, folderBinding) = getNameAndFolderBindings()
         
         NavigationView {
@@ -129,7 +129,7 @@ struct AddressInfoView: View {
     
 #if os(macOS)
     @ViewBuilder
-    func MacOSAddressInfo() -> some View {
+    private func MacOSAddressInfo() -> some View {
         let (addressNameBinding, folderBinding) = getNameAndFolderBindings()
         
         VStack {
