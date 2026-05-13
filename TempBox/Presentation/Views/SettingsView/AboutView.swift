@@ -86,7 +86,7 @@ struct AboutView: View {
                     Button {
                         showDisclaimer = true
                     } label: {
-                        CustomLabel(leadingImageName: "exclamationmark.triangle", title: "Important Notice")
+                        CustomLabel(leadingImageName: "info.circle", title: "Important Notice")
                     }
                     .buttonStyle(.link)
                     .help("View important notice about TempBox")
@@ -198,7 +198,7 @@ struct AboutView: View {
                 Button {
                     showDisclaimer = true
                 } label: {
-                    CustomLabel(leadingImageName: "exclamationmark.triangle", title: "Important Notice")
+                    CustomLabel(leadingImageName: "info.circle", title: "Important Notice")
                 }
                 .help("View important notice about TempBox")
                 Button {

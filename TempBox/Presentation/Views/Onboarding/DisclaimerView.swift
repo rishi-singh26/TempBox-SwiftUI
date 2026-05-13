@@ -36,21 +36,21 @@ struct DisclaimerView: View {
         VStack(spacing: 0) {
             ScrollView(.vertical) {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Warning icon
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    // Info icon
+                    Image(systemName: "info.circle.fill")
                         .font(.system(size: 64))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(tint)
                         .frame(height: 80)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 50)
                         .blurSlide(animateIcon)
                     
                     VStack(alignment: .center, spacing: 6) {
-                        Text("Important Notice")
+                        Text("A Few Things to Know")
                             .font(.title2.bold())
                             .multilineTextAlignment(.center)
-                        
-                        Text("This app is powered by **mail.tm**, a free third-party service. By using this app, you acknowledge and accept the following.")
+
+                        Text("TempBox is powered by **mail.tm**, a free third-party service. Here's what that means for you.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -99,16 +99,16 @@ struct DisclaimerView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: card.symbol)
                     .font(.title2)
-                    .foregroundStyle(card.isHighlighted ? .orange : tint)
+                    .foregroundStyle(tint)
                     .symbolVariant(.fill)
                     .frame(width: 45)
                     .offset(y: 10)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(card.title)
                         .font(.title3)
                         .lineLimit(1)
-                    
+
                     Text(card.subTitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -116,8 +116,8 @@ struct DisclaimerView: View {
                 }
             }
             // Highlight the warning card with a tinted background
-            .padding(card.isHighlighted ? 12 : 0)
-            .background(card.isHighlighted ? Color.orange.opacity(0.1) : Color.clear, in: .rect(cornerRadius: 15))
+            .padding(.vertical, 12)
+            .background(card.isHighlighted ? .yellow.opacity(0.1) : Color.clear, in: .rect(cornerRadius: 15))
             .blurSlide(animateCards[index])
         }
     }
@@ -134,7 +134,7 @@ struct DisclaimerView: View {
             // Accept button
             if #available(iOS 26.0, macOS 26.0, *) {
                 Button(action: onAccept) {
-                    Text("I Understand")
+                    Text("Got It")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
 #if os(macOS)
@@ -148,7 +148,7 @@ struct DisclaimerView: View {
                 .buttonBorderShape(.capsule)
             } else {
                 Button(action: onAccept) {
-                    Text("I Understand")
+                    Text("Got It")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
 #if os(macOS)
@@ -174,29 +174,24 @@ struct DisclaimerView: View {
     static let cards: [DisclaimerCard] = [
         DisclaimerCard(
             symbol: "envelope.badge.minus",
-            title: "Emails Are Not Permanent",
-            subTitle: "Older messages are automatically removed by mail.tm and cannot be recovered. Do not rely on this app to retain important emails."
+            title: "Messages Don't Last Forever",
+            subTitle: "mail.tm automatically removes older messages. Save anything important before it disappears."
         ),
         DisclaimerCard(
             symbol: "lock.trianglebadge.exclamationmark",
-            title: "No Password Recovery",
-            subTitle: "mail.tm does not support password changes or recovery. Losing your password means permanent loss of access to that address and its messages."
+            title: "Passwords Can't Be Recovered",
+            subTitle: "mail.tm does not support password change or recovery. Losing a password means losing access to that address."
         ),
-//        DisclaimerCard(
-//            symbol: "person.crop.circle.badge.minus",
-//            title: "Addresses May Be Deleted",
-//            subTitle: "mail.tm may remove an address if it is inactive, old, or for any other reason at their discretion. This is outside our control."
-//        ),
         DisclaimerCard(
             symbol: "exclamationmark.octagon",
-            title: "Not for Sensitive Use",
-            subTitle: "Do not use this app for financial accounts, legal matters, or any service you depend on. It is intended for temporary, disposable use only.",
+            title: "For Temporary Use Only",
+            subTitle: "TempBox is designed for sign-ups and one-time verifications — not for accounts you rely on, like banking or legal services.",
             isHighlighted: true
         ),
         DisclaimerCard(
             symbol: "shield.slash",
-            title: "No Liability for Loss",
-            subTitle: "We are not responsible for any financial or other loss arising from the unavailability, deletion, or inaccessibility of any email address or message. Use at your own risk."
+            title: "No Liability for Lost Emails",
+            subTitle: "TempBox and mail.tm aren't responsible for loss resulting from unavailable or deleted emails. By continuing, you accept these terms."
         ),
     ]
 }
